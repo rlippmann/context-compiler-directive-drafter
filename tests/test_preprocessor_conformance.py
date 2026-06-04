@@ -2,9 +2,9 @@ import json
 import re
 from pathlib import Path
 
-from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter import (
     parse_preprocessor_output,
+    preprocess_heuristic,
     validate_preprocessor_output,
 )
 

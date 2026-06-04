@@ -33,6 +33,7 @@ from context_compiler import (
     get_policy_items,
     get_premise_value,
 )
+
 from context_compiler_directive_drafter import (
     PREPROCESS_OUTCOME_DIRECTIVE,
     parse_preprocessor_output,

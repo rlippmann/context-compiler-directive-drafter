@@ -35,9 +35,17 @@ The model or drafting layer may propose. Only `context-compiler` may apply.
 
 ## Status
 
-This repository is bootstrapped with a minimal placeholder implementation and
-tooling. The public contract is intentionally narrow until drafting behavior is
-specified and tested.
+This repository contains the copied experimental directive-drafting
+implementation that previously lived alongside `context-compiler`.
+
+The current public package surface is intentionally narrow:
+
+- copied preprocessor API at `context_compiler_directive_drafter`
+- packaged prompt resources for installed integrations
+- integration examples and tests that preserve the current drafting behavior
+
+Drafting remains non-authoritative. Only `context-compiler` applies validated
+directives and mutates authoritative state.
 
 ## Quickstart
 
@@ -47,14 +55,15 @@ Install dependencies with `uv`:
 uv sync --group dev
 ```
 
-Run the placeholder CLI:
+Run the current CLI placeholder:
 
 ```bash
 uv run directive-drafter "please make replies concise"
 ```
 
-Current behavior returns a non-zero exit status and explains that drafting is
-not implemented yet.
+Current CLI behavior still returns a non-zero exit status and explains that
+general natural-language drafting flow is not yet exposed as a broader
+user-facing command workflow.
 
 ## Development
 

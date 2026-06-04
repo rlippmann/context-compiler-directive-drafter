@@ -2,8 +2,12 @@ from pathlib import Path
 
 from context_compiler import create_engine
 from context_compiler.engine import State
-from context_compiler_directive_drafter import PROMPT_TOKEN_NULL_OR_VALUE, PROMPT_TOKEN_POLICY_SET
+
 from context_compiler_directive_drafter import render_prompt
+from context_compiler_directive_drafter.constants import (
+    PROMPT_TOKEN_NULL_OR_VALUE,
+    PROMPT_TOKEN_POLICY_SET,
+)
 
 
 def _write_prompt(path: Path, body: str) -> None:

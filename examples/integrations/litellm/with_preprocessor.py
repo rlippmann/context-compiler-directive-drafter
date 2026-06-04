@@ -41,6 +41,7 @@ from context_compiler import (
 )
 from context_compiler.engine import Engine
 from context_compiler.observability import build_trace
+
 from context_compiler_directive_drafter import (
     PREPROCESS_OUTCOME_DIRECTIVE,
     parse_preprocessor_output,

@@ -65,7 +65,7 @@ If frontmatter dependency installs are disabled, offline, or unavailable:
    - `docker exec -it <openwebui-container> sh`
 2. Install the package manually:
   - Minimal pipe: `pip install "context-compiler>=0.7.4"`
-  - Preprocessor pipe: `pip install "context-compiler-directive-drafter>=0.7.4"`
+  - Preprocessor pipe: `pip install "context-compiler-directive-drafter>=0.1.0"`
 3. Import and enable the function in Open WebUI, then configure valves.
 
 ### Finding valid model ids

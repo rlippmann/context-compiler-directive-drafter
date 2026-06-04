@@ -10,9 +10,9 @@ Documentation in this repository should preserve the same philosophy as
 - keep formal guarantees precise in specification documents
 - treat behavior examples and tests as part of the contract when applicable
 
-Initial bootstrap status:
+Current repository status:
 
-- package scaffold created
-- placeholder CLI created
-- placeholder API created
-- CI and local quality tooling created
+- copied preprocessor implementation lives in the public package
+- prompt resources are packaged for installed integrations
+- preprocessor fixtures, tests, and integration examples are included here
+- CI and local quality tooling are configured

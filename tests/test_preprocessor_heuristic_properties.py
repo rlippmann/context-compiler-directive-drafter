@@ -3,12 +3,12 @@ import re
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
+from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.constants import (
     PREPROCESS_OUTCOME_DIRECTIVE,
     PREPROCESS_OUTCOME_NO_DIRECTIVE,
     PREPROCESS_OUTCOME_UNKNOWN,
 )
-from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.output_validation import (
     _is_allowed_directive,
     parse_preprocessor_output,

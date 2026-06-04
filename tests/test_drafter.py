@@ -1,4 +1,4 @@
-from context_compiler_directive_drafter import draft_directive
+from context_compiler_directive_drafter.drafter import draft_directive
 
 
 def test_draft_directive_is_non_authoritative_placeholder() -> None:

@@ -1,9 +1,9 @@
 from copy import deepcopy
 
+from context_compiler import create_engine
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from context_compiler import create_engine
 from context_compiler_directive_drafter.output_validation import (
     _is_allowed_directive,
     parse_preprocessor_output,

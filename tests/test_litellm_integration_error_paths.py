@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from context_compiler import create_engine
 
 LITELLM_BASIC_PATH = Path("examples/integrations/litellm/basic.py")
