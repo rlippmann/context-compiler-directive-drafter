@@ -79,7 +79,6 @@ uv run pytest
 PyPI publishing is configured through GitHub Actions trusted publishing.
 
 - Release workflow: [.github/workflows/publish-pypi.yml](/Users/rlippmann/Source/context-compiler-directive-drafter/.github/workflows/publish-pypi.yml)
-- Release notes/setup: [docs/releasing.md](/Users/rlippmann/Source/context-compiler-directive-drafter/docs/releasing.md)
 
 ## Documentation philosophy
 
