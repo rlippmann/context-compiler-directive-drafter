@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "context-compiler-directive-drafter"
+version = "0.1.0"
+description = "Draft candidate Context Compiler directives from natural-language input."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Robert Lippmann" }]
+dependencies = [
+  "context-compiler",
+]
+keywords = [
+  "llm",
+  "directive-drafting",
+  "context-compiler",
+  "ai-infrastructure",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/rlippmann/context-compiler-directive-drafter"
+Repository = "https://github.com/rlippmann/context-compiler-directive-drafter"
+Issues = "https://github.com/rlippmann/context-compiler-directive-drafter/issues"
+
+[project.scripts]
+directive-drafter = "context_compiler_directive_drafter.cli:main"
+
+[dependency-groups]
+dev = [
+  "coverage",
+  "mypy>=1.12,<2.0",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "ruff>=0.12,<1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/context_compiler_directive_drafter"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+exclude = ["^tests/"]
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = false
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+markers = [
+  "contract: curated stable user-facing behavior contract tests",
+]
+
+[tool.coverage.run]
+source = ["src/context_compiler_directive_drafter"]
+omit = ["tests/*"]
