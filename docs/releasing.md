@@ -6,8 +6,9 @@ trusted-publishing pattern as `context-compiler`.
 ## Workflow
 
 - GitHub release is published
-- release workflow validates the repo (`pre-commit`, `pytest`)
+- release workflow validates the repo (`pre-commit`, repeated `pytest`)
 - workflow builds sdist + wheel
+- workflow validates built artifacts (`twine check`, clean-wheel install, import/resource smoke)
 - workflow publishes to PyPI using GitHub OIDC trusted publishing
 
 The publish workflow is defined in:
@@ -33,3 +34,4 @@ Repository-side setup still required before first real publish:
 - Do not publish directly from local machines.
 - Do not upload artifacts manually when trusted publishing is available.
 - Validate with `uv build` locally before cutting a release.
+- The release workflow intentionally validates the built wheel before publish.
