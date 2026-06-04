@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from context_compiler_directive_drafter import draft_directive
+from context_compiler_directive_drafter.drafter import draft_directive
 
 
 def build_parser() -> argparse.ArgumentParser:

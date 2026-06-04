@@ -1,0 +1,17 @@
+{
+  "id": "experimental-preprocessor-public-api-v1",
+  "kind": "api-contract",
+  "module": "context_compiler_directive_drafter",
+  "required_exports": [
+    "PREPROCESS_OUTCOME_DIRECTIVE",
+    "PREPROCESS_OUTCOME_NO_DIRECTIVE",
+    "PREPROCESS_OUTCOME_UNKNOWN",
+    "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
+    "PreprocessResult",
+    "PreprocessOutcome",
+    "parse_preprocessor_output",
+    "preprocess_heuristic",
+    "render_prompt",
+    "validate_preprocessor_output"
+  ]
+}

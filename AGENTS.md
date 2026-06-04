@@ -44,7 +44,7 @@ Be explicit that drafting proposes and `context-compiler` decides.
 
 - The public import package is `context_compiler_directive_drafter`.
 - The CLI command is `directive-drafter`.
-- Do not preserve or reintroduce legacy `experimental.preprocessor` imports.
+- Do not preserve or reintroduce legacy `context_compiler_directive_drafter` imports.
 - Do not add compatibility aliases that blur the public package boundary unless explicitly requested.
 
 ## Test coverage expectations
