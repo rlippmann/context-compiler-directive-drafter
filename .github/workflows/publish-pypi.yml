@@ -67,7 +67,7 @@ jobs:
           ls -lh dist
 
       - name: Upload dist artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -86,7 +86,7 @@ jobs:
           python-version: "3.12"
 
       - name: Download dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -106,7 +106,7 @@ jobs:
       - name: Run installed-wheel import/resource smoke
         shell: bash
         run: |
-          /tmp/ccdd-wheel-smoke/bin/python -c "from importlib.resources import files; import context_compiler_directive_drafter as m; required = {'PREPROCESS_OUTCOME_DIRECTIVE','PREPROCESS_OUTCOME_NO_DIRECTIVE','PREPROCESS_OUTCOME_UNKNOWN','PREPROCESSOR_NO_DIRECTIVE_SENTINEL','PreprocessResult','PreprocessOutcome','parse_preprocessor_output','preprocess_heuristic','render_prompt','validate_preprocessor_output'}; missing = sorted(name for name in required if not hasattr(m, name)); assert not missing, missing; assert files('context_compiler_directive_drafter').joinpath('prompts/default.txt').read_text(encoding='utf-8'); print('wheel-smoke: ok')"
+          /tmp/ccdd-wheel-smoke/bin/python -c "from importlib.resources import files; import context_compiler_directive_drafter as m; required = {'PREPROCESS_OUTCOME_DIRECTIVE','PREPROCESS_OUTCOME_NO_DIRECTIVE','PREPROCESS_OUTCOME_UNKNOWN','PREPROCESSOR_NO_DIRECTIVE_SENTINEL','parse_preprocessor_output','preprocess_heuristic','render_prompt','validate_preprocessor_output'}; missing = sorted(name for name in required if not hasattr(m, name)); assert not missing, missing; assert files('context_compiler_directive_drafter').joinpath('prompts/default.txt').read_text(encoding='utf-8'); print('wheel-smoke: ok')"
 
   publish:
     name: Publish to PyPI
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
