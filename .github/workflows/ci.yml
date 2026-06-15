@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v6
@@ -52,9 +52,63 @@ jobs:
       - name: Run tests
         run: uv run pytest
 
+  preprocessor-conformance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Run preprocessor conformance tests
+        run: |
+          uv run pytest \
+            tests/test_preprocessor_conformance.py \
+            tests/test_preprocessor_api_contract_fixture.py
+
+  contract-heuristic-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Run heuristic contract coverage gate
+        run: |
+          uv run pytest \
+            tests/test_preprocessor_heuristic.py \
+            tests/test_preprocessor_heuristic_properties.py \
+            tests/test_preprocessor_conformance.py \
+            --cov=context_compiler_directive_drafter.heuristic_preprocessor \
+            --cov-report=term-missing \
+            --cov-fail-under=100
+
   test:
     runs-on: ubuntu-latest
-    needs: [pre-commit, pytest, build]
+    needs: [pre-commit, pytest, preprocessor-conformance, contract-heuristic-coverage, build]
 
     steps:
       - name: Confirm CI gates passed
