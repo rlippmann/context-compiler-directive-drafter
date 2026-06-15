@@ -1,4 +1,5 @@
 import json
+from importlib import import_module
 from pathlib import Path
 
 import context_compiler_directive_drafter as preprocessor
@@ -34,6 +35,7 @@ def test_preprocessor_api_contract_fixture_matches_public_surface() -> None:
 
     assert contract["kind"] == "api-contract"
     assert set(contract["required_exports"]) == set(_EXPECTED_RUNTIME_EXPORTS)
+    assert set(preprocessor.__all__) == set(contract["required_exports"])
 
     for name in contract["required_exports"]:
         assert hasattr(preprocessor, name), name
@@ -58,3 +60,16 @@ def test_preprocessor_module_does_not_export_typing_only_names() -> None:
     for name in _TYPING_ONLY_NAMES:
         assert not hasattr(preprocessor, name), name
         assert name not in preprocessor.__all__, name
+
+
+def test_expected_runtime_exports_match_contract_exactly() -> None:
+    contract = _load_contract()
+
+    assert set(_EXPECTED_RUNTIME_EXPORTS) == set(contract["required_exports"])
+
+
+def test_typing_only_names_are_not_importable_from_package_root() -> None:
+    package = import_module("context_compiler_directive_drafter")
+
+    for name in _TYPING_ONLY_NAMES:
+        assert name not in package.__dict__, name

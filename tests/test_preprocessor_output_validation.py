@@ -90,6 +90,9 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
         {"classification": "unsupported_action", "output": None},
         {"classification": "directive", "output": "clear state\nreset policies"},
         {"classification": "directive", "output": "clear state", "extra": True},
+        {"classification": "directive", "output": "use docker", "source_input": "use docker"},
+        {"classification": "directive", "output": "use docker", "sourceInput": "use docker"},
+        {"classification": "no_directive", "output": None, "source_input": "hello"},
         {"action": "prohibit", "item": "peanuts"},
     ]
     for raw in cases:
