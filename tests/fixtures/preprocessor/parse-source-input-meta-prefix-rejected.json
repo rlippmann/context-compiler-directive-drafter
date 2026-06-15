@@ -1,0 +1,7 @@
+{
+  "name": "parse-source-input-meta-prefix-rejected",
+  "kind": "parse",
+  "raw_output": "use docker",
+  "source_input": "example: use docker",
+  "expected_parsed": null
+}

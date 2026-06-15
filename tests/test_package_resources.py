@@ -41,6 +41,14 @@ def _state_with_punctuation_and_newline_premise() -> object:
     return engine.state
 
 
+def _state_with_multiple_policy_names() -> object:
+    engine = create_engine()
+    engine.step("use zeta")
+    engine.step("use beta")
+    engine.step("prohibit alpha")
+    return engine.state
+
+
 def test_packaged_resources_exist_and_are_non_empty() -> None:
     package_files = files(_PACKAGE)
 
@@ -97,6 +105,26 @@ def test_packaged_llama_prompt_duplicate_policy_names_render_once() -> None:
     assert rendered is not None
     assert "* policies: shared" in rendered
     assert rendered.count("shared") == 1
+
+
+def test_packaged_default_prompt_renders_sorted_multiple_policy_names() -> None:
+    prompt_resource = files(_PACKAGE).joinpath("prompts/default.txt")
+
+    with as_file(prompt_resource) as prompt_path:
+        rendered = render_prompt(prompt_path, _state_with_multiple_policy_names())
+
+    assert rendered is not None
+    assert "* policies: alpha, beta, zeta" in rendered
+
+
+def test_packaged_llama_prompt_renders_sorted_multiple_policy_names() -> None:
+    prompt_resource = files(_PACKAGE).joinpath("prompts/llama.txt")
+
+    with as_file(prompt_resource) as prompt_path:
+        rendered = render_prompt(prompt_path, _state_with_multiple_policy_names())
+
+    assert rendered is not None
+    assert "* policies: alpha, beta, zeta" in rendered
 
 
 def test_packaged_default_prompt_renders_punctuation_and_newline_premise_deterministically() -> (
