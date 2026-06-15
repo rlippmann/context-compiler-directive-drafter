@@ -1,0 +1,8 @@
+{
+  "name": "malformed-wrapper-use-unknown",
+  "input": "(use)",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

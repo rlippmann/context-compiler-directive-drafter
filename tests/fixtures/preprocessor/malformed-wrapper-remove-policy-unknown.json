@@ -1,0 +1,8 @@
+{
+  "name": "malformed-wrapper-remove-policy-unknown",
+  "input": "[remove policy]",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

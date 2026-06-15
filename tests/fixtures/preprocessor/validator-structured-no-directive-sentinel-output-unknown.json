@@ -1,0 +1,12 @@
+{
+  "name": "validator-structured-no-directive-sentinel-output-unknown",
+  "kind": "validator",
+  "raw_output": {
+    "classification": "no_directive",
+    "output": "<NO_DIRECTIVE>"
+  },
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

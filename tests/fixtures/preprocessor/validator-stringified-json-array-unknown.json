@@ -1,0 +1,9 @@
+{
+  "name": "validator-stringified-json-array-unknown",
+  "kind": "validator",
+  "raw_output": "[{\"classification\":\"directive\",\"output\":\"use docker\"}]",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}
