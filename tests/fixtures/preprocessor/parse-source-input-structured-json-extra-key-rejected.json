@@ -1,0 +1,7 @@
+{
+  "name": "parse-source-input-structured-json-extra-key-rejected",
+  "kind": "parse",
+  "raw_output": "use docker",
+  "source_input": "{\"classification\":\"directive\",\"output\":\"use docker\",\"extra\":true}",
+  "expected_parsed": null
+}

@@ -172,6 +172,8 @@ def test_validation_with_source_input_rejects_boundary_unsafe_fallback_rewrites(
         ("ok. prohibit peanuts", "prohibit peanuts"),
         ("clear premise\nreset policies", "clear premise"),
         ("```\nuse docker\n```", "use docker"),
+        ("~~~\nuse docker\n~~~", "use docker"),
+        ("~~~ use docker ~~~", "use docker"),
         ("the command is `use docker`", "use docker"),
         ('the docs say "use docker"', "use docker"),
         ("use docker and explain why", "use docker"),
