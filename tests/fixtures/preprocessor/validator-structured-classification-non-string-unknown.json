@@ -1,0 +1,12 @@
+{
+  "name": "validator-structured-classification-non-string-unknown",
+  "kind": "validator",
+  "raw_output": {
+    "classification": 123,
+    "output": null
+  },
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

@@ -65,12 +65,10 @@ def test_summarize_confirmation_update_replace_use_returns_replaced_summary() ->
     )
 
 
-def test_summarize_confirmation_update_prohibited_replace_prompt_has_specific_summary(
-) -> None:
+def test_summarize_confirmation_update_prohibited_replace_prompt_has_specific_summary() -> None:
     pending = {
         "prompt_to_user": (
-            '"docker" is currently prohibited. '
-            'Did you mean to remove it and use "podman" instead?'
+            '"docker" is currently prohibited. Did you mean to remove it and use "podman" instead?'
         ),
         "replacement": {
             "kind": "replace_use",
@@ -97,8 +95,9 @@ def test_summarize_confirmation_update_use_only_empty_label_falls_back_to_generi
     assert summarize_confirmation_update("yes", pending) == "State updated."
 
 
-def test_summarize_confirmation_update_replace_use_empty_label_falls_back_to_generic_summary(
-) -> None:
+def test_summarize_confirmation_update_replace_use_empty_label_falls_back_to_generic_summary() -> (
+    None
+):
     pending = {
         "replacement": {
             "kind": "replace_use",
@@ -109,8 +108,9 @@ def test_summarize_confirmation_update_replace_use_empty_label_falls_back_to_gen
     assert summarize_confirmation_update("yes", pending) == "State updated."
 
 
-def test_summarize_confirmation_update_unknown_replacement_kind_falls_back_to_generic_summary(
-) -> None:
+def test_summarize_confirmation_update_unknown_replacement_kind_falls_back_to_generic_summary() -> (
+    None
+):
     pending = {
         "replacement": {
             "kind": "unknown_kind",
@@ -119,8 +119,9 @@ def test_summarize_confirmation_update_unknown_replacement_kind_falls_back_to_ge
     assert summarize_confirmation_update("yes", pending) == "State updated."
 
 
-def test_summarize_confirmation_update_non_confirmation_text_falls_back_to_generic_summary(
-) -> None:
+def test_summarize_confirmation_update_non_confirmation_text_falls_back_to_generic_summary() -> (
+    None
+):
     pending = {
         "replacement": {
             "kind": "use_only",
@@ -150,6 +151,24 @@ def test_summarize_confirmation_update_from_engine_handles_export_failure() -> N
             raise RuntimeError("boom")
 
     assert summarize_confirmation_update_from_engine("yes", BrokenEngine()) == "State updated."
+
+
+def test_summarize_confirmation_update_from_engine_reads_pending_summary() -> None:
+    class EngineWithPending:
+        def export_checkpoint(self) -> object:
+            return {
+                "pending": {
+                    "replacement": {
+                        "kind": "replace_use",
+                        "new_item": "podman",
+                        "old_item": "docker",
+                    }
+                }
+            }
+
+    assert summarize_confirmation_update_from_engine("yes", EngineWithPending()) == (
+        "State updated: Replaced docker with podman."
+    )
 
 
 def test_resolve_provider_config_defaults_to_openai(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -213,8 +232,6 @@ def test_print_startup_config_logs_once(
         print_startup_config(config)
 
     matches = [
-        rec
-        for rec in caplog.records
-        if rec.getMessage().startswith("litellm_config mode=ollama")
+        rec for rec in caplog.records if rec.getMessage().startswith("litellm_config mode=ollama")
     ]
     assert len(matches) == 1

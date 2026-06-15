@@ -1,0 +1,7 @@
+{
+  "name": "parse-source-input-tilde-fence-rejected",
+  "kind": "parse",
+  "raw_output": "use docker",
+  "source_input": "~~~\nuse docker\n~~~",
+  "expected_parsed": null
+}

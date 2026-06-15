@@ -1,3 +1,5 @@
+import json
+
 from context_compiler_directive_drafter.cli import main
 
 
@@ -20,3 +22,20 @@ def test_cli_help_exit_when_input_missing(monkeypatch, capsys) -> None:
     captured = capsys.readouterr()
     assert exit_code == 2
     assert "usage:" in captured.err
+
+
+def test_cli_json_emits_placeholder_payload_on_stdout(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("sys.argv", ["directive-drafter", "--json", "please make replies concise"])
+
+    exit_code = main()
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert captured.err == ""
+    assert json.loads(captured.out) == {
+        "authoritative": False,
+        "candidate_directive": None,
+        "confidence": 0.0,
+        "rationale": "Drafting is not implemented yet.",
+        "user_input": "please make replies concise",
+    }

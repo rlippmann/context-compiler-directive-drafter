@@ -1,0 +1,8 @@
+{
+  "name": "multi-candidate-clear-state-reset-policies-unknown",
+  "input": "clear state; reset policies",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

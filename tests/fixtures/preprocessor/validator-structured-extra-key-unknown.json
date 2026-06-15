@@ -1,0 +1,13 @@
+{
+  "name": "validator-structured-extra-key-unknown",
+  "kind": "validator",
+  "raw_output": {
+    "classification": "directive",
+    "output": "use docker",
+    "source_input": "use docker"
+  },
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}
