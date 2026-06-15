@@ -84,5 +84,5 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/context_compiler_directive_drafter"]
+source = ["src/context_compiler_directive_drafter", "host_support"]
 omit = ["tests/*"]
