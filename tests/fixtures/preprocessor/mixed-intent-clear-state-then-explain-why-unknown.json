@@ -1,0 +1,8 @@
+{
+  "name": "mixed-intent-clear-state-then-explain-why-unknown",
+  "input": "clear state, then explain why",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

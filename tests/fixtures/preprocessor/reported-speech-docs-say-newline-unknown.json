@@ -1,0 +1,8 @@
+{
+  "name": "reported-speech-docs-say-newline-unknown",
+  "input": "docs say:\n\"use docker\"",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

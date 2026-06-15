@@ -1,0 +1,12 @@
+{
+  "name": "validator-structured-directive-multi-candidate-output-unknown",
+  "kind": "validator",
+  "raw_output": {
+    "classification": "directive",
+    "output": "clear state; reset policies"
+  },
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}
