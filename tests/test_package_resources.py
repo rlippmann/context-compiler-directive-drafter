@@ -99,7 +99,9 @@ def test_packaged_llama_prompt_duplicate_policy_names_render_once() -> None:
     assert rendered.count("shared") == 1
 
 
-def test_packaged_default_prompt_renders_punctuation_and_newline_premise_deterministically() -> None:
+def test_packaged_default_prompt_renders_punctuation_and_newline_premise_deterministically() -> (
+    None
+):
     prompt_resource = files(_PACKAGE).joinpath("prompts/default.txt")
 
     with as_file(prompt_resource) as prompt_path:
@@ -121,10 +123,7 @@ def test_packaged_llama_prompt_renders_punctuation_and_newline_premise_determini
 
 def test_repo_files_do_not_reference_legacy_preprocessor_import_path() -> None:
     for root in _SCAN_ROOTS:
-        if root.is_file():
-            paths = [root]
-        else:
-            paths = [path for path in root.rglob("*") if path.is_file()]
+        paths = [root] if root.is_file() else [path for path in root.rglob("*") if path.is_file()]
 
         for path in paths:
             if path.suffix not in {".py", ".md", ".txt", ".json"} and path.name != "py.typed":
