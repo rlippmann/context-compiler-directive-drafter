@@ -2,6 +2,7 @@
   "id": "experimental-preprocessor-public-api-v1",
   "kind": "api-contract",
   "module": "context_compiler_directive_drafter",
+  "forbid_additional_public_exports": true,
   "required_exports": [
     "PREPROCESS_OUTCOME_DIRECTIVE",
     "PREPROCESS_OUTCOME_NO_DIRECTIVE",
@@ -11,5 +12,237 @@
     "preprocess_heuristic",
     "render_prompt",
     "validate_preprocessor_output"
-  ]
+  ],
+  "forbidden_exports": [
+    "PreprocessOutcome",
+    "PreprocessResult"
+  ],
+  "exports": {
+    "PREPROCESSOR_NO_DIRECTIVE_SENTINEL": {
+      "kind": "constant",
+      "value": "<NO_DIRECTIVE>"
+    },
+    "PREPROCESS_OUTCOME_DIRECTIVE": {
+      "kind": "constant",
+      "value": "directive"
+    },
+    "PREPROCESS_OUTCOME_NO_DIRECTIVE": {
+      "kind": "constant",
+      "value": "no_directive"
+    },
+    "PREPROCESS_OUTCOME_UNKNOWN": {
+      "kind": "constant",
+      "value": "unknown"
+    },
+    "preprocess_heuristic": {
+      "kind": "callable",
+      "parameters": [
+        {
+          "name": "message",
+          "kind": "positional_or_keyword",
+          "required": true
+        }
+      ],
+      "return_shape": {
+        "any_of": [
+          {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive",
+              "rule_id"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "directive"
+                ]
+              },
+              "directive": {
+                "type": "string"
+              },
+              "rule_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive",
+              "rule_id"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "no_directive",
+                  "unknown"
+                ]
+              },
+              "directive": {
+                "type": "null"
+              },
+              "rule_id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "shape_probes": [
+        {
+          "kwargs": {
+            "message": "use docker"
+          }
+        },
+        {
+          "kwargs": {
+            "message": "please help with lunch"
+          }
+        },
+        {
+          "kwargs": {
+            "message": "use docker, actually prohibit docker"
+          }
+        }
+      ]
+    },
+    "validate_preprocessor_output": {
+      "kind": "callable",
+      "parameters": [
+        {
+          "name": "raw_output",
+          "kind": "positional_or_keyword",
+          "required": true
+        },
+        {
+          "name": "source_input",
+          "kind": "keyword_only",
+          "required": false
+        }
+      ],
+      "return_shape": {
+        "any_of": [
+          {
+            "type": "object",
+            "required_keys": [
+              "classification",
+              "output"
+            ],
+            "properties": {
+              "classification": {
+                "type": "string",
+                "enum": [
+                  "directive"
+                ]
+              },
+              "output": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required_keys": [
+              "classification",
+              "output"
+            ],
+            "properties": {
+              "classification": {
+                "type": "string",
+                "enum": [
+                  "no_directive",
+                  "unknown"
+                ]
+              },
+              "output": {
+                "type": "null"
+              }
+            }
+          }
+        ]
+      },
+      "shape_probes": [
+        {
+          "kwargs": {
+            "raw_output": "use docker"
+          }
+        },
+        {
+          "kwargs": {
+            "raw_output": "<NO_DIRECTIVE>"
+          }
+        },
+        {
+          "kwargs": {
+            "raw_output": {
+              "classification": "directive",
+              "output": "set premise concise replies"
+            },
+            "source_input": "set premise to concise replies"
+          }
+        }
+      ]
+    },
+    "parse_preprocessor_output": {
+      "kind": "callable",
+      "parameters": [
+        {
+          "name": "raw_output",
+          "kind": "positional_or_keyword",
+          "required": true
+        },
+        {
+          "name": "source_input",
+          "kind": "keyword_only",
+          "required": false
+        }
+      ],
+      "return_shape": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "shape_probes": [
+        {
+          "kwargs": {
+            "raw_output": "use docker"
+          }
+        },
+        {
+          "kwargs": {
+            "raw_output": "<NO_DIRECTIVE>"
+          }
+        },
+        {
+          "kwargs": {
+            "raw_output": {
+              "classification": "directive",
+              "output": "set premise concise replies"
+            },
+            "source_input": "set premise to concise replies"
+          }
+        }
+      ]
+    },
+    "render_prompt": {
+      "kind": "callable",
+      "parameters": [
+        {
+          "name": "path",
+          "kind": "positional_or_keyword",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional_or_keyword",
+          "required": true
+        }
+      ]
+    }
+  }
 }
