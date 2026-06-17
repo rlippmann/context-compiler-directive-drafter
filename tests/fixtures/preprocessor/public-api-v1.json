@@ -242,6 +242,22 @@
           "kind": "positional_or_keyword",
           "required": true
         }
+      ],
+      "behavior_probes": [
+        {
+          "kind": "render_prompt_from_file",
+          "path": "render-prompt-contract-probe.txt",
+          "template": "source=file-template\npremise=<NULL_OR_VALUE>\npolicies=<SET OF CURRENT POLICY ITEMS>\npath-literal=render-prompt-contract-probe.txt\n",
+          "state_steps": [
+            "set premise concise replies",
+            "use docker"
+          ],
+          "expect_result": "source=file-template\npremise=concise replies\npolicies=docker\npath-literal=render-prompt-contract-probe.txt",
+          "reject_substrings": [
+            "premise=<NULL_OR_VALUE>",
+            "policies=<SET OF CURRENT POLICY ITEMS>"
+          ]
+        }
       ]
     }
   }

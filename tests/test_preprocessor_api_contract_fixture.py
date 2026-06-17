@@ -3,6 +3,8 @@ from importlib import import_module
 from inspect import Parameter, isroutine, signature
 from pathlib import Path
 
+from context_compiler import create_engine
+
 import context_compiler_directive_drafter as preprocessor
 
 _CONTRACT_PATH = (
@@ -62,7 +64,30 @@ def _assert_shape(value: object, shape: dict[str, object]) -> None:
         assert value in shape["enum"]
 
 
-def _assert_callable_contract(name: str, exported: object, spec: dict[str, object]) -> None:
+def _assert_render_prompt_behavior_probe(
+    exported: object, probe: dict[str, object], tmp_path: Path
+) -> None:
+    assert probe["kind"] == "render_prompt_from_file"
+
+    template_path = tmp_path / probe["path"]
+    template_path.write_text(probe["template"], encoding="utf-8")
+
+    engine = create_engine()
+    for step in probe.get("state_steps", []):
+        engine.step(step)
+
+    result = exported(template_path, engine.state)
+    assert result == probe["expect_result"]
+    for substring in probe.get("reject_substrings", []):
+        assert substring not in result
+
+
+def _assert_callable_contract(
+    name: str,
+    exported: object,
+    spec: dict[str, object],
+    tmp_path: Path,
+) -> None:
     assert isroutine(exported), name
 
     actual_parameters = list(signature(exported).parameters.values())
@@ -81,6 +106,12 @@ def _assert_callable_contract(name: str, exported: object, spec: dict[str, objec
         return_shape = spec.get("return_shape")
         if return_shape is not None:
             _assert_shape(result, return_shape)
+
+    for probe in spec.get("behavior_probes", []):
+        if name == "render_prompt":
+            _assert_render_prompt_behavior_probe(exported, probe, tmp_path)
+            continue
+        raise AssertionError(f"Unsupported behavior probe for {name}: {probe!r}")
 
 
 def _assert_constant_contract(name: str, exported: object, spec: dict[str, object]) -> None:
@@ -159,14 +190,16 @@ def test_preprocessor_api_contract_fixture_describes_all_required_exports() -> N
     assert set(export_specs) == set(contract["required_exports"])
 
 
-def test_preprocessor_api_contract_fixture_validates_export_kinds_signatures_and_shapes() -> None:
+def test_preprocessor_api_contract_fixture_validates_export_kinds_signatures_and_shapes(
+    tmp_path: Path,
+) -> None:
     contract = _load_contract()
 
     for name, spec in contract["exports"].items():
         exported = getattr(preprocessor, name)
         kind = spec["kind"]
         if kind == "callable":
-            _assert_callable_contract(name, exported, spec)
+            _assert_callable_contract(name, exported, spec, tmp_path)
             continue
         if kind == "constant":
             _assert_constant_contract(name, exported, spec)
