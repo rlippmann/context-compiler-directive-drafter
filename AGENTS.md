@@ -135,11 +135,23 @@ If implementation behavior does not match the specification, report the mismatch
 
 Documentation is not commentary.
 
+This repository is the canonical documentation owner for
+`context-compiler-directive-drafter`.
+
+Package-level drafting documentation should live here, not in
+`context-compiler`.
+
+Keep the ownership boundary explicit:
+- `context-compiler-directive-drafter` owns drafting-package docs, prompt/resource usage docs, and drafting integration guidance for this package
+- `context-compiler` owns compiler behavior, engine semantics, authoritative state mutation, and directive application rules
+
 README examples, integration examples, migration guides, CLI usage
 documentation, and explicitly requested documentation changes are part of the
 project contract.
 
 Treat documentation requirements in a task as acceptance criteria.
+
+Treat user-visible documentation as a behavioral contract, not as optional narrative.
 
 Do not treat documentation as illustrative unless explicitly stated.
 Do not silently change documented behavior because implementation is easier.
@@ -157,10 +169,30 @@ specifications disagree:
 3. Request review before changing documented behavior.
 4. Do not resolve disagreements by silently changing docs.
 
+Drift detection is required work, not optional polish.
+
+When changing behavior or docs, actively check for drift across:
+- README contract language
+- integration examples and their documented behavior
+- CLI usage and exit/output descriptions
+- prompt/resource loading behavior
+- exported package surface and package-listing claims
+- tests, fixtures, and captured examples
+
+If you find drift:
+- report it clearly
+- fix the contract or implementation only in the canonically owned location
+- do not preserve duplicate or conflicting wording across files
+- do not move core-owned compiler docs into this repository unless explicitly instructed
+
 ## Documentation style
 
 For README, integration, migration, CLI, and package-listing docs, explain
 user-visible drafting behavior before architecture.
+
+Lead with what the package does, how users or hosts use it, and how it relates
+to `context-compiler` before discussing implementation structure or project
+history.
 
 Be explicit that drafting proposes and `context-compiler` decides.
 
@@ -175,8 +207,14 @@ Avoid describing drafting as:
 - validation authority
 - state mutation
 - authoritative application
+- a replacement for `context-compiler`
+- the owner of compiler decisions
+- an "experimental preprocessor" when referring to the current public package surface unless the task explicitly requires historical terminology
 
 Avoid describing features only in architectural terms when a behavior-first explanation is possible.
+
+Avoid architecture-archeology framing in README-style docs when present-tense
+ownership and behavior are what users need.
 
 Prefer direct subjects and strong verbs.
 Avoid noun stacks and passive phrasing when a simpler active sentence is clearer.
@@ -186,6 +224,9 @@ Specification and contract documents are different:
 - preserve precise terminology
 - preserve unambiguous behavioral guarantees
 - do not weaken formal semantics for readability
+
+Do not simplify contract or specification wording in ways that blur required
+behavior, ownership boundaries, or authoritative semantics.
 
 Do not rewrite captured outputs, fixture-sensitive examples, or eval evidence unless explicitly asked.
 

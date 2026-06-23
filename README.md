@@ -1,103 +1,147 @@
 # Context Compiler Directive Drafter
 
-Draft candidate Context Compiler directives from natural-language input.
+Turn natural-language requests into candidate Context Compiler directives.
 
-This package is a drafting layer. Its outputs are non-authoritative.
+`context-compiler-directive-drafter` helps hosts translate user requests like:
 
-`context-compiler-directive-drafter` can suggest candidate directives that a
-host may present, inspect, or route for further handling. It does not apply
-directives, mutate authoritative state, or replace `context-compiler`.
+> Please use Docker for container examples.
 
-Only `context-compiler` applies directives and mutates authoritative state.
+into candidate directives, such as:
 
-## What this package is for
+> use docker
 
-Natural-language user requests are often close to a directive without being in
-the exact canonical form expected by deterministic state machinery.
+This package drafts suggestions for the Context Compiler. Only `context-compiler` applies directives and updates state.
 
-This package is intended to help hosts:
+The drafter suggests candidate directives. context-compiler decides what to do with them.
 
-- draft candidate directives from natural-language input
-- keep drafting separate from authoritative state mutation
-- make it explicit when output is only a suggestion
-- preserve a clear handoff to `context-compiler`
+---
 
-## What this package is not for
+## When To Use It
 
-This package does not:
+Use this package when you want to:
 
-- mutate authoritative compiler state
-- apply directives directly
-- override `context-compiler` decision rules
-- silently convert uncertain natural language into authoritative changes
+- Translate user requests into safe, canonical directives.
+- Avoid accidental or unsafe state changes from ambiguous input.
+- Add a conservative natural-language-to-directive step before applying changes.
 
-The model or drafting layer may propose. Only `context-compiler` may apply.
+## Installation
 
-## Status
+Install in your host environment:
 
-This repository contains the copied experimental directive-drafting
-implementation that previously lived alongside `context-compiler`.
+```bash
+pip install "context-compiler-directive-drafter"
+```
 
-The current public package surface is intentionally narrow:
-
-- copied preprocessor API at `context_compiler_directive_drafter`
-- packaged prompt resources for installed integrations
-- integration examples and tests that preserve the current drafting behavior
-
-Drafting remains non-authoritative. Only `context-compiler` applies validated
-directives and mutates authoritative state.
-
-## Quickstart
-
-Install dependencies with `uv`:
+For local development:
 
 ```bash
 uv sync --group dev
 ```
 
-Run the current CLI placeholder:
+
+## Basic Usage
+
+Draft and validate a candidate directive:
+
+```python
+from context_compiler_directive_drafter import preprocess_heuristic, parse_preprocessor_output
+
+user_message = "Please use Docker for container examples."
+result = preprocess_heuristic(user_message)
+
+candidate = parse_preprocessor_output(
+    result["directive"],
+    source_input=user_message,
+)
+
+if candidate is not None:
+    print("Candidate directive:", candidate)
+else:
+    print("No canonical directive found.")
+```
+
+The host validates drafted output before passing it to engine.step(...).
+
+## Public API
+
+Public interface:
+
+- `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
+- `parse_preprocessor_output(raw_output, *, source_input=None)`: Validate and parse drafting output.
+- `validate_preprocessor_output(raw_output, *, source_input=None)`: Classify raw output as directive, no_directive, or unknown.
+- `render_prompt(path, state)`: Load and fill prompt templates.
+- Constants and sentinels exported from the package.
+
+## Recommended Host Flow
+
+1. Run `preprocess_heuristic(message)`.
+2. If a candidate exists, validate it with `parse_preprocessor_output(...)`.
+3. If not valid, consider fallback drafting (e.g., LLM prompt).
+4. Always validate fallback output with `parse_preprocessor_output(..., source_input=message)`.
+5. If validation yields a directive, pass it to `context-compiler`.
+6. Otherwise, pass the original user input unchanged.
+
+**Safety Guidance:**
+
+- Always validate drafting output before compiler handoff.
+- Never pass raw model output directly to the compiler.
+- Bypass drafting when clarification is pending.
+- Do not edit `engine.state` directly.
+- Prefer abstaining over unsafe rewrites.
+
+Do not pass raw model output to the compiler.
+
+## Prompt Resources
+
+The package includes prompt templates for integrations that use model-based drafting when heuristic drafting does not produce a result.
+
+- prompts/default.txt: recommended default prompt
+- prompts/llama.txt: stricter prompt for Llama-family models
+
+Use render_prompt(path, state) to load a template and fill it with the current compiler state.
+
+The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
+
+Any model output should still be validated with parse_preprocessor_output(...) or validate_preprocessor_output(...) before it is used.
+
+## Current Limits
+
+This package is intentionally conservative. It abstains when input is:
+
+- Ambiguous, mixed-intent, or quoted.
+- Embedded in prose, markdown, or code.
+- Not matching a canonical directive form.
+
+Boundary rules:
+
+- Process the full message, not fragments.
+- Emit at most one canonical directive.
+- Do not mine surrounding prose for commands.
+- Do not split multi-instruction input.
+- Avoid broad semantic rewrites.
+- Prefer false negatives over false positives.
+
+Hosts that want broader proposal behavior should implement it explicitly.
+
+## CLI
+
+The CLI command is `directive-drafter`. The CLI currently supports a limited set of behaviors:
 
 ```bash
 uv run directive-drafter "please make replies concise"
 ```
 
-Current CLI behavior still returns a non-zero exit status and explains that
-general natural-language drafting flow is not yet exposed as a broader
-user-facing command workflow.
+It returns a non-zero exit status and explains that a broader natural-language drafting workflow is not yet exposed as a user-facing CLI command.
 
 ## Development
 
-Run the local checks:
+Run local checks:
 
 ```bash
 uv run pre-commit run --all-files
 uv run pytest
 ```
 
-## Release Publishing
-
-PyPI publishing is configured through GitHub Actions trusted publishing.
-
-- Release workflow: [.github/workflows/publish-pypi.yml](/Users/rlippmann/Source/context-compiler-directive-drafter/.github/workflows/publish-pypi.yml)
-
-## Documentation philosophy
-
-This repository follows the same documentation philosophy as
-`context-compiler`:
-
-- explain user-visible behavior before architecture in README-style docs
-- keep specification and contract language precise where guarantees matter
-- treat examples and tests as part of the project contract when they describe
-  intended behavior
-
-## Testing philosophy
-
-This repository follows the same testing philosophy as `context-compiler`:
-
-- favor fast, focused tests over broad but vague coverage claims
-- add or update tests for user-facing behavior changes
-- keep drafting behavior explicit, inspectable, and contract-driven
-- do not weaken tests to accommodate ambiguous implementation shortcuts
 
 ## License
 
