@@ -62,6 +62,9 @@ else:
 
 The host validates drafted output before passing it to engine.step(...).
 
+For small runnable examples, see [examples/basic_usage.py](examples/basic_usage.py)
+and [examples/prompt_rendering.py](examples/prompt_rendering.py).
+
 ## Public API
 
 Public interface:
