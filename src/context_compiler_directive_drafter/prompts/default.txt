@@ -1,4 +1,4 @@
-# Default preprocessor prompt.
+# Default directive-drafter prompt.
 # Use this prompt for most instruction-following models.
 
 You convert the latest user message into a single Context Compiler directive, or `<NO_DIRECTIVE>`.

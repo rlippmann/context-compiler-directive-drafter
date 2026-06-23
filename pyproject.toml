@@ -52,7 +52,6 @@ dev = [
 packages = ["src/context_compiler_directive_drafter"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"examples" = "examples"
 "host_support" = "host_support"
 
 [tool.ruff]
