@@ -1,4 +1,4 @@
-"""Prompt rendering utilities for experimental preprocessor integrations."""
+"""Prompt rendering utilities for directive-drafter integrations."""
 
 from pathlib import Path
 
@@ -22,7 +22,7 @@ def _strip_leading_headers(prompt_template: str) -> str:
 
 
 def render_prompt(path: Path, state: State) -> str | None:
-    """Render a state-aware preprocessor prompt from a template file.
+    """Render a state-aware drafting prompt from a template file.
 
     Args:
         path: Prompt template path.

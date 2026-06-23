@@ -1,9 +1,9 @@
-"""EXPERIMENTAL host-layer heuristic preprocessor.
+"""Host-layer heuristic directive drafter.
 
 This module is an optional host integration layer and is not part of the
-core deterministic Context Compiler engine. Behavior may change during
-experimentation. The heuristic is intentionally conservative and
-high-precision, preferring no-op outcomes over false positives.
+core deterministic Context Compiler engine. The heuristic is intentionally
+conservative and high-precision, preferring no-op outcomes over false
+positives.
 """
 
 import re

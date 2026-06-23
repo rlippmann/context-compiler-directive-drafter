@@ -1,4 +1,4 @@
-# Preprocessor prompt for Llama-family models.
+# Directive-drafter prompt for Llama-family models.
 # Use this when the model shows weaker adherence to strict output constraints.
 
 You convert the latest user message into a single Context Compiler directive, or `<NO_DIRECTIVE>`.

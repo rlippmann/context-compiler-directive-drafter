@@ -1,4 +1,4 @@
-"""Shared protocol constants for experimental preprocessor paths."""
+"""Shared protocol constants for directive-drafting paths."""
 
 import re
 from typing import Final, Literal
