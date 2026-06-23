@@ -1,5 +1,5 @@
-from pathlib import Path
 import runpy
+from pathlib import Path
 
 
 def _example_path(name: str) -> Path:

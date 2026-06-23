@@ -13,9 +13,7 @@ def main() -> None:
     engine.step("use docker")
     engine.step("prohibit peanuts")
 
-    prompt_resource = files("context_compiler_directive_drafter").joinpath(
-        "prompts/default.txt"
-    )
+    prompt_resource = files("context_compiler_directive_drafter").joinpath("prompts/default.txt")
     with as_file(prompt_resource) as prompt_path:
         rendered = render_prompt(prompt_path, engine.state)
 
