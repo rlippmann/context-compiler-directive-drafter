@@ -39,6 +39,7 @@ Be explicit that drafting proposes and `context-compiler` decides.
 - Do not introduce flows that mutate authoritative state outside `context-compiler`.
 - Do not describe candidate drafting output as equivalent to an engine decision.
 - Keep the handoff boundary explicit between drafting output and compiler-owned application.
+- Keep `src/context_compiler_directive_drafter/**` and package-owned `examples/**` compatible with `scripts/check_boundaries.py` by avoiding direct `create_engine(...)`, `engine.step(...)`, `engine.state`, `.state =`, and runnable host-integration imports there.
 
 ## Public API and imports
 

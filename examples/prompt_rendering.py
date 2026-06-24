@@ -2,20 +2,24 @@
 
 from importlib.resources import as_file, files
 
-from context_compiler import create_engine
+from context_compiler import State
 
 from context_compiler_directive_drafter import render_prompt
 
 
 def main() -> None:
-    engine = create_engine()
-    engine.step("set premise concise replies")
-    engine.step("use docker")
-    engine.step("prohibit peanuts")
+    state: State = {
+        "premise": "concise replies",
+        "policies": {
+            "docker": "use",
+            "peanuts": "prohibit",
+        },
+        "version": 2,
+    }
 
     prompt_resource = files("context_compiler_directive_drafter").joinpath("prompts/default.txt")
     with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, engine.state)
+        rendered = render_prompt(prompt_path, state)
 
     if rendered is None:
         raise RuntimeError("prompt resource could not be loaded")

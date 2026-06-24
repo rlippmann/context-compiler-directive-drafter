@@ -1,4 +1,11 @@
 repos:
+  - repo: local
+    hooks:
+      - id: check-boundaries
+        name: check-boundaries
+        entry: uv run python scripts/check_boundaries.py
+        language: system
+        pass_filenames: false
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.0
     hooks:
