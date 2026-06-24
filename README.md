@@ -101,7 +101,7 @@ The package includes prompt templates for integrations that use model-based draf
 - prompts/default.txt: recommended default prompt
 - prompts/llama.txt: stricter prompt for Llama-family models
 
-Use render_prompt(path, state) to load a template and fill it with the current compiler state.
+Use render_prompt(path, state) to load a template and fill it with the current compiler state snapshot.
 
 The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
 
