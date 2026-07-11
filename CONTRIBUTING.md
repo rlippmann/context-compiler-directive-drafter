@@ -59,6 +59,7 @@ For README, CLI, and package-listing docs, explain user-visible behavior before
 architecture.
 
 Prefer plain, concrete wording when accurate. For example:
+
 - "draft candidate directives"
 - "non-authoritative suggestion"
 - "saved authoritative state"

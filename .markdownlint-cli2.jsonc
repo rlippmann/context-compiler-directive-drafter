@@ -1,0 +1,42 @@
+{
+  "globs": [
+    "**/*.md",
+    "!**/node_modules/**",
+    "!**/.venv/**",
+    "!**/.next/**",
+    "!**/.pytest_cache/**"
+  ],
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": {
+      "siblings_only": true
+    },
+    "MD033": false,
+    "MD046": {
+      "style": "fenced"
+    }
+  },
+  "overrides": [
+    {
+      "filter": [
+        ".github/pull_request_template.md"
+      ],
+      "config": {
+        "MD041": false
+      },
+      "combine": "merge"
+    },
+    {
+      "filter": [
+        "AGENTS.md"
+      ],
+      "config": {
+        "MD004": false,
+        "MD022": false,
+        "MD032": false
+      },
+      "combine": "merge"
+    }
+  ]
+}

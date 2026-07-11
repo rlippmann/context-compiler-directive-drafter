@@ -38,7 +38,6 @@ For local development:
 uv sync --group dev
 ```
 
-
 ## Basic Usage
 
 Draft and validate a candidate directive:
@@ -144,7 +143,6 @@ Run local checks:
 uv run pre-commit run --all-files
 uv run pytest
 ```
-
 
 ## License
 
