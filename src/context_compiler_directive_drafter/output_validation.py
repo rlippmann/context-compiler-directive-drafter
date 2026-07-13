@@ -84,7 +84,15 @@ def _contains_multiple_candidate_directives(text: str) -> bool:
 
 
 def _is_safe_fallback_directive_rewrite(source_input: str, directive_output: str) -> bool:
-    """Reject fallback rewrites that bypass strict whole-message boundaries."""
+    """Allow only strict whole-message canonical fallback matches.
+
+    source_input validation is a boundary guard, not a second natural-language
+    parser. At the current 0.1 boundary, fallback output is accepted only when
+    the source is either the exact strict structured directive contract or a
+    whole-message canonical directive shape that normalizes to the same
+    directive. Unsafe wrappers, reported speech, mixed prose, and near-miss
+    canonicalizations remain rejected.
+    """
     source = re.sub(r"\s+", " ", source_input.strip().lower())
     directive = re.sub(r"\s+", " ", directive_output.strip().lower())
 

@@ -1,14 +1,14 @@
 # Context Compiler Directive Drafter
 
-Turn natural-language requests into candidate Context Compiler directives.
+Turn user messages into candidate Context Compiler directives with a conservative validation boundary.
 
-`context-compiler-directive-drafter` helps hosts translate user requests like:
-
-> Please use Docker for container examples.
-
-into candidate directives, such as:
+`context-compiler-directive-drafter` helps hosts validate directive candidates such as:
 
 > use docker
+
+and reject nearby unsafe or non-canonical inputs such as:
+
+> Please use Docker for container examples.
 
 This package drafts suggestions for the Context Compiler. Only `context-compiler` applies directives and updates state.
 
@@ -20,9 +20,9 @@ The drafter suggests candidate directives. context-compiler decides what to do w
 
 Use this package when you want to:
 
-- Translate user requests into safe, canonical directives.
+- Validate and draft safe, canonical directives from user messages.
 - Avoid accidental or unsafe state changes from ambiguous input.
-- Add a conservative natural-language-to-directive step before applying changes.
+- Add a conservative drafting step before applying changes.
 
 ## Installation
 
@@ -45,7 +45,7 @@ Draft and validate a candidate directive:
 ```python
 from context_compiler_directive_drafter import preprocess_heuristic, parse_preprocessor_output
 
-user_message = "Please use Docker for container examples."
+user_message = "use docker"
 result = preprocess_heuristic(user_message)
 
 candidate = parse_preprocessor_output(
@@ -78,7 +78,7 @@ Public interface:
 
 1. Run `preprocess_heuristic(message)`.
 2. If a candidate exists, validate it with `parse_preprocessor_output(...)`.
-3. If not valid, consider fallback drafting (e.g., LLM prompt).
+3. If not valid, you may consider fallback drafting (e.g., an LLM prompt).
 4. Always validate fallback output with `parse_preprocessor_output(..., source_input=message)`.
 5. If validation yields a directive, pass it to `context-compiler`.
 6. Otherwise, pass the original user input unchanged.
@@ -104,6 +104,8 @@ Use render_prompt(path, state) to load a template and fill it with the current c
 
 The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
 
+In `0.1.x`, the validated contract remains intentionally narrow: fallback output must still resolve to a canonical whole-message directive shape that passes `source_input` validation. Broader semantic rewriting is not part of the current package contract.
+
 Any model output should still be validated with parse_preprocessor_output(...) or validate_preprocessor_output(...) before it is used.
 
 ## Current Limits
@@ -113,6 +115,7 @@ This package is intentionally conservative. It abstains when input is:
 - Ambiguous, mixed-intent, or quoted.
 - Embedded in prose, markdown, or code.
 - Not matching a canonical directive form.
+- A non-canonical natural-language paraphrase of a directive.
 
 Boundary rules:
 
