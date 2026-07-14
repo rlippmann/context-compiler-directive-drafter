@@ -31,6 +31,8 @@ NOISY_TEXT = st.one_of(
     st.builds(lambda a, b: f"{a}; {b}", st.text(max_size=30), st.text(max_size=30)),
     st.builds(lambda a, b: f"{a}: {b}", st.text(max_size=30), st.text(max_size=30)),
 )
+COMPOUND_SEPARATORS = st.sampled_from([" and ", "; ", "\n", ", then "])
+STRUCTURED_NON_DIRECTIVE_CLASSIFICATIONS = st.sampled_from(["no_directive", "unknown"])
 
 
 @given(
@@ -140,3 +142,43 @@ def test_validate_output_always_has_null_for_non_directive(raw_output: object) -
         assert isinstance(validated["output"], str)
     else:
         assert validated["output"] is None
+
+
+@given(
+    st.sampled_from(CANONICAL_DIRECTIVES),
+    COMPOUND_SEPARATORS,
+    st.sampled_from(CANONICAL_DIRECTIVES),
+)
+def test_validate_compound_candidate_output_is_always_unknown(
+    first: str, separator: str, second: str
+) -> None:
+    assume(first != second)
+    validated = validate_preprocessor_output(f"{first}{separator}{second}")
+    assert validated == {"classification": "unknown", "output": None}
+
+
+@given(
+    STRUCTURED_NON_DIRECTIVE_CLASSIFICATIONS,
+    st.one_of(
+        st.none(), st.text(max_size=80), st.integers(), st.dictionaries(st.text(), st.none())
+    ),
+)
+def test_validate_structured_non_directive_contract_requires_null_output(
+    classification: str, output: object
+) -> None:
+    validated = validate_preprocessor_output({"classification": classification, "output": output})
+    if output is None:
+        assert validated == {"classification": classification, "output": None}
+    else:
+        assert validated == {"classification": "unknown", "output": None}
+
+
+@given(st.one_of(st.text(max_size=120), st.none(), st.integers()))
+def test_parse_and_validate_agree_on_directive_round_trip(raw_output: object) -> None:
+    parsed = parse_preprocessor_output(raw_output)
+    validated = validate_preprocessor_output(raw_output)
+    if parsed is None:
+        assert validated["classification"] != "directive"
+        assert validated["output"] is None
+    else:
+        assert validated == {"classification": "directive", "output": parsed}

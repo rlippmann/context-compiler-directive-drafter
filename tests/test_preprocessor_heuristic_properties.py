@@ -40,6 +40,16 @@ QUOTED_WRAPPERS = st.sampled_from(
         ("`", "`"),
     ]
 )
+COMPOUND_SEPARATORS = st.sampled_from([" and ", "; ", "\n", ", then "])
+CANONICAL_LOOKALIKE_WORDS = st.sampled_from(
+    [
+        "and butter",
+        "and clear examples",
+        "for prohibitively expensive cases",
+        "for removal-policy notes",
+        "near reset-policy docs",
+    ]
+)
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), st.sampled_from([".", "!"]))
@@ -160,3 +170,33 @@ def test_heuristic_mixed_prose_connector_forms_never_directive(
     for message in messages:
         result = preprocess_heuristic(message)
         assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+
+
+@given(
+    st.sampled_from(CANONICAL_DIRECTIVES),
+    COMPOUND_SEPARATORS,
+    st.sampled_from(CANONICAL_DIRECTIVES),
+)
+def test_heuristic_compound_directives_always_abstain(
+    first: str, separator: str, second: str
+) -> None:
+    assume(first != second)
+    result = preprocess_heuristic(f"{first}{separator}{second}")
+    assert result["outcome"] == PREPROCESS_OUTCOME_UNKNOWN
+    assert result["directive"] is None
+
+
+@given(st.sampled_from(["use docker", "prohibit peanuts"]), CANONICAL_LOOKALIKE_WORDS)
+def test_heuristic_singular_payload_with_canonical_looking_words_can_still_pass(
+    directive_seed: str, suffix: str
+) -> None:
+    message = f"{directive_seed} {suffix}"
+    result = preprocess_heuristic(message)
+    assert result["outcome"] == PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["directive"] == message
+
+
+@given(st.sampled_from(["misuse", "re-use", "nonuse"]), NON_EMPTY_TEXT)
+def test_heuristic_lexical_boundary_prevents_embedded_use_matches(prefix: str, suffix: str) -> None:
+    result = preprocess_heuristic(f"{prefix} docker {suffix}")
+    assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
