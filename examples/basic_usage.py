@@ -12,18 +12,12 @@ def main() -> None:
 
     print("heuristic result:", result)
 
-    candidate = parse_preprocessor_output(
-        result["directive"],
-        source_input=user_message,
-    )
+    candidate = parse_preprocessor_output(result["directive"])
     print("validated candidate:", candidate)
 
     ambiguous_message = "Can you use docker?"
     ambiguous_result = preprocess_heuristic(ambiguous_message)
-    ambiguous_candidate = parse_preprocessor_output(
-        ambiguous_result["directive"],
-        source_input=ambiguous_message,
-    )
+    ambiguous_candidate = parse_preprocessor_output(ambiguous_result["directive"])
 
     print("ambiguous result:", ambiguous_result)
     print("ambiguous candidate:", ambiguous_candidate)

@@ -1,5 +1,4 @@
 import json
-import re
 from pathlib import Path
 
 from context_compiler_directive_drafter import (
@@ -39,35 +38,16 @@ def _normalize_result(message: str) -> dict[str, object]:
     return normalized
 
 
-def _normalize_validator_result(
-    raw_output: object, source_input: str | None = None
-) -> dict[str, object]:
-    validated = validate_preprocessor_output(raw_output, source_input=source_input)
+def _normalize_validator_result(raw_output: object) -> dict[str, object]:
+    validated = validate_preprocessor_output(raw_output)
     return {
         "classification": validated["classification"],
         "output": validated["output"],
     }
 
 
-def _normalize_parse_result(raw_output: object, source_input: str | None = None) -> str | None:
-    return parse_preprocessor_output(raw_output, source_input=source_input)
-
-
-def _derived_risky_rewrite_candidates(source_input: str) -> list[str]:
-    normalized = re.sub(r"\s+", " ", source_input.strip().lower())
-    candidates: list[str] = []
-
-    set_premise_to_match = re.fullmatch(r"set premise to\s+(.+\S)", normalized)
-    if set_premise_to_match is not None:
-        payload = set_premise_to_match.group(1).strip()
-        candidates.append(f"set premise {payload}")
-
-    change_premise_missing_to_match = re.fullmatch(r"change premise\s+(?!to\b)(.+\S)", normalized)
-    if change_premise_missing_to_match is not None:
-        payload = change_premise_missing_to_match.group(1).strip()
-        candidates.append(f"change premise to {payload}")
-
-    return candidates
+def _normalize_parse_result(raw_output: object) -> str | None:
+    return parse_preprocessor_output(raw_output)
 
 
 def test_preprocessor_conformance_fixtures() -> None:
@@ -94,15 +74,13 @@ def test_preprocessor_conformance_fixtures() -> None:
 
         assert "raw_output" in fixture, fixture_name
         raw_output = fixture["raw_output"]
-        source_input_obj = fixture.get("source_input")
-        source_input = source_input_obj if isinstance(source_input_obj, str) else None
 
         if kind == "validator":
             expected = fixture.get("expected")
             assert isinstance(expected, dict), fixture_name
             # Deterministic replay check.
-            first = _normalize_validator_result(raw_output, source_input=source_input)
-            second = _normalize_validator_result(raw_output, source_input=source_input)
+            first = _normalize_validator_result(raw_output)
+            second = _normalize_validator_result(raw_output)
             assert first == second, fixture_name
             assert first == expected, fixture_name
             continue
@@ -113,31 +91,7 @@ def test_preprocessor_conformance_fixtures() -> None:
         assert isinstance(expected_parsed, str) or expected_parsed is None, fixture_name
 
         # Deterministic replay check.
-        first_parsed = _normalize_parse_result(raw_output, source_input=source_input)
-        second_parsed = _normalize_parse_result(raw_output, source_input=source_input)
+        first_parsed = _normalize_parse_result(raw_output)
+        second_parsed = _normalize_parse_result(raw_output)
         assert first_parsed == second_parsed, fixture_name
         assert first_parsed == expected_parsed, fixture_name
-
-
-def test_engine_owned_near_misses_are_reject_only_for_fallback_rewrites() -> None:
-    # Engine-owned near-misses must not be canonicalized by the preprocessor and
-    # must remain unknown even if fallback proposes a plausible canonical rewrite.
-    for path in _behavior_fixture_paths():
-        fixture = _load_fixture(path)
-        if path.name.startswith("public-api-"):
-            continue
-        if fixture.get("kind", "heuristic") != "heuristic":
-            continue
-        expected = fixture["expected"]
-        input_text = fixture["input"]
-        fixture_name = fixture["name"]
-
-        assert isinstance(expected, dict), fixture_name
-        assert isinstance(input_text, str), fixture_name
-
-        if expected.get("classification") != "unknown" or expected.get("output") is not None:
-            continue
-
-        for candidate in _derived_risky_rewrite_candidates(input_text):
-            validated = validate_preprocessor_output(candidate, source_input=input_text)
-            assert validated["classification"] != "directive", fixture_name

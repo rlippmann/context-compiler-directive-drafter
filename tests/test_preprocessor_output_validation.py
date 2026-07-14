@@ -90,9 +90,9 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
         {"classification": "unsupported_action", "output": None},
         {"classification": "directive", "output": "clear state\nreset policies"},
         {"classification": "directive", "output": "clear state", "extra": True},
-        {"classification": "directive", "output": "use docker", "source_input": "use docker"},
-        {"classification": "directive", "output": "use docker", "sourceInput": "use docker"},
-        {"classification": "no_directive", "output": None, "source_input": "hello"},
+        {"classification": "directive", "output": "use docker", "extra": True},
+        {"classification": "directive", "output": "use docker", "extra_field": "use docker"},
+        {"classification": "no_directive", "output": None, "extra": "hello"},
         {"action": "prohibit", "item": "peanuts"},
     ]
     for raw in cases:
@@ -114,106 +114,3 @@ def test_parse_returns_validated_directive_only() -> None:
     assert parse_preprocessor_output("prohibit peanuts") == "prohibit peanuts"
     assert parse_preprocessor_output("<NO_DIRECTIVE>") is None
     assert parse_preprocessor_output("set premise to concise replies") is None
-
-
-def test_parse_with_source_input_rejects_premise_near_miss_canonicalization() -> None:
-    assert (
-        parse_preprocessor_output(
-            "set premise concise replies",
-            source_input="set premise to concise replies",
-        )
-        is None
-    )
-    assert (
-        parse_preprocessor_output(
-            "change premise to concise replies",
-            source_input="change premise concise replies",
-        )
-        is None
-    )
-
-
-def test_validation_with_source_input_rejects_premise_near_miss_canonicalization() -> None:
-    assert validate_preprocessor_output(
-        "set premise concise replies",
-        source_input="set premise to concise replies",
-    ) == {
-        "classification": "unknown",
-        "output": None,
-    }
-    assert validate_preprocessor_output(
-        "change premise to concise replies",
-        source_input="change premise concise replies",
-    ) == {
-        "classification": "unknown",
-        "output": None,
-    }
-
-
-def test_validation_with_source_input_allows_other_directives() -> None:
-    assert validate_preprocessor_output(
-        "prohibit peanuts",
-        source_input="prohibit peanuts",
-    ) == {
-        "classification": "directive",
-        "output": "prohibit peanuts",
-    }
-    assert validate_preprocessor_output(
-        "use coconut milk",
-        source_input="what is a simple curry recipe?",
-    ) == {
-        "classification": "unknown",
-        "output": None,
-    }
-
-
-def test_validation_with_source_input_rejects_boundary_unsafe_fallback_rewrites() -> None:
-    cases = [
-        ("ok. prohibit peanuts", "prohibit peanuts"),
-        ("clear premise\nreset policies", "clear premise"),
-        ("```\nuse docker\n```", "use docker"),
-        ("~~~\nuse docker\n~~~", "use docker"),
-        ("~~~ use docker ~~~", "use docker"),
-        ("the command is `use docker`", "use docker"),
-        ('the docs say "use docker"', "use docker"),
-        ("use docker and explain why", "use docker"),
-        ("can you use docker?", "use docker"),
-    ]
-    for source_input, fallback_output in cases:
-        assert validate_preprocessor_output(
-            fallback_output,
-            source_input=source_input,
-        ) == {
-            "classification": "unknown",
-            "output": None,
-        }
-
-
-def test_validation_with_source_input_preserves_safe_whole_message_canonicalization() -> None:
-    cases = [
-        ("Use Docker", "use docker"),
-        ("  use    docker  ", "use docker"),
-        ("clear state.", "clear state"),
-        ("reset policies!", "reset policies"),
-        ("(clear state)", "clear state"),
-        ("[clear state]", "clear state"),
-        ('use "docker"', 'use "docker"'),
-    ]
-    for source_input, fallback_output in cases:
-        assert validate_preprocessor_output(
-            fallback_output,
-            source_input=source_input,
-        ) == {
-            "classification": "directive",
-            "output": fallback_output,
-        }
-
-
-def test_validation_with_source_input_allows_strict_structured_contract_self_input() -> None:
-    assert validate_preprocessor_output(
-        '{"classification":"directive","output":"prohibit peanuts"}',
-        source_input='{"classification":"directive","output":"prohibit peanuts"}',
-    ) == {
-        "classification": "directive",
-        "output": "prohibit peanuts",
-    }

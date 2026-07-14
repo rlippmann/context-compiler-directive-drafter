@@ -50,7 +50,6 @@ result = preprocess_heuristic(user_message)
 
 candidate = parse_preprocessor_output(
     result["directive"],
-    source_input=user_message,
 )
 
 if candidate is not None:
@@ -69,8 +68,8 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 Public interface:
 
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
-- `parse_preprocessor_output(raw_output, *, source_input=None)`: Validate and parse drafting output.
-- `validate_preprocessor_output(raw_output, *, source_input=None)`: Classify raw output as directive, no_directive, or unknown.
+- `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
+- `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
 - `render_prompt(path, state)`: Load and fill prompt templates.
 - Constants and sentinels exported from the package.
 
@@ -79,7 +78,7 @@ Public interface:
 1. Run `preprocess_heuristic(message)`.
 2. If a candidate exists, validate it with `parse_preprocessor_output(...)`.
 3. If not valid, consider fallback drafting (e.g., LLM prompt).
-4. Always validate fallback output with `parse_preprocessor_output(..., source_input=message)`.
+4. Always validate fallback output with `parse_preprocessor_output(...)`.
 5. If validation yields a directive, pass it to `context-compiler`.
 6. Otherwise, pass the original user input unchanged.
 
@@ -90,6 +89,9 @@ Public interface:
 - Bypass drafting when clarification is pending.
 - Do not edit `engine.state` directly.
 - Prefer abstaining over unsafe rewrites.
+- Output validation checks structure and canonical grammar only.
+- A structurally valid drafted directive may still be the wrong interpretation of the user's meaning.
+- Reviewed semantic drafting belongs in a separate higher-level workflow.
 
 Do not pass raw model output to the compiler.
 
@@ -104,7 +106,7 @@ Use render_prompt(path, state) to load a template and fill it with the current c
 
 The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
 
-Any model output should still be validated with parse_preprocessor_output(...) or validate_preprocessor_output(...) before it is used.
+Any model output should still be validated with parse_preprocessor_output(...) or validate_preprocessor_output(...) before it is shown or used.
 
 ## Current Limits
 
