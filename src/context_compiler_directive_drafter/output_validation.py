@@ -8,7 +8,6 @@ Internal helpers are implementation details and may change.
 """
 
 import json
-import re
 from typing import TypedDict
 
 from .constants import (
@@ -16,6 +15,7 @@ from .constants import (
     CANONICAL_DIRECTIVE_PATTERNS,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     PreprocessOutcome,
+    count_canonical_directive_starts,
 )
 
 __all__ = [
@@ -27,12 +27,6 @@ __all__ = [
 class PreprocessorValidationResult(TypedDict):
     classification: PreprocessOutcome
     output: str | None
-
-
-_MULTI_CANDIDATE_DIRECTIVE_PATTERN = re.compile(
-    r"(?:\band\b|\bthen\b|;|,)\s*(?:set premise\b|change premise\b|use\b|"
-    r"prohibit\b|remove policy\b|clear premise\b|reset policies\b|clear state\b)"
-)
 
 
 def _unknown() -> PreprocessorValidationResult:
@@ -54,8 +48,7 @@ def _is_allowed_directive(text: str) -> bool:
 
 
 def _contains_multiple_candidate_directives(text: str) -> bool:
-    normalized = re.sub(r"\s+", " ", text.strip().lower())
-    return bool(_MULTI_CANDIDATE_DIRECTIVE_PATTERN.search(normalized))
+    return count_canonical_directive_starts(text) > 1
 
 
 def _validate_structured_output(raw_output: object) -> PreprocessorValidationResult:

@@ -1,0 +1,8 @@
+{
+  "name": "compound-prohibit-semicolon-use-unknown",
+  "input": "prohibit peanuts; use docker",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

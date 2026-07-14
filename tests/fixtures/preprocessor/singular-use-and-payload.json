@@ -1,0 +1,8 @@
+{
+  "name": "singular-use-and-payload",
+  "input": "use bread and butter",
+  "expected": {
+    "classification": "directive",
+    "output": "use bread and butter"
+  }
+}

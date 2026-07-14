@@ -120,10 +120,15 @@ Boundary rules:
 
 - Process the full message, not fragments.
 - Emit at most one canonical directive.
+- Abstain when one message contains multiple directive-shaped instructions.
 - Do not mine surrounding prose for commands.
-- Do not split multi-instruction input.
+- Do not split one message into multiple drafted directives.
 - Avoid broad semantic rewrites.
 - Prefer false negatives over false positives.
+
+`context-compiler-directive-drafter` only proposes at most one candidate
+directive. `context-compiler` remains responsible for independently enforcing
+the single-directive invariant before any authoritative application.
 
 Hosts that want broader proposal behavior should implement it explicitly.
 

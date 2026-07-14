@@ -154,7 +154,8 @@ def test_heuristic_mixed_prose_connector_forms_never_directive(
     messages = [
         f"{directive_seed} because {detail}",
         f"{directive_seed} then continue {detail}",
-        f"{directive_seed} and {detail}",
+        f"{directive_seed} and then continue {detail}",
+        f"{directive_seed} and explain {detail}",
     ]
     for message in messages:
         result = preprocess_heuristic(message)
