@@ -1,0 +1,8 @@
+{
+  "name": "compound-remove-policy-newline-use-unknown",
+  "input": "remove policy docker\nuse podman",
+  "expected": {
+    "classification": "unknown",
+    "output": null
+  }
+}

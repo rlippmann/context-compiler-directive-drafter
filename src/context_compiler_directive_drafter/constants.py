@@ -27,3 +27,24 @@ CANONICAL_DIRECTIVE_PATTERNS: Final[tuple[re.Pattern[str], ...]] = tuple(
 CANONICAL_DIRECTIVE_EXACT: Final[frozenset[str]] = frozenset(
     {"clear premise", "reset policies", "clear state"}
 )
+CANONICAL_DIRECTIVE_STARTS: Final[tuple[str, ...]] = (
+    "change premise to",
+    "remove policy",
+    "clear premise",
+    "reset policies",
+    "clear state",
+    "set premise",
+    "prohibit",
+    "use",
+)
+_CANONICAL_DIRECTIVE_START_PATTERN: Final[re.Pattern[str]] = re.compile(
+    "|".join(rf"(?<!\S){re.escape(start)}(?=\s|$)" for start in CANONICAL_DIRECTIVE_STARTS)
+)
+
+
+def count_canonical_directive_starts(text: str) -> int:
+    """Count canonical directive starts in normalized free text."""
+    normalized = re.sub(r"\s+", " ", text.strip()).lower()
+    if not normalized:
+        return 0
+    return len(_CANONICAL_DIRECTIVE_START_PATTERN.findall(normalized))

@@ -41,6 +41,14 @@ def test_validate_text_rejects_malformed_or_mixed_output_as_unknown() -> None:
         "classification": "unknown",
         "output": None,
     }
+    assert validate_preprocessor_output("clear premise and reset policies") == {
+        "classification": "unknown",
+        "output": None,
+    }
+    assert validate_preprocessor_output("remove policy docker\nuse podman") == {
+        "classification": "unknown",
+        "output": None,
+    }
 
 
 def test_validate_structured_output_accepts_strict_contract_shape() -> None:
@@ -89,6 +97,10 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
         {"classification": "unknown", "output": "clear state"},
         {"classification": "unsupported_action", "output": None},
         {"classification": "directive", "output": "clear state\nreset policies"},
+        {
+            "classification": "directive",
+            "output": "set premise deployment target is staging, then use cautious rollout",
+        },
         {"classification": "directive", "output": "clear state", "extra": True},
         {"classification": "directive", "output": "use docker", "extra": True},
         {"classification": "directive", "output": "use docker", "extra_field": "use docker"},

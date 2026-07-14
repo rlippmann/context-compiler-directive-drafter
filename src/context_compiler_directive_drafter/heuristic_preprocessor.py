@@ -16,6 +16,7 @@ from .constants import (
     PREPROCESS_OUTCOME_NO_DIRECTIVE,
     PREPROCESS_OUTCOME_UNKNOWN,
     PreprocessOutcome,
+    count_canonical_directive_starts,
 )
 
 
@@ -24,13 +25,6 @@ class PreprocessResult(TypedDict):
     directive: str | None
     rule_id: str | None
 
-
-_MULTI_INSTRUCTION_CASES = {
-    "clear premise then clear state",
-    "prohibit peanuts and use almonds",
-    "set premise concise; reset policies",
-    "use docker, actually prohibit docker",
-}
 
 _QUOTED_OR_REPORTED_CASES = {
     '"set premise concise replies" is invalid syntax, right?',
@@ -66,7 +60,7 @@ _META_PREFIX_PATTERN = re.compile(
 _MULTI_SEGMENT_PATTERN = re.compile(
     r"^\s*(?:use|prohibit|remove policy|set premise|change premise to|clear premise|"
     r"reset policies|clear state)\b"
-    r".*\b(?:because|then continue|and)\b"
+    r".*\b(?:because|then continue|and then continue|and explain)\b"
 )
 _PUNCTUATION_TRIM_PATTERN = re.compile(r"[.!]+\s*$")
 _DIRECTIVE_CUE_PATTERN = re.compile(
@@ -74,10 +68,6 @@ _DIRECTIVE_CUE_PATTERN = re.compile(
     r"reset policies|clear state)\b"
 )
 _MALFORMED_REPLACEMENT_PATTERN = re.compile(r"\buse\b.*\binstead\b")
-_MULTI_CANDIDATE_DIRECTIVE_PATTERN = re.compile(
-    r"(?:\band\b|\bthen\b|;|,)\s*(?:set premise\b|change premise\b|use\b|"
-    r"prohibit\b|remove policy\b|clear premise\b|reset policies\b|clear state\b)"
-)
 _WRAPPER_PAIRS = {
     ('"', '"'),
     ("'", "'"),
@@ -176,13 +166,6 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "rule_id": "reject.multi_segment_or_mixed_prose",
         }
 
-    if normalized in _MULTI_INSTRUCTION_CASES:
-        return {
-            "outcome": PREPROCESS_OUTCOME_UNKNOWN,
-            "directive": None,
-            "rule_id": "reject.multi_instruction",
-        }
-
     if _contains_reporting_bracket_mention(message):
         return {
             "outcome": PREPROCESS_OUTCOME_UNKNOWN,
@@ -206,6 +189,13 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized_candidate = _normalize_candidate(message)
 
+    if count_canonical_directive_starts(normalized_candidate) > 1:
+        return {
+            "outcome": PREPROCESS_OUTCOME_UNKNOWN,
+            "directive": None,
+            "rule_id": "reject.multi_candidate_directive",
+        }
+
     if normalized in _NEAR_MISS_ALIAS_CASES:
         return {
             "outcome": PREPROCESS_OUTCOME_UNKNOWN,
@@ -228,13 +218,6 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "outcome": PREPROCESS_OUTCOME_UNKNOWN,
             "directive": None,
             "rule_id": "reject.malformed_replacement_syntax",
-        }
-
-    if _MULTI_CANDIDATE_DIRECTIVE_PATTERN.search(normalized_candidate):
-        return {
-            "outcome": PREPROCESS_OUTCOME_UNKNOWN,
-            "directive": None,
-            "rule_id": "reject.multi_candidate_directive",
         }
 
     if normalized_candidate in CANONICAL_DIRECTIVE_EXACT:

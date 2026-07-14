@@ -139,7 +139,6 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
     cases = [
         "use docker because this repo already has Docker",
         "clear state then continue",
-        "use docker and prohibit peanuts",
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
@@ -147,6 +146,38 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
             "directive": None,
             "rule_id": "reject.multi_segment_or_mixed_prose",
         }
+
+
+def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
+    cases = [
+        "use docker and prohibit peanuts",
+        "prohibit peanuts; use docker",
+        "set premise deployment target is staging, then use cautious rollout",
+        "clear premise and reset policies",
+        "remove policy docker\nuse podman",
+    ]
+    for message in cases:
+        assert preprocess_heuristic(message) == {
+            "outcome": "unknown",
+            "directive": None,
+            "rule_id": "reject.multi_candidate_directive",
+        }
+
+
+def test_heuristic_does_not_reject_single_directive_payload_with_ordinary_and() -> None:
+    assert preprocess_heuristic("use bread and butter") == {
+        "outcome": "directive",
+        "directive": "use bread and butter",
+        "rule_id": "canonical.full_match",
+    }
+
+
+def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start() -> None:
+    assert preprocess_heuristic("misuse docker and prohibitively expensive peanuts") == {
+        "outcome": "no_directive",
+        "directive": None,
+        "rule_id": "reject.confident_non_directive",
+    }
 
 
 def test_heuristic_rejects_malformed_replacement_syntax() -> None:
