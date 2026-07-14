@@ -1,7 +1,0 @@
-{
-  "name": "parse-source-input-empty-wrapper-parens-rejected",
-  "kind": "parse",
-  "raw_output": "clear state",
-  "source_input": "()",
-  "expected_parsed": null
-}

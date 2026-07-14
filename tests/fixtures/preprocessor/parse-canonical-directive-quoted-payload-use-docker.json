@@ -1,7 +1,6 @@
 {
-  "name": "parse-source-input-quoted-payload-locked",
+  "name": "parse-canonical-directive-quoted-payload-use-docker",
   "kind": "parse",
-  "source_input": "use \"docker\"",
   "raw_output": "use \"docker\"",
   "expected_parsed": "use \"docker\""
 }

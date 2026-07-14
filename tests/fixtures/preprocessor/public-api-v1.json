@@ -117,11 +117,6 @@
           "name": "raw_output",
           "kind": "positional_or_keyword",
           "required": true
-        },
-        {
-          "name": "source_input",
-          "kind": "keyword_only",
-          "required": false
         }
       ],
       "return_shape": {
@@ -181,8 +176,7 @@
             "raw_output": {
               "classification": "directive",
               "output": "set premise concise replies"
-            },
-            "source_input": "set premise to concise replies"
+            }
           }
         }
       ]
@@ -194,11 +188,6 @@
           "name": "raw_output",
           "kind": "positional_or_keyword",
           "required": true
-        },
-        {
-          "name": "source_input",
-          "kind": "keyword_only",
-          "required": false
         }
       ],
       "return_shape": {
@@ -223,8 +212,7 @@
             "raw_output": {
               "classification": "directive",
               "output": "set premise concise replies"
-            },
-            "source_input": "set premise to concise replies"
+            }
           }
         }
       ]

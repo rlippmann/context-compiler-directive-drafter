@@ -1,7 +1,0 @@
-{
-  "name": "parse-source-input-multi-candidate-semicolon-rejected",
-  "kind": "parse",
-  "raw_output": "clear state",
-  "source_input": "clear state; reset policies",
-  "expected_parsed": null
-}
