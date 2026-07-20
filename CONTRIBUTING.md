@@ -46,9 +46,28 @@ is not an authoritative state engine. It is not designed to:
 - replace `context-compiler`
 - silently upgrade ambiguous language into authoritative changes
 - blur the distinction between proposal and application
+- decide whether a canonical directive is allowed
+- own or redefine directive semantics that belong to the compiler contract
 
 Authoritative state transitions are expected to live in `context-compiler` and
 host-controlled orchestration layers.
+
+This package does own the human-input drafting boundary. Documentation and
+specification changes in this repository should treat the drafter as responsible
+for converting messy user input into one of three non-authoritative outcomes:
+
+- `directive`: propose one canonical directive string
+- `no_directive`: classify the message as not requesting a directive
+- `unknown`: preserve uncertainty, malformed recovery failure, or unresolved
+  directive-like intent without guessing
+
+The authoritative acquisition contract lives in [docs/DrafterAcquisitionSpec.md](docs/DrafterAcquisitionSpec.md).
+
+Use that specification for drafting rules, interpretation-confirmation requirements, clarification-or-resubmission ownership, and migration notes.
+
+Interpretation context is read-only and non-authoritative. It may help the drafter understand phrases like "change it", "remove the old rule", or "use Linux instead of Windows" when current context matters, but it must not turn this package into a second authority layer. The drafter may interpret and propose; only `context-compiler` may validate against authoritative state, authorize operations, and apply resulting directives.
+
+That boundary does not authorize this repository to duplicate the compiler's normative grammar. When an extracted grammar contract is available, this package should reference and consume that contract instead of restating grammar rules as if they were drafter-owned.
 
 Changes that weaken that separation should be treated as architectural
 proposals, not routine feature requests.
