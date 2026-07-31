@@ -14,6 +14,10 @@ def _load_contract() -> dict[str, object]:
     return json.loads(_CONTRACT_PATH.read_text(encoding="utf-8"))
 
 
+def _assert_exact_keys(payload: dict[str, object], expected: set[str], label: str) -> None:
+    assert set(payload.keys()) == expected, label
+
+
 def _json_type_matches(value: object, expected: str) -> bool:
     return {
         "null": value is None,
@@ -56,7 +60,53 @@ def _assert_shape(value: object, shape: dict[str, object]) -> None:
         assert value in shape["enum"]
 
 
+def _assert_shape_schema(shape: dict[str, object], label: str) -> None:
+    if "any_of" in shape:
+        _assert_exact_keys(shape, {"any_of"}, label)
+        assert set(shape.keys()) == {"any_of"}, label
+        variants = shape["any_of"]
+        assert isinstance(variants, list) and variants, label
+        for index, variant in enumerate(variants):
+            assert isinstance(variant, dict), f"{label}.any_of[{index}]"
+            _assert_shape_schema(variant, f"{label}.any_of[{index}]")
+        return
+
+    _assert_exact_keys(
+        shape,
+        {"type"} | ({"required_keys", "properties", "enum", "const"} & set(shape.keys())),
+        label,
+    )
+
+    expected_types = shape.get("type")
+    assert isinstance(expected_types, str | list), label
+    if isinstance(expected_types, list):
+        assert expected_types, label
+        assert all(isinstance(item, str) for item in expected_types), label
+
+    required_keys = shape.get("required_keys")
+    if required_keys is not None:
+        assert isinstance(required_keys, list), label
+        assert all(isinstance(item, str) for item in required_keys), label
+
+    properties = shape.get("properties")
+    if properties is not None:
+        assert isinstance(properties, dict), label
+        for key, property_shape in properties.items():
+            assert isinstance(key, str), label
+            assert isinstance(property_shape, dict), f"{label}.properties.{key}"
+            _assert_shape_schema(property_shape, f"{label}.properties.{key}")
+
+    enum_values = shape.get("enum")
+    if enum_values is not None:
+        assert isinstance(enum_values, list), label
+
+
 def _assert_signature_matches(obj: object, expected: dict[str, object], label: str) -> None:
+    expected_is_async = expected["is_async"]
+    assert isinstance(expected_is_async, bool), label
+    actual_is_async = inspect.iscoroutinefunction(obj) or inspect.isasyncgenfunction(obj)
+    assert actual_is_async is expected_is_async, label
+
     signature = inspect.signature(obj)
     params = list(signature.parameters.values())
     expected_params = expected["params"]
@@ -73,7 +123,7 @@ def _assert_signature_matches(obj: object, expected: dict[str, object], label: s
 def _assert_render_prompt_behavior_probe(
     exported: object, probe: dict[str, object], tmp_path: Path
 ) -> None:
-    assert probe["kind"] == "render_prompt_from_file"
+    _assert_render_prompt_behavior_probe_schema(probe, "render_prompt behavior probe")
 
     template_path = tmp_path / probe["path"]
     template_path.write_text(probe["template"], encoding="utf-8")
@@ -82,6 +132,24 @@ def _assert_render_prompt_behavior_probe(
     assert result == probe["expect_result"]
     for substring in probe.get("reject_substrings", []):
         assert substring not in result
+
+
+def _assert_render_prompt_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
+    _assert_exact_keys(
+        probe,
+        {"kind", "path", "template", "premise", "policies", "expect_result"}
+        | ({"reject_substrings"} & set(probe.keys())),
+        label,
+    )
+    assert probe["kind"] == "render_prompt_from_file"
+    assert isinstance(probe["path"], str)
+    assert isinstance(probe["template"], str)
+    assert probe["premise"] is None or isinstance(probe["premise"], str)
+    assert isinstance(probe["policies"], dict)
+    assert isinstance(probe["expect_result"], str)
+    reject_substrings = probe.get("reject_substrings", [])
+    assert isinstance(reject_substrings, list)
+    assert all(isinstance(item, str) for item in reject_substrings)
 
 
 def _assert_export_kind(name: str, exported: object, expected_kind: str) -> None:
@@ -94,8 +162,90 @@ def _assert_export_kind(name: str, exported: object, expected_kind: str) -> None
     if expected_kind == "type_alias":
         assert not inspect.isroutine(exported) and not inspect.isclass(exported), name
         return
+    if expected_kind == "type":
+        assert inspect.isclass(exported), name
+        return
     assert expected_kind == "class", name
     assert inspect.isclass(exported), name
+
+
+def _assert_signature_schema(signature_spec: dict[str, object], label: str) -> None:
+    _assert_exact_keys(signature_spec, {"is_async", "params"}, label)
+    assert isinstance(signature_spec["is_async"], bool), label
+    params = signature_spec["params"]
+    assert isinstance(params, list), label
+    for index, parameter in enumerate(params):
+        assert isinstance(parameter, dict), f"{label}.params[{index}]"
+        _assert_exact_keys(parameter, {"name", "kind", "has_default"}, f"{label}.params[{index}]")
+        assert isinstance(parameter["name"], str), f"{label}.params[{index}]"
+        assert parameter["kind"] in {
+            "POSITIONAL_ONLY",
+            "POSITIONAL_OR_KEYWORD",
+            "VAR_POSITIONAL",
+            "KEYWORD_ONLY",
+            "VAR_KEYWORD",
+        }, f"{label}.params[{index}]"
+        assert isinstance(parameter["has_default"], bool), f"{label}.params[{index}]"
+
+
+def _assert_callable_spec_schema(spec: dict[str, object], label: str) -> None:
+    _assert_exact_keys(
+        spec,
+        {"kind", "signature"}
+        | ({"return_shape"} & set(spec.keys()))
+        | ({"shape_probes"} & set(spec.keys()))
+        | ({"behavior_probes"} & set(spec.keys())),
+        label,
+    )
+    _assert_signature_schema(spec["signature"], f"{label}.signature")
+
+    if "return_shape" in spec:
+        assert isinstance(spec["return_shape"], dict), f"{label}.return_shape"
+        _assert_shape_schema(spec["return_shape"], f"{label}.return_shape")
+
+    if "shape_probes" in spec:
+        shape_probes = spec["shape_probes"]
+        assert isinstance(shape_probes, list), f"{label}.shape_probes"
+        for index, probe in enumerate(shape_probes):
+            assert isinstance(probe, dict), f"{label}.shape_probes[{index}]"
+            _assert_exact_keys(probe, {"kwargs"}, f"{label}.shape_probes[{index}]")
+            assert isinstance(probe["kwargs"], dict), f"{label}.shape_probes[{index}]"
+
+    if "behavior_probes" in spec:
+        behavior_probes = spec["behavior_probes"]
+        assert isinstance(behavior_probes, list), f"{label}.behavior_probes"
+        for index, probe in enumerate(behavior_probes):
+            assert isinstance(probe, dict), f"{label}.behavior_probes[{index}]"
+            if probe.get("kind") == "render_prompt_from_file":
+                _assert_render_prompt_behavior_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
+            raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
+
+
+def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
+    _assert_exact_keys(spec, {"kind"} | ({"public_members"} & set(spec.keys())), label)
+    public_members = spec.get("public_members")
+    if public_members is None:
+        return
+
+    assert isinstance(public_members, dict), f"{label}.public_members"
+    _assert_exact_keys(public_members, {"mode", "members"}, f"{label}.public_members")
+    assert public_members["mode"] == "exact", f"{label}.public_members"
+    members = public_members["members"]
+    assert isinstance(members, dict), f"{label}.public_members.members"
+
+    for member_name, member_contract in members.items():
+        assert isinstance(member_name, str), f"{label}.public_members.members"
+        assert isinstance(member_contract, dict), f"{label}.{member_name}"
+        member_kind = member_contract.get("kind")
+        assert member_kind in {"method", "property"}, f"{label}.{member_name}"
+        if member_kind == "property":
+            _assert_exact_keys(member_contract, {"kind"}, f"{label}.{member_name}")
+            continue
+        _assert_exact_keys(member_contract, {"kind", "signature"}, f"{label}.{member_name}")
+        _assert_signature_schema(member_contract["signature"], f"{label}.{member_name}.signature")
 
 
 def _assert_callable_contract(
@@ -171,14 +321,20 @@ _TYPING_ONLY_NAMES = [
 def test_preprocessor_api_contract_fixture_matches_public_surface() -> None:
     contract = _load_contract()
 
+    _assert_exact_keys(
+        contract, {"id", "kind", "module", "forbidden_exports", "exports"}, "contract"
+    )
     assert contract["kind"] == "api-contract"
+    assert contract["module"] == preprocessor.__name__
     exports = contract["exports"]
     expected_exports = exports["names"]
     export_members = exports["members"]
 
     assert set(expected_exports) == set(_EXPECTED_RUNTIME_EXPORTS)
-    if contract["forbid_additional_public_exports"]:
+    if exports["mode"] == "exact":
         assert set(preprocessor.__all__) == set(expected_exports)
+    else:
+        raise AssertionError(f"Unsupported exports mode: {exports['mode']!r}")
 
     for name in expected_exports:
         assert hasattr(preprocessor, name), name
@@ -234,27 +390,29 @@ def test_preprocessor_api_contract_fixture_declares_core_style_export_schema() -
 
     exports = contract["exports"]
     assert exports["mode"] == "exact"
+    _assert_exact_keys(exports, {"mode", "names", "members"}, "exports")
+    assert isinstance(exports["names"], list)
+    assert all(isinstance(name, str) for name in exports["names"])
+    assert isinstance(exports["members"], dict)
 
     for export_name, export_contract in exports["members"].items():
+        assert isinstance(export_name, str), "exports.members"
+        assert isinstance(export_contract, dict), export_name
         kind = export_contract["kind"]
-        assert kind in {"callable", "constant", "type_alias", "class"}, export_name
+        assert kind in {"callable", "constant", "type_alias", "type", "class"}, export_name
         if kind == "callable":
-            assert "signature" in export_contract, export_name
-        else:
-            assert "signature" not in export_contract, export_name
-
-        if kind == "class":
-            public_members = export_contract.get("public_members")
-            if public_members is None:
-                continue
-            assert public_members["mode"] == "exact", export_name
-            for member_name, member_contract in public_members["members"].items():
-                member_kind = member_contract["kind"]
-                assert member_kind in {"method", "property"}, f"{export_name}.{member_name}"
-                if member_kind == "property":
-                    assert "signature" not in member_contract, f"{export_name}.{member_name}"
-                else:
-                    assert "signature" in member_contract, f"{export_name}.{member_name}"
+            _assert_callable_spec_schema(export_contract, export_name)
+            continue
+        if kind == "constant":
+            _assert_exact_keys(export_contract, {"kind", "value"}, export_name)
+            continue
+        if kind == "type_alias":
+            _assert_exact_keys(export_contract, {"kind"}, export_name)
+            continue
+        if kind == "type":
+            _assert_exact_keys(export_contract, {"kind"}, export_name)
+            continue
+        _assert_class_spec_schema(export_contract, export_name)
 
 
 def test_preprocessor_api_contract_fixture_validates_export_kinds_signatures_and_shapes(
