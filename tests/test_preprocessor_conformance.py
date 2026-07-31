@@ -18,6 +18,50 @@ def _load_fixture(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _assert_exact_keys(payload: dict[str, object], expected: set[str], label: str) -> None:
+    assert set(payload.keys()) == expected, label
+
+
+def _assert_expected_contract(expected: object, label: str) -> None:
+    assert isinstance(expected, dict), label
+    _assert_exact_keys(expected, {"classification", "output"}, label)
+    classification = expected["classification"]
+    output = expected["output"]
+    assert classification in {"directive", "no_directive", "unknown"}, label
+    assert isinstance(output, str) or output is None, label
+    if classification == "directive":
+        assert isinstance(output, str), label
+    else:
+        assert output is None, label
+
+
+def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> None:
+    label = path.name
+    name = fixture.get("name")
+    assert isinstance(name, str), label
+    assert name == path.stem, label
+
+    kind = fixture.get("kind", "heuristic")
+    assert kind in {"heuristic", "validator", "parse"}, label
+
+    if kind == "heuristic":
+        _assert_exact_keys(
+            fixture, {"name", "input", "expected"} | ({"kind"} & set(fixture.keys())), label
+        )
+        assert isinstance(fixture["input"], str), label
+        _assert_expected_contract(fixture["expected"], label)
+        return
+
+    if kind == "validator":
+        _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected"}, label)
+        _assert_expected_contract(fixture["expected"], label)
+        return
+
+    _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected_parsed"}, label)
+    expected_parsed = fixture["expected_parsed"]
+    assert isinstance(expected_parsed, str) or expected_parsed is None, label
+
+
 def _normalize_result(message: str) -> dict[str, object]:
     result = preprocess_heuristic(message)
     output = result["directive"] if result["outcome"] == "directive" else None
@@ -56,12 +100,14 @@ def test_preprocessor_conformance_fixtures() -> None:
         if path.name.startswith("public-api-"):
             continue
 
+        _assert_behavior_fixture_schema(path, fixture)
+
         fixture_name = fixture.get("name", path.name)
         kind = fixture.get("kind", "heuristic")
 
         if kind == "heuristic":
             expected = fixture.get("expected")
-            assert isinstance(expected, dict), fixture_name
+            _assert_expected_contract(expected, fixture_name)
             input_text = fixture.get("input")
             assert isinstance(input_text, str), fixture_name
 
@@ -77,7 +123,7 @@ def test_preprocessor_conformance_fixtures() -> None:
 
         if kind == "validator":
             expected = fixture.get("expected")
-            assert isinstance(expected, dict), fixture_name
+            _assert_expected_contract(expected, fixture_name)
             # Deterministic replay check.
             first = _normalize_validator_result(raw_output)
             second = _normalize_validator_result(raw_output)

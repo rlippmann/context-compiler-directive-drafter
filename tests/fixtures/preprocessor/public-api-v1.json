@@ -2,7 +2,6 @@
   "id": "experimental-preprocessor-public-api-v1",
   "kind": "api-contract",
   "module": "context_compiler_directive_drafter",
-  "forbid_additional_public_exports": true,
   "forbidden_exports": [
     "PreprocessOutcome",
     "PreprocessResult"
@@ -37,231 +36,235 @@
       "value": "unknown"
       },
       "preprocess_heuristic": {
-      "kind": "callable",
-      "signature": {
-        "params": [
-          {
-            "name": "message",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          }
-        ]
-      },
-      "return_shape": {
-        "any_of": [
-          {
-            "type": "object",
-            "required_keys": [
-              "outcome",
-              "directive",
-              "rule_id"
-            ],
-            "properties": {
-              "outcome": {
-                "type": "string",
-                "enum": [
-                  "directive"
-                ]
-              },
-              "directive": {
-                "type": "string"
-              },
-              "rule_id": {
-                "type": "string"
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {
+              "name": "message",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
+          ]
+        },
+        "return_shape": {
+          "any_of": [
+            {
+              "type": "object",
+              "required_keys": [
+                "outcome",
+                "directive",
+                "rule_id"
+              ],
+              "properties": {
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "directive"
+                  ]
+                },
+                "directive": {
+                  "type": "string"
+                },
+                "rule_id": {
+                  "type": "string"
+                }
               }
+            },
+            {
+              "type": "object",
+              "required_keys": [
+                "outcome",
+                "directive",
+                "rule_id"
+              ],
+              "properties": {
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "no_directive",
+                    "unknown"
+                  ]
+                },
+                "directive": {
+                  "type": "null"
+                },
+                "rule_id": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        },
+        "shape_probes": [
+          {
+            "kwargs": {
+              "message": "use docker"
             }
           },
           {
-            "type": "object",
-            "required_keys": [
-              "outcome",
-              "directive",
-              "rule_id"
-            ],
-            "properties": {
-              "outcome": {
-                "type": "string",
-                "enum": [
-                  "no_directive",
-                  "unknown"
-                ]
-              },
-              "directive": {
-                "type": "null"
-              },
-              "rule_id": {
-                "type": "string"
-              }
+            "kwargs": {
+              "message": "please help with lunch"
+            }
+          },
+          {
+            "kwargs": {
+              "message": "use docker, actually prohibit docker"
             }
           }
         ]
-      },
-      "shape_probes": [
-        {
-          "kwargs": {
-            "message": "use docker"
-          }
-        },
-        {
-          "kwargs": {
-            "message": "please help with lunch"
-          }
-        },
-        {
-          "kwargs": {
-            "message": "use docker, actually prohibit docker"
-          }
-        }
-      ]
       },
       "validate_preprocessor_output": {
-      "kind": "callable",
-      "signature": {
-        "params": [
-          {
-            "name": "raw_output",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          }
-        ]
-      },
-      "return_shape": {
-        "any_of": [
-          {
-            "type": "object",
-            "required_keys": [
-              "classification",
-              "output"
-            ],
-            "properties": {
-              "classification": {
-                "type": "string",
-                "enum": [
-                  "directive"
-                ]
-              },
-              "output": {
-                "type": "string"
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {
+              "name": "raw_output",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
+          ]
+        },
+        "return_shape": {
+          "any_of": [
+            {
+              "type": "object",
+              "required_keys": [
+                "classification",
+                "output"
+              ],
+              "properties": {
+                "classification": {
+                  "type": "string",
+                  "enum": [
+                    "directive"
+                  ]
+                },
+                "output": {
+                  "type": "string"
+                }
               }
+            },
+            {
+              "type": "object",
+              "required_keys": [
+                "classification",
+                "output"
+              ],
+              "properties": {
+                "classification": {
+                  "type": "string",
+                  "enum": [
+                    "no_directive",
+                    "unknown"
+                  ]
+                },
+                "output": {
+                  "type": "null"
+                }
+              }
+            }
+          ]
+        },
+        "shape_probes": [
+          {
+            "kwargs": {
+              "raw_output": "use docker"
             }
           },
           {
-            "type": "object",
-            "required_keys": [
-              "classification",
-              "output"
-            ],
-            "properties": {
-              "classification": {
-                "type": "string",
-                "enum": [
-                  "no_directive",
-                  "unknown"
-                ]
-              },
-              "output": {
-                "type": "null"
+            "kwargs": {
+              "raw_output": "<NO_DIRECTIVE>"
+            }
+          },
+          {
+            "kwargs": {
+              "raw_output": {
+                "classification": "directive",
+                "output": "set premise concise replies"
               }
             }
           }
         ]
-      },
-      "shape_probes": [
-        {
-          "kwargs": {
-            "raw_output": "use docker"
-          }
-        },
-        {
-          "kwargs": {
-            "raw_output": "<NO_DIRECTIVE>"
-          }
-        },
-        {
-          "kwargs": {
-            "raw_output": {
-              "classification": "directive",
-              "output": "set premise concise replies"
-            }
-          }
-        }
-      ]
       },
       "parse_preprocessor_output": {
-      "kind": "callable",
-      "signature": {
-        "params": [
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {
+              "name": "raw_output",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
+          ]
+        },
+        "return_shape": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shape_probes": [
           {
-            "name": "raw_output",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          }
-        ]
-      },
-      "return_shape": {
-        "type": [
-          "string",
-          "null"
-        ]
-      },
-      "shape_probes": [
-        {
-          "kwargs": {
-            "raw_output": "use docker"
-          }
-        },
-        {
-          "kwargs": {
-            "raw_output": "<NO_DIRECTIVE>"
-          }
-        },
-        {
-          "kwargs": {
-            "raw_output": {
-              "classification": "directive",
-              "output": "set premise concise replies"
+            "kwargs": {
+              "raw_output": "use docker"
+            }
+          },
+          {
+            "kwargs": {
+              "raw_output": "<NO_DIRECTIVE>"
+            }
+          },
+          {
+            "kwargs": {
+              "raw_output": {
+                "classification": "directive",
+                "output": "set premise concise replies"
+              }
             }
           }
-        }
-      ]
-      },
-      "render_prompt": {
-      "kind": "callable",
-      "signature": {
-        "params": [
-          {
-            "name": "path",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          },
-          {
-            "name": "premise",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          },
-          {
-            "name": "policies",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          }
         ]
       },
-      "behavior_probes": [
-        {
-          "kind": "render_prompt_from_file",
-          "path": "render-prompt-contract-probe.txt",
-          "template": "source=file-template\npremise=<NULL_OR_VALUE>\npolicies=<SET OF CURRENT POLICY ITEMS>\npath-literal=render-prompt-contract-probe.txt\n",
-          "premise": "concise replies",
-          "policies": {
-            "docker": "use"
-          },
-          "expect_result": "source=file-template\npremise=concise replies\npolicies=docker\npath-literal=render-prompt-contract-probe.txt",
-          "reject_substrings": [
-            "premise=<NULL_OR_VALUE>",
-            "policies=<SET OF CURRENT POLICY ITEMS>"
+      "render_prompt": {
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {
+              "name": "path",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "premise",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "policies",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
           ]
-        }
-      ]
+        },
+        "behavior_probes": [
+          {
+            "kind": "render_prompt_from_file",
+            "path": "render-prompt-contract-probe.txt",
+            "template": "source=file-template\npremise=<NULL_OR_VALUE>\npolicies=<SET OF CURRENT POLICY ITEMS>\npath-literal=render-prompt-contract-probe.txt\n",
+            "premise": "concise replies",
+            "policies": {
+              "docker": "use"
+            },
+            "expect_result": "source=file-template\npremise=concise replies\npolicies=docker\npath-literal=render-prompt-contract-probe.txt",
+            "reject_substrings": [
+              "premise=<NULL_OR_VALUE>",
+              "policies=<SET OF CURRENT POLICY ITEMS>"
+            ]
+          }
+        ]
       }
     }
   }
