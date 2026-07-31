@@ -46,7 +46,9 @@ def test_scan_roots_ignores_tests_directory() -> None:
         tmp_path.rmdir()
 
 
-def test_boundary_checker_allows_read_only_engine_properties_and_type_imports(tmp_path: Path) -> None:
+def test_boundary_checker_allows_read_only_engine_properties_and_type_imports(
+    tmp_path: Path,
+) -> None:
     _write_scanned_file(
         tmp_path,
         "src/context_compiler_directive_drafter/allowed.py",
