@@ -51,9 +51,6 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/context_compiler_directive_drafter"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"host_support" = "host_support"
-
 [tool.ruff]
 line-length = 100
 target-version = "py311"
@@ -83,5 +80,5 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/context_compiler_directive_drafter", "host_support"]
+source = ["src/context_compiler_directive_drafter"]
 omit = ["tests/*"]
