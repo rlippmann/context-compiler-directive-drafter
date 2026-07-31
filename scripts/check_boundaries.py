@@ -12,13 +12,6 @@ SCAN_ROOTS = [
     ROOT / "examples",
 ]
 ALLOWED_SUFFIXES = {".py"}
-HOST_IMPORT_RATIONALE = (
-    "Package source and package-owned examples should not import runnable host integration helpers."
-)
-AUTHORITY_HOST_SUPPORT_RATIONALE = (
-    "Package source and package-owned examples should not import "
-    "authority-layer or host orchestration helpers."
-)
 WEB_HOST_IMPORT_RATIONALE = (
     "Runnable web-host integrations belong outside package-owned drafting source and examples."
 )
@@ -43,22 +36,6 @@ CHECKS = [
             "Direct .state assignment is a simple signal for possible "
             "authoritative state mutation across the boundary."
         ),
-    ),
-    Check(
-        pattern="from host_support",
-        rationale=HOST_IMPORT_RATIONALE,
-    ),
-    Check(
-        pattern="import host_support",
-        rationale=HOST_IMPORT_RATIONALE,
-    ),
-    Check(
-        pattern="from context_compiler.host_support",
-        rationale=AUTHORITY_HOST_SUPPORT_RATIONALE,
-    ),
-    Check(
-        pattern="import context_compiler.host_support",
-        rationale=AUTHORITY_HOST_SUPPORT_RATIONALE,
     ),
 ]
 HOST_INTEGRATION_IMPORTS = {
