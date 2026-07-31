@@ -1,5 +1,6 @@
 import re
 
+from context_compiler.grammar import is_canonical_directive
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
@@ -10,7 +11,6 @@ from context_compiler_directive_drafter.constants import (
     PREPROCESS_OUTCOME_UNKNOWN,
 )
 from context_compiler_directive_drafter.output_validation import (
-    _is_allowed_directive,
     parse_preprocessor_output,
 )
 
@@ -131,7 +131,7 @@ def test_heuristic_whole_message_discipline_for_surrounded_directive(
     assume(prefix.strip() not in {'"', "'", "`", "(", "["})
     assume(suffix.strip() not in {'"', "'", "`", ")", "]"})
     assume(not message.strip().lower().startswith("change premise "))
-    assume(not _is_allowed_directive(normalized))
+    assume(not is_canonical_directive(normalized))
     result = preprocess_heuristic(message)
     assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
 

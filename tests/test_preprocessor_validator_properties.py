@@ -1,8 +1,8 @@
+from context_compiler.grammar import is_canonical_directive
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from context_compiler_directive_drafter.output_validation import (
-    _is_allowed_directive,
     parse_preprocessor_output,
     validate_preprocessor_output,
 )
@@ -53,7 +53,7 @@ def test_parse_non_string_never_produces_directive(raw_output: object) -> None:
 @given(NOISY_TEXT)
 def test_parse_invalid_text_never_becomes_directive(text: str) -> None:
     stripped = text.strip()
-    assume(not _is_allowed_directive(stripped))
+    assume(not is_canonical_directive(stripped))
     assert parse_preprocessor_output(text) is None
 
 
@@ -71,7 +71,7 @@ def test_parse_rejects_directive_with_surrounding_text(
 ) -> None:
     raw = f"{prefix} {directive} {suffix}"
     stripped = raw.strip()
-    assume(not _is_allowed_directive(stripped))
+    assume(not is_canonical_directive(stripped))
     assert parse_preprocessor_output(raw) is None
 
 
