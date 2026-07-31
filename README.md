@@ -61,6 +61,18 @@ For local development:
 uv sync --group dev
 ```
 
+To test locally against an unpublished sibling `../context-compiler` checkout
+without changing this package's dependency metadata, run commands explicitly
+with:
+
+```bash
+uv run --with-editable ../context-compiler <command>
+```
+
+This is an opt-in contributor workflow for local testing only. It is not the
+normal installation path, and CI and release validation continue to use the
+declared published dependency.
+
 ## Basic Usage
 
 Draft and validate a candidate directive:
