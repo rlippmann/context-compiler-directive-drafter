@@ -138,7 +138,8 @@ authorize the drafter to validate, mutate, or apply authoritative state.
 - Always validate drafting output before compiler handoff.
 - Never pass raw model output directly to the compiler.
 - Bypass drafting when clarification is pending.
-- Do not edit `engine.state` directly.
+- Do not drive authoritative transitions from package-owned drafting code.
+- Do not read or mutate `engine.state` directly from package-owned drafting code.
 - Prefer abstaining over unsafe guesses.
 - Use interpretation context to resolve human references only when that context
   is read-only and supplied for drafting.
