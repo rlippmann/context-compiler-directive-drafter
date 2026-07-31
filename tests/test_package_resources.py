@@ -1,6 +1,8 @@
 from importlib.resources import as_file, files
 from pathlib import Path
 
+from context_compiler import PolicyValue
+
 from context_compiler_directive_drafter import render_prompt
 
 _PACKAGE = "context_compiler_directive_drafter"
@@ -22,11 +24,11 @@ _SCAN_ROOTS = [
 ]
 
 
-def _empty_policies() -> dict[str, str]:
+def _empty_policies() -> dict[str, PolicyValue]:
     return {}
 
 
-def _policies_with_duplicate_policy_name() -> dict[str, str]:
+def _policies_with_duplicate_policy_name() -> dict[str, PolicyValue]:
     return {"shared": "prohibit"}
 
 
@@ -34,7 +36,7 @@ def _premise_with_punctuation_and_newline() -> str:
     return "first line second line!"
 
 
-def _policies_with_multiple_names() -> dict[str, str]:
+def _policies_with_multiple_names() -> dict[str, PolicyValue]:
     return {"zeta": "use", "beta": "use", "alpha": "prohibit"}
 
 
