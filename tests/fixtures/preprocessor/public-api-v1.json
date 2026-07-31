@@ -226,7 +226,12 @@
           "required": true
         },
         {
-          "name": "state",
+          "name": "premise",
+          "kind": "positional_or_keyword",
+          "required": true
+        },
+        {
+          "name": "policies",
           "kind": "positional_or_keyword",
           "required": true
         }
@@ -236,10 +241,10 @@
           "kind": "render_prompt_from_file",
           "path": "render-prompt-contract-probe.txt",
           "template": "source=file-template\npremise=<NULL_OR_VALUE>\npolicies=<SET OF CURRENT POLICY ITEMS>\npath-literal=render-prompt-contract-probe.txt\n",
-          "state_steps": [
-            "set premise concise replies",
-            "use docker"
-          ],
+          "premise": "concise replies",
+          "policies": {
+            "docker": "use"
+          },
           "expect_result": "source=file-template\npremise=concise replies\npolicies=docker\npath-literal=render-prompt-contract-probe.txt",
           "reject_substrings": [
             "premise=<NULL_OR_VALUE>",
