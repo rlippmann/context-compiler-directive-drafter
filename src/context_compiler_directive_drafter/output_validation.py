@@ -10,9 +10,9 @@ Internal helpers are implementation details and may change.
 import json
 from typing import TypedDict
 
+from context_compiler.grammar import is_canonical_directive
+
 from .constants import (
-    CANONICAL_DIRECTIVE_EXACT,
-    CANONICAL_DIRECTIVE_PATTERNS,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     PreprocessOutcome,
     count_canonical_directive_starts,
@@ -42,9 +42,7 @@ def _no_directive() -> PreprocessorValidationResult:
 
 
 def _is_allowed_directive(text: str) -> bool:
-    if text in CANONICAL_DIRECTIVE_EXACT:
-        return True
-    return any(pattern.fullmatch(text) for pattern in CANONICAL_DIRECTIVE_PATTERNS)
+    return is_canonical_directive(text)
 
 
 def _contains_multiple_candidate_directives(text: str) -> bool:

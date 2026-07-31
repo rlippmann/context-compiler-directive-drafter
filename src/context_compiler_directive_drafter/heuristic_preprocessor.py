@@ -9,9 +9,9 @@ positives.
 import re
 from typing import TypedDict
 
+from context_compiler.grammar import validate_directive
+
 from .constants import (
-    CANONICAL_DIRECTIVE_EXACT,
-    CANONICAL_DIRECTIVE_PATTERNS,
     PREPROCESS_OUTCOME_DIRECTIVE,
     PREPROCESS_OUTCOME_NO_DIRECTIVE,
     PREPROCESS_OUTCOME_UNKNOWN,
@@ -220,20 +220,13 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "rule_id": "reject.malformed_replacement_syntax",
         }
 
-    if normalized_candidate in CANONICAL_DIRECTIVE_EXACT:
+    validated = validate_directive(normalized_candidate)
+    if validated is not None:
         return {
             "outcome": PREPROCESS_OUTCOME_DIRECTIVE,
-            "directive": normalized_candidate,
+            "directive": validated.text,
             "rule_id": "canonical.full_match",
         }
-
-    for pattern in CANONICAL_DIRECTIVE_PATTERNS:
-        if pattern.fullmatch(normalized_candidate):
-            return {
-                "outcome": PREPROCESS_OUTCOME_DIRECTIVE,
-                "directive": normalized_candidate,
-                "rule_id": "canonical.full_match",
-            }
 
     if _DIRECTIVE_CUE_PATTERN.search(normalized_candidate):
         return {
