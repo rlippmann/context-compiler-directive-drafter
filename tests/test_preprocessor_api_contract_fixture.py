@@ -3,8 +3,6 @@ from importlib import import_module
 from inspect import Parameter, isroutine, signature
 from pathlib import Path
 
-from context_compiler import create_engine
-
 import context_compiler_directive_drafter as preprocessor
 
 _CONTRACT_PATH = (
@@ -72,11 +70,7 @@ def _assert_render_prompt_behavior_probe(
     template_path = tmp_path / probe["path"]
     template_path.write_text(probe["template"], encoding="utf-8")
 
-    engine = create_engine()
-    for step in probe.get("state_steps", []):
-        engine.step(step)
-
-    result = exported(template_path, engine.state)
+    result = exported(template_path, probe["premise"], probe["policies"])
     assert result == probe["expect_result"]
     for substring in probe.get("reject_substrings", []):
         assert substring not in result

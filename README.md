@@ -93,7 +93,7 @@ Public interface:
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
 - `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
-- `render_prompt(path, state)`: Load and fill prompt templates.
+- `render_prompt(path, premise, policies)`: Load and fill prompt templates.
 - Constants and sentinels exported from the package.
 
 ### Output Contract
@@ -179,7 +179,7 @@ The package includes prompt templates for integrations that use model-based draf
 - prompts/default.txt: recommended default prompt
 - prompts/llama.txt: stricter prompt for Llama-family models
 
-Use render_prompt(path, state) to load a template and fill it with the current compiler state snapshot.
+Use render_prompt(path, premise, policies) to load a template and fill it with the current prompt-ready premise and policies.
 
 The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
 
