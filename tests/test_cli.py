@@ -1,9 +1,11 @@
+"""Placeholder-only regression coverage for the current CLI surface."""
+
 import json
 
 from context_compiler_directive_drafter.cli import main
 
 
-def test_cli_returns_placeholder_status(monkeypatch, capsys) -> None:
+def test_cli_placeholder_invocation_returns_placeholder_status(monkeypatch, capsys) -> None:
     monkeypatch.setattr("sys.argv", ["directive-drafter", "please make replies concise"])
 
     exit_code = main()

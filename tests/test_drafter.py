@@ -1,7 +1,9 @@
+"""Placeholder-only regression coverage for the current drafter entrypoint."""
+
 from context_compiler_directive_drafter.drafter import draft_directive
 
 
-def test_draft_directive_is_non_authoritative_placeholder() -> None:
+def test_draft_directive_placeholder_remains_non_authoritative_stub() -> None:
     result = draft_directive("please make replies concise")
 
     assert result.user_input == "please make replies concise"
