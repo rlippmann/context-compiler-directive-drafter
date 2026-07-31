@@ -3,46 +3,50 @@
   "kind": "api-contract",
   "module": "context_compiler_directive_drafter",
   "forbid_additional_public_exports": true,
-  "required_exports": [
-    "PREPROCESS_OUTCOME_DIRECTIVE",
-    "PREPROCESS_OUTCOME_NO_DIRECTIVE",
-    "PREPROCESS_OUTCOME_UNKNOWN",
-    "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
-    "parse_preprocessor_output",
-    "preprocess_heuristic",
-    "render_prompt",
-    "validate_preprocessor_output"
-  ],
   "forbidden_exports": [
     "PreprocessOutcome",
     "PreprocessResult"
   ],
   "exports": {
-    "PREPROCESSOR_NO_DIRECTIVE_SENTINEL": {
+    "mode": "exact",
+    "names": [
+      "PREPROCESS_OUTCOME_DIRECTIVE",
+      "PREPROCESS_OUTCOME_NO_DIRECTIVE",
+      "PREPROCESS_OUTCOME_UNKNOWN",
+      "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
+      "parse_preprocessor_output",
+      "preprocess_heuristic",
+      "render_prompt",
+      "validate_preprocessor_output"
+    ],
+    "members": {
+      "PREPROCESSOR_NO_DIRECTIVE_SENTINEL": {
       "kind": "constant",
       "value": "<NO_DIRECTIVE>"
-    },
-    "PREPROCESS_OUTCOME_DIRECTIVE": {
+      },
+      "PREPROCESS_OUTCOME_DIRECTIVE": {
       "kind": "constant",
       "value": "directive"
-    },
-    "PREPROCESS_OUTCOME_NO_DIRECTIVE": {
+      },
+      "PREPROCESS_OUTCOME_NO_DIRECTIVE": {
       "kind": "constant",
       "value": "no_directive"
-    },
-    "PREPROCESS_OUTCOME_UNKNOWN": {
+      },
+      "PREPROCESS_OUTCOME_UNKNOWN": {
       "kind": "constant",
       "value": "unknown"
-    },
-    "preprocess_heuristic": {
+      },
+      "preprocess_heuristic": {
       "kind": "callable",
-      "parameters": [
-        {
-          "name": "message",
-          "kind": "positional_or_keyword",
-          "required": true
-        }
-      ],
+      "signature": {
+        "params": [
+          {
+            "name": "message",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          }
+        ]
+      },
       "return_shape": {
         "any_of": [
           {
@@ -109,16 +113,18 @@
           }
         }
       ]
-    },
-    "validate_preprocessor_output": {
+      },
+      "validate_preprocessor_output": {
       "kind": "callable",
-      "parameters": [
-        {
-          "name": "raw_output",
-          "kind": "positional_or_keyword",
-          "required": true
-        }
-      ],
+      "signature": {
+        "params": [
+          {
+            "name": "raw_output",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          }
+        ]
+      },
       "return_shape": {
         "any_of": [
           {
@@ -180,16 +186,18 @@
           }
         }
       ]
-    },
-    "parse_preprocessor_output": {
+      },
+      "parse_preprocessor_output": {
       "kind": "callable",
-      "parameters": [
-        {
-          "name": "raw_output",
-          "kind": "positional_or_keyword",
-          "required": true
-        }
-      ],
+      "signature": {
+        "params": [
+          {
+            "name": "raw_output",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          }
+        ]
+      },
       "return_shape": {
         "type": [
           "string",
@@ -216,26 +224,28 @@
           }
         }
       ]
-    },
-    "render_prompt": {
+      },
+      "render_prompt": {
       "kind": "callable",
-      "parameters": [
-        {
-          "name": "path",
-          "kind": "positional_or_keyword",
-          "required": true
-        },
-        {
-          "name": "premise",
-          "kind": "positional_or_keyword",
-          "required": true
-        },
-        {
-          "name": "policies",
-          "kind": "positional_or_keyword",
-          "required": true
-        }
-      ],
+      "signature": {
+        "params": [
+          {
+            "name": "path",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          },
+          {
+            "name": "premise",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          },
+          {
+            "name": "policies",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          }
+        ]
+      },
       "behavior_probes": [
         {
           "kind": "render_prompt_from_file",
@@ -252,6 +262,7 @@
           ]
         }
       ]
+      }
     }
   }
 }
