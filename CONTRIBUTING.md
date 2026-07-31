@@ -17,18 +17,6 @@ Contributions are typically submitted via fork and pull request:
 uv sync --group dev
 ```
 
-To test this repository against an unpublished sibling
-`../context-compiler` checkout without changing project dependency metadata,
-run commands explicitly with:
-
-```bash
-uv run --with-editable ../context-compiler <command>
-```
-
-Use that only for local development when you intentionally want to exercise an
-unpublished core checkout. It is not the normal installation path, and CI and
-release validation continue to use the declared published dependency.
-
 ## Running Tests
 
 ```bash
