@@ -1,15 +1,16 @@
+from context_compiler.grammar import is_canonical_directive
+
 from context_compiler_directive_drafter.output_validation import (
-    _is_allowed_directive,
     parse_preprocessor_output,
     validate_preprocessor_output,
 )
 
 
-def test_is_allowed_directive_accepts_canonical_shapes() -> None:
-    assert _is_allowed_directive("clear state")
-    assert _is_allowed_directive("set premise concise replies")
-    assert _is_allowed_directive("change premise to formal tone")
-    assert _is_allowed_directive("use podman instead of docker")
+def test_core_canonical_validation_accepts_canonical_shapes() -> None:
+    assert is_canonical_directive("clear state")
+    assert is_canonical_directive("set premise concise replies")
+    assert is_canonical_directive("change premise to formal tone")
+    assert is_canonical_directive("use podman instead of docker")
 
 
 def test_validate_text_accepts_canonical_directive() -> None:
