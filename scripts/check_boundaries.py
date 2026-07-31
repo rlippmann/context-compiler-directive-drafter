@@ -38,24 +38,6 @@ class Check:
 
 CHECKS = [
     Check(
-        pattern="create_engine(",
-        rationale=(
-            "Package source and package-owned examples should not construct "
-            "compiler authority objects."
-        ),
-    ),
-    Check(
-        pattern="engine.step(",
-        rationale=(
-            "The drafter proposes candidate directives; only hosts using "
-            "context-compiler should drive authoritative engine steps."
-        ),
-    ),
-    Check(
-        pattern="engine.state",
-        rationale="The drafting layer must not read or edit authoritative engine state directly.",
-    ),
-    Check(
         pattern=".state =",
         rationale=(
             "Direct .state assignment is a simple signal for possible "
@@ -130,7 +112,84 @@ def _scan_file(path: Path) -> list[Violation]:
         tree = ast.parse(content, filename=str(path))
     except SyntaxError:
         return violations
+    _attach_parents(tree)
+    violations.extend(_scan_engine_access(path, content, tree))
     violations.extend(_scan_imports(path, content, tree))
+    return violations
+
+
+def _attach_parents(tree: ast.AST) -> None:
+    for parent in ast.walk(tree):
+        for child in ast.iter_child_nodes(parent):
+            child._boundary_parent = parent
+
+
+def _violation_for_node(path: Path, content: str, node: ast.AST, check: Check) -> Violation:
+    line = getattr(node, "lineno", 1)
+    lines = content.splitlines()
+    snippet = lines[line - 1].strip() if 1 <= line <= len(lines) else ""
+    return Violation(path=path, line=line, snippet=snippet, check=check)
+
+
+def _scan_engine_access(path: Path, content: str, tree: ast.AST) -> list[Violation]:
+    violations: list[Violation] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Attribute):
+            continue
+        if not isinstance(node.value, ast.Name) or node.value.id != "engine":
+            continue
+
+        if node.attr == "step":
+            parent = getattr(node, "_boundary_parent", None)
+            if isinstance(parent, ast.Call) and parent.func is node:
+                violations.append(
+                    _violation_for_node(
+                        path,
+                        content,
+                        node,
+                        Check(
+                            pattern="engine.step(",
+                            rationale=(
+                                "The drafter proposes candidate directives; only hosts using "
+                                "context-compiler should drive authoritative engine steps."
+                            ),
+                        ),
+                    )
+                )
+            continue
+
+        if node.attr == "state":
+            violations.append(
+                _violation_for_node(
+                    path,
+                    content,
+                    node,
+                    Check(
+                        pattern="engine.state",
+                        rationale=(
+                            "The drafting layer must not read or edit authoritative engine "
+                            "state directly; use supported read-only context instead."
+                        ),
+                    ),
+                )
+            )
+            continue
+
+        if node.attr == "_state":
+            violations.append(
+                _violation_for_node(
+                    path,
+                    content,
+                    node,
+                    Check(
+                        pattern="engine._state",
+                        rationale=(
+                            "Package source and package-owned examples must not read or mutate "
+                            "engine internals directly."
+                        ),
+                    ),
+                )
+            )
     return violations
 
 
@@ -166,13 +225,14 @@ def _scan_imports(path: Path, content: str, tree: ast.AST) -> list[Violation]:
     return violations
 
 
-def main() -> int:
-    violations = [
-        violation
-        for root in SCAN_ROOTS
-        for path in _iter_files(root)
-        for violation in _scan_file(path)
+def scan_roots(roots: list[Path]) -> list[Violation]:
+    return [
+        violation for root in roots for path in _iter_files(root) for violation in _scan_file(path)
     ]
+
+
+def main() -> int:
+    violations = scan_roots(SCAN_ROOTS)
 
     if not violations:
         print(
