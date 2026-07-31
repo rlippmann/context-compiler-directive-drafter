@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from context_compiler import PolicyValue
+
 from context_compiler_directive_drafter import render_prompt
 from context_compiler_directive_drafter.constants import (
     PROMPT_TOKEN_NULL_OR_VALUE,
@@ -11,11 +13,11 @@ def _write_prompt(path: Path, body: str) -> None:
     path.write_text(body, encoding="utf-8")
 
 
-def _empty_policies() -> dict[str, str]:
+def _empty_policies() -> dict[str, PolicyValue]:
     return {}
 
 
-def _populated_policies() -> dict[str, str]:
+def _populated_policies() -> dict[str, PolicyValue]:
     return {"zeta": "use", "beta": "use", "alpha": "prohibit"}
 
 

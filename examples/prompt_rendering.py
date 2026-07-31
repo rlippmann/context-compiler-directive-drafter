@@ -2,12 +2,14 @@
 
 from importlib.resources import as_file, files
 
+from context_compiler import PolicyValue
+
 from context_compiler_directive_drafter import render_prompt
 
 
 def main() -> None:
     premise = "concise replies"
-    policies = {
+    policies: dict[str, PolicyValue] = {
         "docker": "use",
         "peanuts": "prohibit",
     }
