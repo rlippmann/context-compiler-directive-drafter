@@ -342,9 +342,9 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
     engine = create_engine(probe["engine_state"])
     before = engine.state
-    drafter = exported(engine)
+    drafter = exported()
 
-    result = drafter.draft_directive(probe["user_input"])
+    result = drafter.draft_directive(probe["user_input"], engine)
 
     _assert_shape(result.__dict__, probe["expect_result"])
     if probe["expect_engine_unchanged"]:

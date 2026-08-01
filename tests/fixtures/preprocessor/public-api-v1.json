@@ -60,6 +60,11 @@
                     "name": "user_input",
                     "kind": "POSITIONAL_OR_KEYWORD",
                     "has_default": false
+                  },
+                  {
+                    "name": "engine",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
                   }
                 ]
               }
@@ -78,42 +83,17 @@
             "expect_result": {
               "type": "object",
               "required_keys": [
-                "user_input",
                 "outcome",
-                "candidate_directive",
-                "refined_directive",
-                "rule_id",
-                "authoritative",
-                "rationale"
+                "directive"
               ],
               "properties": {
-                "user_input": {
-                  "type": "string",
-                  "const": "set premise concise replies"
-                },
                 "outcome": {
                   "type": "string",
                   "const": "directive"
                 },
-                "candidate_directive": {
+                "directive": {
                   "type": "string",
                   "const": "set premise concise replies"
-                },
-                "refined_directive": {
-                  "type": "string",
-                  "const": "set premise concise replies"
-                },
-                "rule_id": {
-                  "type": "string",
-                  "const": "canonical.full_match"
-                },
-                "authoritative": {
-                  "type": "boolean",
-                  "const": false
-                },
-                "rationale": {
-                  "type": "string",
-                  "const": "Drafted a candidate directive with deterministic refinement."
                 }
               }
             },
@@ -130,40 +110,16 @@
             "expect_result": {
               "type": "object",
               "required_keys": [
-                "user_input",
                 "outcome",
-                "candidate_directive",
-                "refined_directive",
-                "rule_id",
-                "authoritative",
-                "rationale"
+                "directive"
               ],
               "properties": {
-                "user_input": {
-                  "type": "string",
-                  "const": "can you help with lunch?"
-                },
                 "outcome": {
                   "type": "string",
                   "const": "no_directive"
                 },
-                "candidate_directive": {
+                "directive": {
                   "type": "null"
-                },
-                "refined_directive": {
-                  "type": "null"
-                },
-                "rule_id": {
-                  "type": "string",
-                  "const": "reject.confident_non_directive"
-                },
-                "authoritative": {
-                  "type": "boolean",
-                  "const": false
-                },
-                "rationale": {
-                  "type": "string",
-                  "const": "Input did not look like a directive request."
                 }
               }
             },
@@ -180,42 +136,17 @@
             "expect_result": {
               "type": "object",
               "required_keys": [
-                "user_input",
                 "outcome",
-                "candidate_directive",
-                "refined_directive",
-                "rule_id",
-                "authoritative",
-                "rationale"
+                "directive"
               ],
               "properties": {
-                "user_input": {
-                  "type": "string",
-                  "const": "set premise concise replies"
-                },
                 "outcome": {
                   "type": "string",
                   "const": "directive"
                 },
-                "candidate_directive": {
-                  "type": "string",
-                  "const": "set premise concise replies"
-                },
-                "refined_directive": {
+                "directive": {
                   "type": "string",
                   "const": "change premise to concise replies"
-                },
-                "rule_id": {
-                  "type": "string",
-                  "const": "canonical.full_match"
-                },
-                "authoritative": {
-                  "type": "boolean",
-                  "const": false
-                },
-                "rationale": {
-                  "type": "string",
-                  "const": "Drafted a candidate directive with deterministic refinement."
                 }
               }
             },
