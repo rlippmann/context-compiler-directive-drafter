@@ -1,0 +1,6 @@
+{
+  "name": "set-premise-missing-noop",
+  "premise": null,
+  "input": "set premise concise replies",
+  "expected": "set premise concise replies"
+}
