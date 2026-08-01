@@ -6,7 +6,7 @@ authoritative state, or replace core validation/execution.
 """
 
 from context_compiler import Engine
-from context_compiler.grammar import CanonicalDirective
+from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive, render_directive
 
 
 def refine_directive(directive: CanonicalDirective, engine: Engine) -> CanonicalDirective:
@@ -17,5 +17,23 @@ def refine_directive(directive: CanonicalDirective, engine: Engine) -> Canonical
     read-only authoritative state and returns the directive unchanged.
     """
 
-    _ = engine.premise, engine.policies
+    if directive.kind is DirectiveKind.SET_PREMISE and engine.premise is not None:
+        refined = render_directive(
+            DirectiveKind.CHANGE_PREMISE,
+            value=directive.operands["value"],
+        )
+        refined_directive = decompose_directive(refined)
+        assert refined_directive is not None
+        return refined_directive
+
+    if directive.kind is DirectiveKind.CHANGE_PREMISE and engine.premise is None:
+        refined = render_directive(
+            DirectiveKind.SET_PREMISE,
+            value=directive.operands["value"],
+        )
+        refined_directive = decompose_directive(refined)
+        assert refined_directive is not None
+        return refined_directive
+
+    _ = engine.policies
     return directive

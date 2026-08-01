@@ -4,7 +4,10 @@ from context_compiler.grammar import decompose_directive
 from context_compiler_directive_drafter import refine_directive
 
 
-def _assert_refinement_preserves_engine_state(directive_text: str, prelude: list[str]) -> None:
+def _refine_with_engine(
+    directive_text: str,
+    prelude: list[str],
+):
     engine = create_engine()
     for item in prelude:
         engine.step(item)
@@ -20,26 +23,49 @@ def _assert_refinement_preserves_engine_state(directive_text: str, prelude: list
 
     engine.step = _unexpected_step  # type: ignore[method-assign]
     try:
-        assert refine_directive(directive, engine) == directive
+        refined = refine_directive(directive, engine)
     finally:
         engine.step = original_step  # type: ignore[method-assign]
 
     assert engine.state == before
+    return refined, directive, before
 
 
-def test_refine_directive_returns_same_canonical_directive_for_no_op_placeholder() -> None:
-    _assert_refinement_preserves_engine_state("set premise concise replies", [])
-
-
-def test_refine_directive_accepts_replacement_directive_without_rewriting_yet() -> None:
-    _assert_refinement_preserves_engine_state(
-        "use podman instead of docker",
-        ["use docker"],
+def test_refine_directive_rewrites_set_premise_to_change_premise_when_premise_exists() -> None:
+    refined, _, _ = _refine_with_engine(
+        "set premise concise replies",
+        ["set premise existing premise"],
     )
 
+    assert refined == decompose_directive("change premise to concise replies")
 
-def test_refine_directive_preserves_populated_authoritative_engine_state() -> None:
-    _assert_refinement_preserves_engine_state(
+
+def test_refine_directive_rewrites_change_premise_to_set_premise_when_premise_missing() -> None:
+    refined, _, _ = _refine_with_engine(
+        "change premise to concise replies",
+        [],
+    )
+
+    assert refined == decompose_directive("set premise concise replies")
+
+
+def test_refine_directive_leaves_set_premise_unchanged_when_premise_missing() -> None:
+    refined, directive, _ = _refine_with_engine("set premise concise replies", [])
+
+    assert refined == directive
+
+
+def test_refine_directive_leaves_change_premise_unchanged_when_premise_exists() -> None:
+    refined, directive, _ = _refine_with_engine(
+        "change premise to concise replies",
+        ["set premise existing premise"],
+    )
+
+    assert refined == directive
+
+
+def test_refine_directive_leaves_unrelated_directives_unchanged() -> None:
+    refined, directive, _ = _refine_with_engine(
         "prohibit kubectl",
         [
             "set premise concise replies",
@@ -47,3 +73,25 @@ def test_refine_directive_preserves_populated_authoritative_engine_state() -> No
             "prohibit pytest",
         ],
     )
+
+    assert refined == directive
+
+
+def test_refine_directive_preserves_populated_authoritative_engine_state() -> None:
+    _, _, before = _refine_with_engine(
+        "set premise concise replies",
+        [
+            "set premise existing premise",
+            "use docker",
+            "prohibit pytest",
+        ],
+    )
+
+    assert before == {
+        "premise": "existing premise",
+        "policies": {
+            "docker": "use",
+            "pytest": "prohibit",
+        },
+        "version": 2,
+    }
