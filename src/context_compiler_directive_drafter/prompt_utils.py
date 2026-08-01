@@ -27,12 +27,12 @@ def render_prompt(
     premise: str | None,
     policies: Mapping[str, PolicyValue],
 ) -> str | None:
-    """Render a drafting prompt from prompt-ready premise and policy data.
+    """Render a drafting prompt from premise and policy context data.
 
     Args:
         path: Prompt template path.
         premise: Current premise value, or None when unset.
-        policies: Current policy mapping keyed by policy item name.
+        policies: Current read-only policy mapping keyed by policy item name.
 
     Returns:
         The rendered prompt text, or None when the prompt file cannot be loaded.
@@ -42,6 +42,7 @@ def render_prompt(
         - leading # header lines and leading blank lines are removed
         - <NULL_OR_VALUE> becomes null or current premise
         - <SET OF CURRENT POLICY ITEMS> becomes sorted policy keys or "(none)"
+        - policy and premise inputs are treated as drafting context only
     """
     try:
         prompt_template = path.read_text(encoding="utf-8")
