@@ -130,11 +130,13 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         A PreprocessResult with:
         - outcome="directive" and a canonical directive string when matched
         - outcome="no_directive" when the heuristic abstains/rejects
-        - outcome="unknown" when unresolved and LLM fallback may be attempted
+        - outcome="unknown" when unresolved and the host should avoid guessing
 
     Notes:
         This pass is precision-first and intentionally narrow. It may abstain
-        on ambiguous or mixed-intent inputs.
+        on ambiguous or mixed-intent inputs. The returned directive, when
+        present, is still a non-authoritative proposal for later compiler
+        review.
     """
     if _LIST_MARKER_PATTERN.match(message):
         return {

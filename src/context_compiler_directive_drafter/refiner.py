@@ -17,9 +17,15 @@ from context_compiler.grammar import (
 def refine_directive(directive: CanonicalDirective, engine: Engine) -> CanonicalDirective:
     """Return a canonical directive after applying deterministic refinement.
 
-    The initial implementation is intentionally a no-op placeholder. It accepts
-    an already-valid canonical directive representation plus an engine exposing
-    read-only authoritative state and returns the directive unchanged.
+    Args:
+        directive: Already-canonical directive data to refine, if needed.
+        engine: Read-only compiler context consulted for deterministic
+            premise/policy refinement decisions. This function does not apply
+            directives or mutate authoritative state through the engine.
+
+    Returns:
+        A canonical directive proposal that may be rewritten to match current
+        premise context while remaining non-authoritative.
     """
 
     if directive.kind is DirectiveKind.SET_PREMISE and engine.premise is not None:

@@ -117,6 +117,10 @@ def validate_preprocessor_output(raw_output: object) -> PreprocessorValidationRe
         - directive: output is a canonical directive string
         - no_directive: output is None
         - unknown: output is None
+
+    This function validates structure and canonical directive shape only. It
+    does not decide whether a directive is allowed in the current compiler
+    context, and it does not apply any directive.
     """
     if isinstance(raw_output, str):
         validated = _validate_text_output(raw_output)
@@ -127,7 +131,12 @@ def validate_preprocessor_output(raw_output: object) -> PreprocessorValidationRe
 
 
 def parse_preprocessor_output(raw_output: object) -> str | None:
-    """Public validation boundary returning only validated directive output."""
+    """Return only the validated canonical directive from raw drafting output.
+
+    This is a narrowing convenience over `validate_preprocessor_output(...)`.
+    It preserves the non-authoritative boundary by returning a canonical
+    directive proposal or `None`, never an applied compiler result.
+    """
     validated = validate_preprocessor_output(raw_output)
     if validated["classification"] == "directive":
         return validated["output"]
