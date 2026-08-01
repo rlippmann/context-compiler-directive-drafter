@@ -3,6 +3,8 @@ import json
 from importlib import import_module
 from pathlib import Path
 
+from context_compiler import create_engine
+
 import context_compiler_directive_drafter as preprocessor
 
 _CONTRACT_PATH = (
@@ -225,27 +227,57 @@ def _assert_callable_spec_schema(spec: dict[str, object], label: str) -> None:
 
 
 def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
-    _assert_exact_keys(spec, {"kind"} | ({"public_members"} & set(spec.keys())), label)
+    _assert_exact_keys(
+        spec, {"kind"} | ({"public_members", "behavior_probes"} & set(spec.keys())), label
+    )
     public_members = spec.get("public_members")
     if public_members is None:
-        return
+        members = None
+    else:
+        assert isinstance(public_members, dict), f"{label}.public_members"
+        _assert_exact_keys(public_members, {"mode", "members"}, f"{label}.public_members")
+        assert public_members["mode"] == "exact", f"{label}.public_members"
+        members = public_members["members"]
+        assert isinstance(members, dict), f"{label}.public_members.members"
 
-    assert isinstance(public_members, dict), f"{label}.public_members"
-    _assert_exact_keys(public_members, {"mode", "members"}, f"{label}.public_members")
-    assert public_members["mode"] == "exact", f"{label}.public_members"
-    members = public_members["members"]
-    assert isinstance(members, dict), f"{label}.public_members.members"
+        for member_name, member_contract in members.items():
+            assert isinstance(member_name, str), f"{label}.public_members.members"
+            assert isinstance(member_contract, dict), f"{label}.{member_name}"
+            member_kind = member_contract.get("kind")
+            assert member_kind in {"method", "property"}, f"{label}.{member_name}"
+            if member_kind == "property":
+                _assert_exact_keys(member_contract, {"kind"}, f"{label}.{member_name}")
+                continue
+            _assert_exact_keys(member_contract, {"kind", "signature"}, f"{label}.{member_name}")
+            _assert_signature_schema(
+                member_contract["signature"], f"{label}.{member_name}.signature"
+            )
 
-    for member_name, member_contract in members.items():
-        assert isinstance(member_name, str), f"{label}.public_members.members"
-        assert isinstance(member_contract, dict), f"{label}.{member_name}"
-        member_kind = member_contract.get("kind")
-        assert member_kind in {"method", "property"}, f"{label}.{member_name}"
-        if member_kind == "property":
-            _assert_exact_keys(member_contract, {"kind"}, f"{label}.{member_name}")
-            continue
-        _assert_exact_keys(member_contract, {"kind", "signature"}, f"{label}.{member_name}")
-        _assert_signature_schema(member_contract["signature"], f"{label}.{member_name}.signature")
+    behavior_probes = spec.get("behavior_probes")
+    if behavior_probes is not None:
+        assert isinstance(behavior_probes, list), f"{label}.behavior_probes"
+        for index, probe in enumerate(behavior_probes):
+            assert isinstance(probe, dict), f"{label}.behavior_probes[{index}]"
+            if probe.get("kind") == "directive_drafter_draft":
+                _assert_directive_drafter_behavior_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
+            raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
+
+
+def _assert_directive_drafter_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
+    _assert_exact_keys(
+        probe,
+        {"kind", "engine_state", "user_input", "expect_result", "expect_engine_unchanged"},
+        label,
+    )
+    assert probe["kind"] == "directive_drafter_draft", label
+    assert isinstance(probe["engine_state"], dict), label
+    assert isinstance(probe["user_input"], str), label
+    assert isinstance(probe["expect_result"], dict), label
+    _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
+    assert isinstance(probe["expect_engine_unchanged"], bool), label
 
 
 def _assert_callable_contract(
@@ -300,12 +332,31 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
             getattr(exported, member_name), member_contract["signature"], (f"{name}.{member_name}")
         )
 
+    for probe in spec.get("behavior_probes", []):
+        if name == "DirectiveDrafter":
+            _assert_directive_drafter_behavior_probe(exported, probe)
+            continue
+        raise AssertionError(f"Unsupported class behavior probe for {name}: {probe!r}")
+
+
+def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
+    engine = create_engine(probe["engine_state"])
+    before = engine.state
+    drafter = exported(engine)
+
+    result = drafter.draft_directive(probe["user_input"])
+
+    _assert_shape(result.__dict__, probe["expect_result"])
+    if probe["expect_engine_unchanged"]:
+        assert engine.state == before
+
 
 _EXPECTED_RUNTIME_EXPORTS = [
     "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
     "PREPROCESS_OUTCOME_DIRECTIVE",
     "PREPROCESS_OUTCOME_NO_DIRECTIVE",
     "PREPROCESS_OUTCOME_UNKNOWN",
+    "DraftResult",
     "DirectiveDrafter",
     "preprocess_heuristic",
     "validate_preprocessor_output",

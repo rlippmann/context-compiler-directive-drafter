@@ -61,22 +61,6 @@ class DirectiveDrafter:
         )
 
 
-def draft_directive(user_input: str, engine: Engine | None = None) -> DraftResult:
-    """Draft at most one directive using the synchronous orchestration layer."""
-
-    if engine is None:
-        return DraftResult(
-            user_input=user_input,
-            outcome="unknown",
-            candidate_directive=None,
-            refined_directive=None,
-            rule_id=None,
-            rationale="Drafting orchestration requires an engine for refinement.",
-        )
-
-    return DirectiveDrafter(engine).draft_directive(user_input)
-
-
 def _rationale_for_non_directive_outcome(outcome: PreprocessOutcome) -> str:
     if outcome == "no_directive":
         return "Input did not look like a directive request."
