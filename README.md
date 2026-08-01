@@ -96,6 +96,7 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 Public interface:
 
 - `DirectiveDrafter(engine)`: Synchronous orchestration over heuristic preprocessing plus deterministic refinement.
+- `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
 - `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
@@ -127,7 +128,7 @@ authorize the drafter to validate, mutate, or apply authoritative state.
 
 ## Recommended Host Flow
 
-1. Run `DirectiveDrafter(engine).draft_directive(message)` or call the helpers directly.
+1. Run `DirectiveDrafter(engine).draft_directive(message)` as the high-level drafting API, or call the helpers directly if your host needs lower-level control.
 2. If the result yields a candidate directive, pass that canonical directive to
    `context-compiler` for authoritative review and application.
 3. If the result yields `no_directive`, continue the host flow without a
@@ -229,7 +230,7 @@ The CLI command is `directive-drafter`. The CLI currently supports a limited set
 uv run directive-drafter "please make replies concise"
 ```
 
-It returns a non-zero exit status because the synchronous orchestration layer still requires an engine-provided refinement context from host code.
+It returns a non-zero exit status because the public high-level drafting API requires a host-provided engine context.
 
 ## Development
 

@@ -1,10 +1,7 @@
 """CLI entrypoint placeholder for directive drafting."""
 
 import argparse
-import json
 import sys
-
-from context_compiler_directive_drafter.drafter import draft_directive
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -20,7 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--json",
         action="store_true",
-        help="Emit placeholder result as JSON.",
+        help="Emit the current CLI status as JSON.",
     )
     return parser
 
@@ -33,13 +30,16 @@ def main() -> int:
         parser.print_help(sys.stderr)
         return 2
 
-    result = draft_directive(args.user_input)
-
     if args.json:
-        print(json.dumps(result.__dict__, sort_keys=True))
+        print(
+            '{"available": false, "reason": '
+            '"The public high-level drafting API requires a host-provided engine."}'
+        )
     else:
-        print(f"directive-drafter: {result.rationale}", file=sys.stderr)
-        print(f"input: {result.user_input}", file=sys.stderr)
-        print("candidate_directive: none", file=sys.stderr)
+        print(
+            "directive-drafter: the public high-level drafting API requires a "
+            "host-provided engine.",
+            file=sys.stderr,
+        )
 
     return 1

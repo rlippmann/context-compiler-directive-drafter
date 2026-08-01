@@ -13,6 +13,7 @@
       "PREPROCESS_OUTCOME_NO_DIRECTIVE",
       "PREPROCESS_OUTCOME_UNKNOWN",
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
+      "DraftResult",
       "DirectiveDrafter",
       "parse_preprocessor_output",
       "preprocess_heuristic",
@@ -36,6 +37,9 @@
       "PREPROCESS_OUTCOME_UNKNOWN": {
       "kind": "constant",
       "value": "unknown"
+      },
+      "DraftResult": {
+        "kind": "class"
       },
       "DirectiveDrafter": {
         "kind": "class",
@@ -61,7 +65,163 @@
               }
             }
           }
-        }
+        },
+        "behavior_probes": [
+          {
+            "kind": "directive_drafter_draft",
+            "engine_state": {
+              "premise": null,
+              "policies": {},
+              "version": 2
+            },
+            "user_input": "set premise concise replies",
+            "expect_result": {
+              "type": "object",
+              "required_keys": [
+                "user_input",
+                "outcome",
+                "candidate_directive",
+                "refined_directive",
+                "rule_id",
+                "authoritative",
+                "rationale"
+              ],
+              "properties": {
+                "user_input": {
+                  "type": "string",
+                  "const": "set premise concise replies"
+                },
+                "outcome": {
+                  "type": "string",
+                  "const": "directive"
+                },
+                "candidate_directive": {
+                  "type": "string",
+                  "const": "set premise concise replies"
+                },
+                "refined_directive": {
+                  "type": "string",
+                  "const": "set premise concise replies"
+                },
+                "rule_id": {
+                  "type": "string",
+                  "const": "canonical.full_match"
+                },
+                "authoritative": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "rationale": {
+                  "type": "string",
+                  "const": "Drafted a candidate directive with deterministic refinement."
+                }
+              }
+            },
+            "expect_engine_unchanged": true
+          },
+          {
+            "kind": "directive_drafter_draft",
+            "engine_state": {
+              "premise": null,
+              "policies": {},
+              "version": 2
+            },
+            "user_input": "can you help with lunch?",
+            "expect_result": {
+              "type": "object",
+              "required_keys": [
+                "user_input",
+                "outcome",
+                "candidate_directive",
+                "refined_directive",
+                "rule_id",
+                "authoritative",
+                "rationale"
+              ],
+              "properties": {
+                "user_input": {
+                  "type": "string",
+                  "const": "can you help with lunch?"
+                },
+                "outcome": {
+                  "type": "string",
+                  "const": "no_directive"
+                },
+                "candidate_directive": {
+                  "type": "null"
+                },
+                "refined_directive": {
+                  "type": "null"
+                },
+                "rule_id": {
+                  "type": "string",
+                  "const": "reject.confident_non_directive"
+                },
+                "authoritative": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "rationale": {
+                  "type": "string",
+                  "const": "Input did not look like a directive request."
+                }
+              }
+            },
+            "expect_engine_unchanged": true
+          },
+          {
+            "kind": "directive_drafter_draft",
+            "engine_state": {
+              "premise": "existing premise",
+              "policies": {},
+              "version": 2
+            },
+            "user_input": "set premise concise replies",
+            "expect_result": {
+              "type": "object",
+              "required_keys": [
+                "user_input",
+                "outcome",
+                "candidate_directive",
+                "refined_directive",
+                "rule_id",
+                "authoritative",
+                "rationale"
+              ],
+              "properties": {
+                "user_input": {
+                  "type": "string",
+                  "const": "set premise concise replies"
+                },
+                "outcome": {
+                  "type": "string",
+                  "const": "directive"
+                },
+                "candidate_directive": {
+                  "type": "string",
+                  "const": "set premise concise replies"
+                },
+                "refined_directive": {
+                  "type": "string",
+                  "const": "change premise to concise replies"
+                },
+                "rule_id": {
+                  "type": "string",
+                  "const": "canonical.full_match"
+                },
+                "authoritative": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "rationale": {
+                  "type": "string",
+                  "const": "Drafted a candidate directive with deterministic refinement."
+                }
+              }
+            },
+            "expect_engine_unchanged": true
+          }
+        ]
       },
       "preprocess_heuristic": {
         "kind": "callable",
