@@ -15,6 +15,7 @@
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
       "parse_preprocessor_output",
       "preprocess_heuristic",
+      "refine_directive",
       "render_prompt",
       "validate_preprocessor_output"
     ],
@@ -226,6 +227,24 @@
             }
           }
         ]
+      },
+      "refine_directive": {
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {
+              "name": "directive",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "engine",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
+          ]
+        }
       },
       "render_prompt": {
         "kind": "callable",
