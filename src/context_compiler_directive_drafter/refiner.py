@@ -6,7 +6,12 @@ authoritative state, or replace core validation/execution.
 """
 
 from context_compiler import Engine
-from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive, render_directive
+from context_compiler.grammar import (
+    CanonicalDirective,
+    DirectiveKind,
+    decompose_directive,
+    render_directive,
+)
 
 
 def refine_directive(directive: CanonicalDirective, engine: Engine) -> CanonicalDirective:
