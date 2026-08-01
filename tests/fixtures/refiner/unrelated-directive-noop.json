@@ -1,0 +1,6 @@
+{
+  "name": "unrelated-directive-noop",
+  "premise": "existing premise",
+  "input": "prohibit kubectl",
+  "expected": "prohibit kubectl"
+}
