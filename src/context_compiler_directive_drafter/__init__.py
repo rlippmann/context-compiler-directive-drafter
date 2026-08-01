@@ -14,6 +14,7 @@ from context_compiler_directive_drafter.output_validation import (
     validate_preprocessor_output,
 )
 from context_compiler_directive_drafter.prompt_utils import render_prompt
+from context_compiler_directive_drafter.refiner import refine_directive
 
 __all__ = [
     "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
@@ -22,6 +23,7 @@ __all__ = [
     "PREPROCESS_OUTCOME_UNKNOWN",
     "parse_preprocessor_output",
     "preprocess_heuristic",
+    "refine_directive",
     "render_prompt",
     "validate_preprocessor_output",
 ]

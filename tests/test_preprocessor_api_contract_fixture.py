@@ -309,6 +309,7 @@ _EXPECTED_RUNTIME_EXPORTS = [
     "preprocess_heuristic",
     "validate_preprocessor_output",
     "parse_preprocessor_output",
+    "refine_directive",
     "render_prompt",
 ]
 
