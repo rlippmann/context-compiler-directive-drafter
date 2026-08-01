@@ -13,6 +13,7 @@
       "PREPROCESS_OUTCOME_NO_DIRECTIVE",
       "PREPROCESS_OUTCOME_UNKNOWN",
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
+      "DirectiveDrafter",
       "parse_preprocessor_output",
       "preprocess_heuristic",
       "refine_directive",
@@ -35,6 +36,32 @@
       "PREPROCESS_OUTCOME_UNKNOWN": {
       "kind": "constant",
       "value": "unknown"
+      },
+      "DirectiveDrafter": {
+        "kind": "class",
+        "public_members": {
+          "mode": "exact",
+          "members": {
+            "draft_directive": {
+              "kind": "method",
+              "signature": {
+                "is_async": false,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "user_input",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       "preprocess_heuristic": {
         "kind": "callable",

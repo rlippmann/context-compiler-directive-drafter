@@ -1,4 +1,4 @@
-"""Placeholder-only regression coverage for the current CLI surface."""
+"""Regression coverage for the current CLI surface."""
 
 import json
 
@@ -12,7 +12,7 @@ def test_cli_placeholder_invocation_returns_placeholder_status(monkeypatch, caps
 
     captured = capsys.readouterr()
     assert exit_code == 1
-    assert "drafting is not implemented yet" in captured.err
+    assert "Drafting orchestration requires an engine for refinement" in captured.err
     assert "candidate_directive: none" in captured.err
 
 
@@ -37,7 +37,9 @@ def test_cli_json_emits_placeholder_payload_on_stdout(monkeypatch, capsys) -> No
     assert json.loads(captured.out) == {
         "authoritative": False,
         "candidate_directive": None,
-        "confidence": 0.0,
-        "rationale": "Drafting is not implemented yet.",
+        "outcome": "unknown",
+        "refined_directive": None,
+        "rationale": "Drafting orchestration requires an engine for refinement.",
+        "rule_id": None,
         "user_input": "please make replies concise",
     }

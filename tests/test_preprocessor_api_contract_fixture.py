@@ -306,6 +306,7 @@ _EXPECTED_RUNTIME_EXPORTS = [
     "PREPROCESS_OUTCOME_DIRECTIVE",
     "PREPROCESS_OUTCOME_NO_DIRECTIVE",
     "PREPROCESS_OUTCOME_UNKNOWN",
+    "DirectiveDrafter",
     "preprocess_heuristic",
     "validate_preprocessor_output",
     "parse_preprocessor_output",

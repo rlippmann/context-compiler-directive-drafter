@@ -38,7 +38,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(result.__dict__, sort_keys=True))
     else:
-        print("directive-drafter: drafting is not implemented yet.", file=sys.stderr)
+        print(f"directive-drafter: {result.rationale}", file=sys.stderr)
         print(f"input: {result.user_input}", file=sys.stderr)
         print("candidate_directive: none", file=sys.stderr)
 

@@ -63,22 +63,27 @@ uv sync --group dev
 
 ## Basic Usage
 
-Draft and validate a candidate directive:
+Draft and optionally refine a candidate directive:
 
 ```python
-from context_compiler_directive_drafter import preprocess_heuristic, parse_preprocessor_output
+from context_compiler import create_engine
+from context_compiler_directive_drafter import DirectiveDrafter
 
-user_message = "Please use Docker for container examples."
-result = preprocess_heuristic(user_message)
-
-candidate = parse_preprocessor_output(
-    result["directive"],
+engine = create_engine(
+    {
+        "premise": None,
+        "policies": {},
+        "version": 2,
+    }
 )
+drafter = DirectiveDrafter(engine)
 
-if candidate is not None:
-    print("Candidate directive:", candidate)
+result = drafter.draft_directive("Please use Docker for container examples.")
+
+if result.refined_directive is not None:
+    print("Candidate directive:", result.refined_directive)
 else:
-    print("No canonical directive found.")
+    print("No canonical directive drafted.")
 ```
 
 The host validates drafted output before passing it to engine.step(...).
@@ -90,6 +95,7 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 
 Public interface:
 
+- `DirectiveDrafter(engine)`: Synchronous orchestration over heuristic preprocessing plus deterministic refinement.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
 - `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
@@ -121,17 +127,16 @@ authorize the drafter to validate, mutate, or apply authoritative state.
 
 ## Recommended Host Flow
 
-1. Run `preprocess_heuristic(message)`.
-2. If a candidate exists, validate it with `parse_preprocessor_output(...)`.
-3. If not valid, consider fallback drafting (e.g., LLM prompt).
-4. Always validate fallback output with `parse_preprocessor_output(...)`.
-5. If validation yields `directive`, pass that canonical directive to
+1. Run `DirectiveDrafter(engine).draft_directive(message)` or call the helpers directly.
+2. If the result yields a candidate directive, pass that canonical directive to
    `context-compiler` for authoritative review and application.
-6. If validation yields `no_directive`, continue the host flow without a
+3. If the result yields `no_directive`, continue the host flow without a
    directive handoff.
-7. If validation yields `unknown`, preserve the boundary: ask for
+4. If the result yields `unknown`, preserve the boundary: ask for
    clarification, show resubmission guidance, or retry drafting in a safer
    workflow.
+
+The public helpers remain available unchanged for hosts that prefer to orchestrate preprocessing, validation, and refinement themselves.
 
 **Safety Guidance:**
 
@@ -224,7 +229,7 @@ The CLI command is `directive-drafter`. The CLI currently supports a limited set
 uv run directive-drafter "please make replies concise"
 ```
 
-It returns a non-zero exit status and explains that a broader natural-language drafting workflow is not yet exposed as a user-facing CLI command.
+It returns a non-zero exit status because the synchronous orchestration layer still requires an engine-provided refinement context from host code.
 
 ## Development
 
