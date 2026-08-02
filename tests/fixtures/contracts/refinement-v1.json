@@ -1,0 +1,26 @@
+{
+  "id": "refinement-capability-v1",
+  "kind": "api-capability-contract",
+  "module": "context_compiler_directive_drafter",
+  "capability": "refinement",
+  "members": {
+    "refine_directive": {
+      "kind": "callable",
+      "signature": {
+        "is_async": false,
+        "params": [
+          {
+            "name": "directive",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          },
+          {
+            "name": "engine",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          }
+        ]
+      }
+    }
+  }
+}

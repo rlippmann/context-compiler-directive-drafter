@@ -1,0 +1,87 @@
+{
+  "id": "acquisition-capability-v1",
+  "kind": "api-capability-contract",
+  "module": "context_compiler_directive_drafter",
+  "capability": "preprocessing-acquisition",
+  "members": {
+    "preprocess_heuristic": {
+      "kind": "callable",
+      "signature": {
+        "is_async": false,
+        "params": [
+          {
+            "name": "message",
+            "kind": "POSITIONAL_OR_KEYWORD",
+            "has_default": false
+          }
+        ]
+      },
+      "return_shape": {
+        "any_of": [
+          {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive",
+              "rule_id"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "directive"
+                ]
+              },
+              "directive": {
+                "type": "string"
+              },
+              "rule_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive",
+              "rule_id"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "no_directive",
+                  "unknown"
+                ]
+              },
+              "directive": {
+                "type": "null"
+              },
+              "rule_id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "shape_probes": [
+        {
+          "kwargs": {
+            "message": "use docker"
+          }
+        },
+        {
+          "kwargs": {
+            "message": "please help with lunch"
+          }
+        },
+        {
+          "kwargs": {
+            "message": "use docker, actually prohibit docker"
+          }
+        }
+      ]
+    }
+  }
+}
