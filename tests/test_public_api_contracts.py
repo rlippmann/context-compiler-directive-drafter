@@ -259,7 +259,9 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
             raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
 
 
-def _assert_render_prompt_behavior_probe(exported: object, probe: dict[str, object], tmp_path: Path) -> None:
+def _assert_render_prompt_behavior_probe(
+    exported: object, probe: dict[str, object], tmp_path: Path
+) -> None:
     template_path = tmp_path / probe["path"]
     template_path.write_text(probe["template"], encoding="utf-8")
     result = exported(template_path, probe["premise"], probe["policies"])
@@ -278,7 +280,9 @@ def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, 
         assert engine.state == before
 
 
-def _assert_callable_contract(name: str, exported: object, spec: dict[str, object], tmp_path: Path) -> None:
+def _assert_callable_contract(
+    name: str, exported: object, spec: dict[str, object], tmp_path: Path
+) -> None:
     _assert_signature_matches(exported, spec["signature"], name)
 
     for probe in spec.get("shape_probes", []):
@@ -302,7 +306,9 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
     public_members = spec.get("public_members")
     if public_members is not None:
         members = public_members["members"]
-        actual_public_members = sorted(member for member in dir(exported) if not member.startswith("_"))
+        actual_public_members = sorted(
+            member for member in dir(exported) if not member.startswith("_")
+        )
         assert actual_public_members == sorted(members.keys()), name
         for member_name, member_contract in members.items():
             assert hasattr(exported, member_name), f"{name}.{member_name}"
@@ -313,7 +319,9 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
                 continue
             assert callable(getattr(exported, member_name)), f"{name}.{member_name}"
             _assert_signature_matches(
-                getattr(exported, member_name), member_contract["signature"], f"{name}.{member_name}"
+                getattr(exported, member_name),
+                member_contract["signature"],
+                f"{name}.{member_name}",
             )
 
     for probe in spec.get("behavior_probes", []):
@@ -426,10 +434,16 @@ def test_public_api_capability_contracts_reference_exported_members_only() -> No
             assert name in package.__all__, f"{path.name}:{name}"
 
 
-def test_public_api_contracts_validate_kinds_signatures_and_shapes(tmp_path: Path) -> None:
+def test_public_api_contracts_validate_kinds_signatures_and_shapes(
+    tmp_path: Path,
+) -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
-        members = contract["exports"]["members"] if contract["kind"] == "api-surface-contract" else contract["members"]
+        members = (
+            contract["exports"]["members"]
+            if contract["kind"] == "api-surface-contract"
+            else contract["members"]
+        )
         for name, spec in members.items():
             exported = getattr(package, name)
             kind = spec["kind"]
