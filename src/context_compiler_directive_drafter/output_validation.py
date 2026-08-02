@@ -14,7 +14,7 @@ from context_compiler.grammar import is_canonical_directive
 
 from .constants import (
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
-    PreprocessOutcome,
+    DraftOutcome,
     count_canonical_directive_starts,
 )
 
@@ -25,7 +25,7 @@ __all__ = [
 
 
 class PreprocessorValidationResult(TypedDict):
-    classification: PreprocessOutcome
+    classification: DraftOutcome
     output: str | None
 
 

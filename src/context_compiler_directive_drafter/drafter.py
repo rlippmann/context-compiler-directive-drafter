@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from context_compiler import Engine
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter.constants import PreprocessOutcome
+from context_compiler_directive_drafter.constants import DraftOutcome
 from context_compiler_directive_drafter.heuristic_preprocessor import preprocess_heuristic
 from context_compiler_directive_drafter.refiner import refine_directive
 
@@ -19,7 +19,7 @@ class DraftResult:
     validation, or authoritative state mutation.
     """
 
-    outcome: PreprocessOutcome
+    outcome: DraftOutcome
     directive: str | None
 
 
@@ -46,15 +46,20 @@ class DirectiveDrafter:
             final directive proposal, if one was produced.
         """
 
-        preprocess_result = preprocess_heuristic(user_input)
-        outcome = preprocess_result["outcome"]
-        candidate_directive = preprocess_result["directive"]
+        heuristic_result = preprocess_heuristic(user_input)
+        drafted = DraftResult(
+            outcome=heuristic_result["outcome"],
+            directive=heuristic_result["directive"],
+        )
 
-        if candidate_directive is None:
-            return DraftResult(outcome=outcome, directive=None)
+        if drafted.directive is None:
+            return drafted
 
-        canonical_directive = decompose_directive(candidate_directive)
+        canonical_directive = decompose_directive(drafted.directive)
         assert canonical_directive is not None
 
         refined = refine_directive(canonical_directive, engine)
-        return DraftResult(outcome=outcome, directive=refined.text)
+        if refined.text == drafted.directive:
+            return drafted
+
+        return DraftResult(outcome=drafted.outcome, directive=refined.text)
