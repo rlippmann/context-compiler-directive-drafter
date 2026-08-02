@@ -1,0 +1,124 @@
+{
+  "id": "high-level-drafting-capability-v1",
+  "kind": "api-capability-contract",
+  "module": "context_compiler_directive_drafter",
+  "capability": "high-level-drafting",
+  "members": {
+    "DraftResult": {
+      "kind": "class"
+    },
+    "DirectiveDrafter": {
+      "kind": "class",
+      "public_members": {
+        "mode": "exact",
+        "members": {
+          "draft_directive": {
+            "kind": "method",
+            "signature": {
+              "is_async": false,
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "user_input",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "engine",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                }
+              ]
+            }
+          }
+        }
+      },
+      "behavior_probes": [
+        {
+          "kind": "directive_drafter_draft",
+          "engine_state": {
+            "premise": null,
+            "policies": {},
+            "version": 2
+          },
+          "user_input": "set premise concise replies",
+          "expect_result": {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "directive"
+              },
+              "directive": {
+                "type": "string",
+                "const": "set premise concise replies"
+              }
+            }
+          },
+          "expect_engine_unchanged": true
+        },
+        {
+          "kind": "directive_drafter_draft",
+          "engine_state": {
+            "premise": null,
+            "policies": {},
+            "version": 2
+          },
+          "user_input": "can you help with lunch?",
+          "expect_result": {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "no_directive"
+              },
+              "directive": {
+                "type": "null"
+              }
+            }
+          },
+          "expect_engine_unchanged": true
+        },
+        {
+          "kind": "directive_drafter_draft",
+          "engine_state": {
+            "premise": "existing premise",
+            "policies": {},
+            "version": 2
+          },
+          "user_input": "set premise concise replies",
+          "expect_result": {
+            "type": "object",
+            "required_keys": [
+              "outcome",
+              "directive"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "directive"
+              },
+              "directive": {
+                "type": "string",
+                "const": "change premise to concise replies"
+              }
+            }
+          },
+          "expect_engine_unchanged": true
+        }
+      ]
+    }
+  }
+}
