@@ -1,11 +1,12 @@
 """Synchronous orchestration for non-authoritative directive drafting."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from context_compiler import Engine
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter.constants import DraftOutcome
+from context_compiler_directive_drafter.constants import DRAFT_OUTCOME_DIRECTIVE, DraftOutcome
 from context_compiler_directive_drafter.heuristic_preprocessor import preprocess_heuristic
 from context_compiler_directive_drafter.refiner import refine_directive
 
@@ -23,6 +24,9 @@ class DraftResult:
     directive: str | None
 
 
+DraftFallback = Callable[[str], DraftResult]
+
+
 class DirectiveDrafter:
     """Synchronous high-level drafting API over the public helper functions.
 
@@ -31,6 +35,17 @@ class DirectiveDrafter:
     canonical directive per call and leaves authoritative review and
     application to `context-compiler`.
     """
+
+    def __init__(self, fallback: DraftFallback | None = None) -> None:
+        """Create a drafter with an optional fallback acquisition callback.
+
+        Args:
+            fallback: Optional non-authoritative callback that accepts the
+                original user input and returns a DraftResult. The callback is
+                only used when heuristic drafting does not produce a directive.
+        """
+
+        self._fallback = fallback
 
     def draft_directive(self, user_input: str, engine: Engine) -> DraftResult:
         """Draft at most one canonical directive from one user input.
@@ -52,9 +67,18 @@ class DirectiveDrafter:
             directive=heuristic_result["directive"],
         )
 
-        if drafted.directive is None:
+        if drafted.outcome != DRAFT_OUTCOME_DIRECTIVE and self._fallback is not None:
+            drafted = self._fallback(user_input)
+
+        if drafted.outcome != DRAFT_OUTCOME_DIRECTIVE:
             return drafted
 
+        return self._refine_draft_result(drafted, engine)
+
+    def _refine_draft_result(self, drafted: DraftResult, engine: Engine) -> DraftResult:
+        """Refine a drafted canonical directive without mutating the result."""
+
+        assert drafted.directive is not None
         canonical_directive = decompose_directive(drafted.directive)
         assert canonical_directive is not None
 

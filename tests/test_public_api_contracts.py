@@ -467,9 +467,9 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
     contract = _load_contract(path)
     assert set(contract["exports"]["names"]) == {
         "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
-        "PREPROCESS_OUTCOME_DIRECTIVE",
-        "PREPROCESS_OUTCOME_NO_DIRECTIVE",
-        "PREPROCESS_OUTCOME_UNKNOWN",
+        "DRAFT_OUTCOME_DIRECTIVE",
+        "DRAFT_OUTCOME_NO_DIRECTIVE",
+        "DRAFT_OUTCOME_UNKNOWN",
         "DraftResult",
         "DirectiveDrafter",
         "parse_preprocessor_output",
@@ -484,3 +484,13 @@ def test_typing_only_names_are_not_importable_from_package_root() -> None:
     imported = import_module("context_compiler_directive_drafter")
     for name in ["DraftOutcome", "PreprocessResult"]:
         assert name not in imported.__dict__, name
+
+
+def test_directive_drafter_constructor_supports_optional_fallback() -> None:
+    signature = inspect.signature(package.DirectiveDrafter)
+    parameters = list(signature.parameters.values())
+
+    assert len(parameters) == 1
+    assert parameters[0].name == "fallback"
+    assert parameters[0].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+    assert parameters[0].default is None

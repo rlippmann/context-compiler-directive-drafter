@@ -1,9 +1,9 @@
 """Public package surface for context-compiler-directive-drafter."""
 
 from context_compiler_directive_drafter.constants import (
-    PREPROCESS_OUTCOME_DIRECTIVE,
-    PREPROCESS_OUTCOME_NO_DIRECTIVE,
-    PREPROCESS_OUTCOME_UNKNOWN,
+    DRAFT_OUTCOME_DIRECTIVE,
+    DRAFT_OUTCOME_NO_DIRECTIVE,
+    DRAFT_OUTCOME_UNKNOWN,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
 )
 from context_compiler_directive_drafter.drafter import DirectiveDrafter, DraftResult
@@ -19,9 +19,9 @@ from context_compiler_directive_drafter.refiner import refine_directive
 
 __all__ = [
     "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
-    "PREPROCESS_OUTCOME_DIRECTIVE",
-    "PREPROCESS_OUTCOME_NO_DIRECTIVE",
-    "PREPROCESS_OUTCOME_UNKNOWN",
+    "DRAFT_OUTCOME_DIRECTIVE",
+    "DRAFT_OUTCOME_NO_DIRECTIVE",
+    "DRAFT_OUTCOME_UNKNOWN",
     "DraftResult",
     "DirectiveDrafter",
     "parse_preprocessor_output",

@@ -5,9 +5,9 @@ from typing import Final, Literal
 
 PREPROCESSOR_NO_DIRECTIVE_SENTINEL: Final = "<NO_DIRECTIVE>"
 
-PREPROCESS_OUTCOME_DIRECTIVE: Final = "directive"
-PREPROCESS_OUTCOME_NO_DIRECTIVE: Final = "no_directive"
-PREPROCESS_OUTCOME_UNKNOWN: Final = "unknown"
+DRAFT_OUTCOME_DIRECTIVE: Final = "directive"
+DRAFT_OUTCOME_NO_DIRECTIVE: Final = "no_directive"
+DRAFT_OUTCOME_UNKNOWN: Final = "unknown"
 DraftOutcome = Literal["directive", "no_directive", "unknown"]
 
 PROMPT_TOKEN_NULL_OR_VALUE: Final = "<NULL_OR_VALUE>"
