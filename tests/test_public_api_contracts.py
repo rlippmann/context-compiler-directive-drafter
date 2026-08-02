@@ -416,7 +416,7 @@ def test_public_api_surface_contract_has_unique_entries() -> None:
 def test_public_api_surface_contract_excludes_typing_only_names() -> None:
     path = _CONTRACTS_DIR / "public-api-v1.json"
     contract = _load_contract(path)
-    for name in ["PreprocessOutcome", "PreprocessResult"]:
+    for name in ["DraftOutcome", "PreprocessResult"]:
         assert name not in contract["exports"]["names"], name
         assert name in contract["forbidden_exports"], name
         assert not hasattr(package, name), name
@@ -482,5 +482,5 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
 
 def test_typing_only_names_are_not_importable_from_package_root() -> None:
     imported = import_module("context_compiler_directive_drafter")
-    for name in ["PreprocessOutcome", "PreprocessResult"]:
+    for name in ["DraftOutcome", "PreprocessResult"]:
         assert name not in imported.__dict__, name

@@ -3,7 +3,7 @@
   "kind": "api-surface-contract",
   "module": "context_compiler_directive_drafter",
   "forbidden_exports": [
-    "PreprocessOutcome",
+    "DraftOutcome",
     "PreprocessResult"
   ],
   "exports": {

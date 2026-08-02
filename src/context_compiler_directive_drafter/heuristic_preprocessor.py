@@ -15,13 +15,13 @@ from .constants import (
     PREPROCESS_OUTCOME_DIRECTIVE,
     PREPROCESS_OUTCOME_NO_DIRECTIVE,
     PREPROCESS_OUTCOME_UNKNOWN,
-    PreprocessOutcome,
+    DraftOutcome,
     count_canonical_directive_starts,
 )
 
 
 class PreprocessResult(TypedDict):
-    outcome: PreprocessOutcome
+    outcome: DraftOutcome
     directive: str | None
     rule_id: str | None
 
