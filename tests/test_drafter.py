@@ -1,9 +1,10 @@
-from context_compiler.grammar import CanonicalDirective, DirectiveKind
-from context_compiler import create_engine
 from types import MappingProxyType
 
-from context_compiler_directive_drafter import DirectiveDrafter, DraftResult
+from context_compiler import create_engine
+from context_compiler.grammar import CanonicalDirective, DirectiveKind
+
 import context_compiler_directive_drafter.drafter as drafter_module
+from context_compiler_directive_drafter import DirectiveDrafter, DraftResult
 
 
 def test_fallback_is_used_when_heuristic_does_not_produce_a_directive() -> None:
@@ -120,3 +121,43 @@ def test_fallback_unknown_result_is_returned_unchanged_even_if_directive_is_miss
     result = drafter.draft_directive("directive-like but unresolved", engine)
 
     assert result == expected
+
+
+def test_invalid_fallback_directive_does_not_reach_refinement(monkeypatch) -> None:
+    refined_calls: list[str] = []
+
+    def fake_refine(directive: CanonicalDirective, engine) -> CanonicalDirective:
+        refined_calls.append(directive.text)
+        return directive
+
+    monkeypatch.setattr(drafter_module, "refine_directive", fake_refine)
+
+    drafter = DirectiveDrafter(
+        fallback=lambda _: DraftResult(outcome="directive", directive="please use docker")
+    )
+    engine = create_engine({"premise": None, "policies": {}, "version": 2})
+
+    result = drafter.draft_directive("please use docker", engine)
+
+    assert result == DraftResult(outcome="unknown", directive=None)
+    assert refined_calls == []
+
+
+def test_valid_fallback_directive_is_validated_before_refinement(monkeypatch) -> None:
+    refined_calls: list[str] = []
+
+    def fake_refine(directive: CanonicalDirective, engine) -> CanonicalDirective:
+        refined_calls.append(directive.text)
+        return directive
+
+    monkeypatch.setattr(drafter_module, "refine_directive", fake_refine)
+
+    drafter = DirectiveDrafter(
+        fallback=lambda _: DraftResult(outcome="directive", directive="use docker")
+    )
+    engine = create_engine({"premise": None, "policies": {}, "version": 2})
+
+    result = drafter.draft_directive("please use docker", engine)
+
+    assert result == DraftResult(outcome="directive", directive="use docker")
+    assert refined_calls == ["use docker"]

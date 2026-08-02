@@ -8,6 +8,7 @@ from context_compiler.grammar import decompose_directive
 
 from context_compiler_directive_drafter.constants import DRAFT_OUTCOME_DIRECTIVE, DraftOutcome
 from context_compiler_directive_drafter.heuristic_preprocessor import preprocess_heuristic
+from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
 from context_compiler_directive_drafter.refiner import refine_directive
 
 
@@ -73,6 +74,11 @@ class DirectiveDrafter:
         if drafted.outcome != DRAFT_OUTCOME_DIRECTIVE:
             return drafted
 
+        validated_directive = parse_preprocessor_output(drafted.directive)
+        if validated_directive is None:
+            return DraftResult(outcome="unknown", directive=None)
+
+        drafted = DraftResult(outcome=drafted.outcome, directive=validated_directive)
         return self._refine_draft_result(drafted, engine)
 
     def _refine_draft_result(self, drafted: DraftResult, engine: Engine) -> DraftResult:
