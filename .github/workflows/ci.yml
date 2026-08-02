@@ -84,11 +84,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync --group dev
 
-      - name: Run preprocessor conformance tests
+      - name: Run public API conformance tests
         run: |
           uv run pytest \
             tests/test_preprocessor_conformance.py \
-            tests/test_preprocessor_api_contract_fixture.py
+            tests/test_public_api_contracts.py
 
   contract-heuristic-coverage:
     runs-on: ubuntu-latest
