@@ -13,6 +13,9 @@ from typing import TypedDict
 from context_compiler.grammar import is_canonical_directive
 
 from .constants import (
+    DRAFT_OUTCOME_DIRECTIVE,
+    DRAFT_OUTCOME_NO_DIRECTIVE,
+    DRAFT_OUTCOME_UNKNOWN,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DraftOutcome,
     count_canonical_directive_starts,
@@ -30,15 +33,15 @@ class PreprocessorValidationResult(TypedDict):
 
 
 def _unknown() -> PreprocessorValidationResult:
-    return {"classification": "unknown", "output": None}
+    return {"classification": DRAFT_OUTCOME_UNKNOWN, "output": None}
 
 
 def _directive(output: str) -> PreprocessorValidationResult:
-    return {"classification": "directive", "output": output}
+    return {"classification": DRAFT_OUTCOME_DIRECTIVE, "output": output}
 
 
 def _no_directive() -> PreprocessorValidationResult:
-    return {"classification": "no_directive", "output": None}
+    return {"classification": DRAFT_OUTCOME_NO_DIRECTIVE, "output": None}
 
 
 def _is_allowed_directive(text: str) -> bool:
@@ -61,7 +64,7 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
     if not isinstance(classification, str):
         return _unknown()
 
-    if classification == "directive":
+    if classification == DRAFT_OUTCOME_DIRECTIVE:
         if not isinstance(output, str):
             return _unknown()
         normalized_output = output.strip()
@@ -73,12 +76,12 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
             return _unknown()
         return _directive(normalized_output)
 
-    if classification == "no_directive":
+    if classification == DRAFT_OUTCOME_NO_DIRECTIVE:
         if output is not None:
             return _unknown()
         return _no_directive()
 
-    if classification == "unknown":
+    if classification == DRAFT_OUTCOME_UNKNOWN:
         if output is not None:
             return _unknown()
         return _unknown()
@@ -138,6 +141,6 @@ def parse_preprocessor_output(raw_output: object) -> str | None:
     directive proposal or `None`, never an applied compiler result.
     """
     validated = validate_preprocessor_output(raw_output)
-    if validated["classification"] == "directive":
+    if validated["classification"] == DRAFT_OUTCOME_DIRECTIVE:
         return validated["output"]
     return None

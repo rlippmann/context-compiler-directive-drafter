@@ -6,9 +6,9 @@ from hypothesis import strategies as st
 
 from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.constants import (
-    PREPROCESS_OUTCOME_DIRECTIVE,
-    PREPROCESS_OUTCOME_NO_DIRECTIVE,
-    PREPROCESS_OUTCOME_UNKNOWN,
+    DRAFT_OUTCOME_DIRECTIVE,
+    DRAFT_OUTCOME_NO_DIRECTIVE,
+    DRAFT_OUTCOME_UNKNOWN,
 )
 from context_compiler_directive_drafter.output_validation import (
     parse_preprocessor_output,
@@ -57,7 +57,7 @@ def test_heuristic_accepts_canonical_directive_with_trailing_period_or_bang(
     directive: str, punctuation: str
 ) -> None:
     result = preprocess_heuristic(f"{directive}{punctuation}")
-    assert result["outcome"] == PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     parsed = parse_preprocessor_output(result["directive"])
     assert parsed == result["directive"]
 
@@ -65,7 +65,7 @@ def test_heuristic_accepts_canonical_directive_with_trailing_period_or_bang(
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
 def test_heuristic_question_suffix_never_produces_directive(directive: str) -> None:
     result = preprocess_heuristic(f"{directive}?")
-    assert result["outcome"] == PREPROCESS_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
     assert result["directive"] is None
 
 
@@ -75,7 +75,7 @@ def test_heuristic_accepts_single_layer_exact_wrapper(
 ) -> None:
     left, right = wrapper
     result = preprocess_heuristic(f"{left}{directive}{right}")
-    assert result["outcome"] == PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     parsed = parse_preprocessor_output(result["directive"])
     assert parsed == result["directive"]
 
@@ -86,7 +86,7 @@ def test_heuristic_quoted_exact_wrappers_never_directive(
 ) -> None:
     left, right = wrapper
     result = preprocess_heuristic(f"{left}{directive}{right}")
-    assert result["outcome"] == PREPROCESS_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
     assert result["directive"] is None
 
 
@@ -101,21 +101,21 @@ def test_heuristic_rejects_wrapped_directive_with_surrounding_meta_text(
     left, right = wrapper
     message = f"{prefix} {left}{directive}{right}"
     result = preprocess_heuristic(message)
-    assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
 
 
 @given(st.text(max_size=60), st.text(max_size=60))
 def test_heuristic_question_mark_is_always_rejected(prefix: str, suffix: str) -> None:
     message = f"{prefix}?{suffix}"
     result = preprocess_heuristic(message)
-    assert result["outcome"] in {PREPROCESS_OUTCOME_NO_DIRECTIVE, PREPROCESS_OUTCOME_UNKNOWN}
+    assert result["outcome"] in {DRAFT_OUTCOME_NO_DIRECTIVE, DRAFT_OUTCOME_UNKNOWN}
     assert result["directive"] is None
 
 
 @given(st.text(max_size=120))
 def test_heuristic_directive_output_is_always_validator_safe(message: str) -> None:
     result = preprocess_heuristic(message)
-    if result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE:
+    if result["outcome"] != DRAFT_OUTCOME_DIRECTIVE:
         return
     directive = result["directive"]
     assert isinstance(directive, str)
@@ -133,14 +133,14 @@ def test_heuristic_whole_message_discipline_for_surrounded_directive(
     assume(not message.strip().lower().startswith("change premise "))
     assume(not is_canonical_directive(normalized))
     result = preprocess_heuristic(message)
-    assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
 
 
 @given(NON_EMPTY_TEXT)
 def test_heuristic_list_or_enumeration_prefix_never_directive(rest: str) -> None:
     for prefix in ("1. ", "- ", "* "):
         result = preprocess_heuristic(f"{prefix}{rest}")
-        assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+        assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
@@ -154,7 +154,7 @@ def test_heuristic_meta_reporting_prefix_never_directive(directive: str) -> None
     ]
     for message in samples:
         result = preprocess_heuristic(message)
-        assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+        assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
 
 
 @given(st.sampled_from(["use docker", "clear state", "prohibit peanuts"]), NON_EMPTY_TEXT)
@@ -169,7 +169,7 @@ def test_heuristic_mixed_prose_connector_forms_never_directive(
     ]
     for message in messages:
         result = preprocess_heuristic(message)
-        assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+        assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
 
 
 @given(
@@ -182,7 +182,7 @@ def test_heuristic_compound_directives_always_abstain(
 ) -> None:
     assume(first != second)
     result = preprocess_heuristic(f"{first}{separator}{second}")
-    assert result["outcome"] == PREPROCESS_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
     assert result["directive"] is None
 
 
@@ -192,11 +192,11 @@ def test_heuristic_singular_payload_with_canonical_looking_words_can_still_pass(
 ) -> None:
     message = f"{directive_seed} {suffix}"
     result = preprocess_heuristic(message)
-    assert result["outcome"] == PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     assert result["directive"] == message
 
 
 @given(st.sampled_from(["misuse", "re-use", "nonuse"]), NON_EMPTY_TEXT)
 def test_heuristic_lexical_boundary_prevents_embedded_use_matches(prefix: str, suffix: str) -> None:
     result = preprocess_heuristic(f"{prefix} docker {suffix}")
-    assert result["outcome"] != PREPROCESS_OUTCOME_DIRECTIVE
+    assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE

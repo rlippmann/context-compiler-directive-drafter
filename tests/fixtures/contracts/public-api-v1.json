@@ -9,9 +9,9 @@
   "exports": {
     "mode": "exact",
     "names": [
-      "PREPROCESS_OUTCOME_DIRECTIVE",
-      "PREPROCESS_OUTCOME_NO_DIRECTIVE",
-      "PREPROCESS_OUTCOME_UNKNOWN",
+      "DRAFT_OUTCOME_DIRECTIVE",
+      "DRAFT_OUTCOME_NO_DIRECTIVE",
+      "DRAFT_OUTCOME_UNKNOWN",
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
       "DraftResult",
       "DirectiveDrafter",
@@ -26,15 +26,15 @@
         "kind": "constant",
         "value": "<NO_DIRECTIVE>"
       },
-      "PREPROCESS_OUTCOME_DIRECTIVE": {
+      "DRAFT_OUTCOME_DIRECTIVE": {
         "kind": "constant",
         "value": "directive"
       },
-      "PREPROCESS_OUTCOME_NO_DIRECTIVE": {
+      "DRAFT_OUTCOME_NO_DIRECTIVE": {
         "kind": "constant",
         "value": "no_directive"
       },
-      "PREPROCESS_OUTCOME_UNKNOWN": {
+      "DRAFT_OUTCOME_UNKNOWN": {
         "kind": "constant",
         "value": "unknown"
       },
