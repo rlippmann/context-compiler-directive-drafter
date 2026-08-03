@@ -18,9 +18,8 @@ The drafter owns the human-facing acquisition step between messy user input and
 canonical directive text. That includes deciding when a message is close enough
 to propose a canonical directive, when the message is not a directive at all,
 and when the message is too unclear or malformed to safely interpret without
-more help. The drafter may use optional read-only interpretation context to
-resolve references and narrow likely user intent, but it does not become an
-authority over state, permissions, or application.
+more help. It does not become an authority over state, permissions, or
+application.
 
 ---
 
@@ -63,24 +62,15 @@ uv sync --group dev
 
 ## Basic Usage
 
-Draft and optionally refine a candidate directive:
+Draft a candidate directive:
 
 ```python
-from context_compiler import create_engine
 from context_compiler_directive_drafter import DirectiveDrafter
 
-engine = create_engine(
-    {
-        "premise": None,
-        "policies": {},
-        "version": 2,
-    }
-)
 drafter = DirectiveDrafter()
 
 result = drafter.draft_directive(
     "Please use Docker for container examples.",
-    engine,
 )
 
 if result.directive is not None:
@@ -98,7 +88,7 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 
 Public interface:
 
-- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing plus deterministic refinement.
+- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing plus output validation.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
 - `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
@@ -110,7 +100,7 @@ Public interface:
 
 The intended acquisition boundary is:
 
-- input: user text plus optional read-only interpretation context
+- input: user text
 - output: one of `directive`, `no_directive`, or `unknown`
 
 Every drafting path should end in one of three host-visible outcomes:
@@ -124,14 +114,9 @@ Every drafting path should end in one of three host-visible outcomes:
 `directive` means "this is a proposed canonical directive," not "this directive
 is permitted" and not "this directive has been applied."
 
-Optional interpretation context exists to help the drafter resolve references,
-compare the user's wording against currently active directives, and safely
-narrow likely intent. That context is read-only and interpretive. It does not
-authorize the drafter to validate, mutate, or apply authoritative state.
-
 ## Recommended Host Flow
 
-1. Run `DirectiveDrafter().draft_directive(message, engine)` as the high-level drafting API, or call the helpers directly if your host needs lower-level control.
+1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API, or call the helpers directly if your host needs lower-level control.
 2. If the result yields a candidate directive, pass that canonical directive to
    `context-compiler` for authoritative review and application.
 3. If the result yields `no_directive`, continue the host flow without a
@@ -140,7 +125,7 @@ authorize the drafter to validate, mutate, or apply authoritative state.
    clarification, show resubmission guidance, or retry drafting in a safer
    workflow.
 
-The public helpers remain available unchanged for hosts that prefer to orchestrate preprocessing, validation, and refinement themselves.
+The public helpers remain available unchanged for hosts that prefer to orchestrate preprocessing and validation themselves.
 
 **Safety Guidance:**
 
@@ -150,34 +135,15 @@ The public helpers remain available unchanged for hosts that prefer to orchestra
 - Do not drive authoritative transitions from package-owned drafting code.
 - Do not read or mutate `engine.state` directly from package-owned drafting code.
 - Prefer abstaining over unsafe guesses.
-- Use interpretation context to resolve human references only when that context
-  is read-only and supplied for drafting.
 - Output validation checks the canonical directive contract, not whether the
   directive is allowed in context.
 - A structurally valid drafted directive may still be the wrong interpretation of the user's meaning.
-- Reviewed semantic drafting belongs in a separate higher-level workflow.
+- Reviewed semantic drafting belongs in a separate higher-level workflow such as preview, approval, or engine application.
 
 Hosts may use the `unknown` outcome to trigger clarification, confirmation, or
 resubmission guidance. That interaction is part of the human-input drafting
 boundary, but any eventual canonical directive must still be revalidated before
 compiler handoff.
-
-### Interpretation Example
-
-The drafter may use read-only context to interpret intent without becoming a
-state authority.
-
-Example:
-
-- user input: `use Linux instead of Windows`
-- interpretation context: `Windows is not currently present`
-- possible drafter output: `use Linux`
-
-In that example, the drafter uses context to narrow the likely user intent into
-a canonical directive that core can review. The drafter still does not mutate
-state, does not authorize the operation, and does not decide whether the
-resulting directive is valid to apply. Core remains responsible for validating
-and applying the resulting canonical directive.
 
 Do not pass raw model output to the compiler.
 

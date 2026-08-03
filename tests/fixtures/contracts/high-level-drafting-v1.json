@@ -26,11 +26,6 @@
                   "name": "user_input",
                   "kind": "POSITIONAL_OR_KEYWORD",
                   "has_default": false
-                },
-                {
-                  "name": "engine",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
                 }
               ]
             }
@@ -40,11 +35,6 @@
       "behavior_probes": [
         {
           "kind": "directive_drafter_draft",
-          "engine_state": {
-            "premise": null,
-            "policies": {},
-            "version": 2
-          },
           "user_input": "set premise concise replies",
           "expect_result": {
             "type": "object",
@@ -62,16 +52,10 @@
                 "const": "set premise concise replies"
               }
             }
-          },
-          "expect_engine_unchanged": true
+          }
         },
         {
           "kind": "directive_drafter_draft",
-          "engine_state": {
-            "premise": null,
-            "policies": {},
-            "version": 2
-          },
           "user_input": "can you help with lunch?",
           "expect_result": {
             "type": "object",
@@ -88,35 +72,7 @@
                 "type": "null"
               }
             }
-          },
-          "expect_engine_unchanged": true
-        },
-        {
-          "kind": "directive_drafter_draft",
-          "engine_state": {
-            "premise": "existing premise",
-            "policies": {},
-            "version": 2
-          },
-          "user_input": "set premise concise replies",
-          "expect_result": {
-            "type": "object",
-            "required_keys": [
-              "outcome",
-              "directive"
-            ],
-            "properties": {
-              "outcome": {
-                "type": "string",
-                "const": "directive"
-              },
-              "directive": {
-                "type": "string",
-                "const": "change premise to concise replies"
-              }
-            }
-          },
-          "expect_engine_unchanged": true
+          }
         }
       ]
     }

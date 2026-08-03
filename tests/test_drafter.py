@@ -1,9 +1,3 @@
-from types import MappingProxyType
-
-from context_compiler import create_engine
-from context_compiler.grammar import CanonicalDirective, DirectiveKind
-
-import context_compiler_directive_drafter.drafter as drafter_module
 from context_compiler_directive_drafter import DirectiveDrafter, DraftResult
 
 
@@ -15,9 +9,8 @@ def test_fallback_is_used_when_heuristic_does_not_produce_a_directive() -> None:
         return DraftResult(outcome="unknown", directive=None)
 
     drafter = DirectiveDrafter(fallback=fallback)
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("can you help with lunch?", engine)
+    result = drafter.draft_directive("can you help with lunch?")
 
     assert result == DraftResult(outcome="unknown", directive=None)
     assert calls == ["can you help with lunch?"]
@@ -31,84 +24,46 @@ def test_fallback_is_not_used_when_heuristic_produces_a_directive() -> None:
         return DraftResult(outcome="unknown", directive=None)
 
     drafter = DirectiveDrafter(fallback=fallback)
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("set premise concise replies", engine)
+    result = drafter.draft_directive("set premise concise replies")
 
     assert result == DraftResult(outcome="directive", directive="set premise concise replies")
     assert calls == []
 
 
-def test_fallback_directive_receives_the_same_refinement_path() -> None:
+def test_fallback_directive_receives_the_same_validation_path() -> None:
     def fallback(user_input: str) -> DraftResult:
         assert user_input == "please make replies concise"
         return DraftResult(outcome="directive", directive="set premise concise replies")
 
     drafter = DirectiveDrafter(fallback=fallback)
-    engine = create_engine({"premise": "existing premise", "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("please make replies concise", engine)
+    result = drafter.draft_directive("please make replies concise")
 
-    assert result == DraftResult(outcome="directive", directive="change premise to concise replies")
+    assert result == DraftResult(outcome="directive", directive="set premise concise replies")
 
 
 def test_no_fallback_preserves_existing_non_directive_behavior() -> None:
     drafter = DirectiveDrafter()
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("can you help with lunch?", engine)
+    result = drafter.draft_directive("can you help with lunch?")
 
     assert result == DraftResult(outcome="no_directive", directive=None)
 
 
-def test_refinement_happens_once_when_heuristic_succeeds(monkeypatch) -> None:
-    refined_calls: list[str] = []
+def test_drafting_does_not_require_engine_state_to_return_a_directive() -> None:
+    drafter = DirectiveDrafter()
 
-    def fake_refine(directive: CanonicalDirective, engine) -> CanonicalDirective:
-        refined_calls.append(directive.text)
-        return directive
-
-    monkeypatch.setattr(drafter_module, "refine_directive", fake_refine)
-
-    drafter = DirectiveDrafter(fallback=lambda _: DraftResult(outcome="unknown", directive=None))
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
-
-    result = drafter.draft_directive("set premise concise replies", engine)
+    result = drafter.draft_directive("set premise concise replies")
 
     assert result == DraftResult(outcome="directive", directive="set premise concise replies")
-    assert refined_calls == ["set premise concise replies"]
-
-
-def test_refinement_happens_once_after_fallback_selection(monkeypatch) -> None:
-    refined_calls: list[str] = []
-
-    def fake_refine(directive: CanonicalDirective, engine) -> CanonicalDirective:
-        refined_calls.append(directive.text)
-        return CanonicalDirective(
-            text="change premise to concise replies",
-            kind=DirectiveKind.CHANGE_PREMISE,
-            operands=MappingProxyType({"value": "concise replies"}),
-        )
-
-    monkeypatch.setattr(drafter_module, "refine_directive", fake_refine)
-
-    drafter = DirectiveDrafter(
-        fallback=lambda _: DraftResult(outcome="directive", directive="set premise concise replies")
-    )
-    engine = create_engine({"premise": "existing premise", "policies": {}, "version": 2})
-
-    result = drafter.draft_directive("please make replies concise", engine)
-
-    assert result == DraftResult(outcome="directive", directive="change premise to concise replies")
-    assert refined_calls == ["set premise concise replies"]
 
 
 def test_fallback_non_directive_result_is_returned_unchanged() -> None:
     expected = DraftResult(outcome="no_directive", directive=None)
     drafter = DirectiveDrafter(fallback=lambda _: expected)
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("ordinary text", engine)
+    result = drafter.draft_directive("ordinary text")
 
     assert result == expected
 
@@ -116,48 +71,27 @@ def test_fallback_non_directive_result_is_returned_unchanged() -> None:
 def test_fallback_unknown_result_is_returned_unchanged_even_if_directive_is_missing() -> None:
     expected = DraftResult(outcome="unknown", directive=None)
     drafter = DirectiveDrafter(fallback=lambda _: expected)
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("directive-like but unresolved", engine)
+    result = drafter.draft_directive("directive-like but unresolved")
 
     assert result == expected
 
 
-def test_invalid_fallback_directive_does_not_reach_refinement(monkeypatch) -> None:
-    refined_calls: list[str] = []
-
-    def fake_refine(directive: CanonicalDirective, engine) -> CanonicalDirective:
-        refined_calls.append(directive.text)
-        return directive
-
-    monkeypatch.setattr(drafter_module, "refine_directive", fake_refine)
-
+def test_invalid_fallback_directive_returns_unknown() -> None:
     drafter = DirectiveDrafter(
         fallback=lambda _: DraftResult(outcome="directive", directive="please use docker")
     )
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("please use docker", engine)
+    result = drafter.draft_directive("please use docker")
 
     assert result == DraftResult(outcome="unknown", directive=None)
-    assert refined_calls == []
 
 
-def test_valid_fallback_directive_is_validated_before_refinement(monkeypatch) -> None:
-    refined_calls: list[str] = []
-
-    def fake_refine(directive: CanonicalDirective, engine) -> CanonicalDirective:
-        refined_calls.append(directive.text)
-        return directive
-
-    monkeypatch.setattr(drafter_module, "refine_directive", fake_refine)
-
+def test_valid_fallback_directive_is_validated_before_returning() -> None:
     drafter = DirectiveDrafter(
         fallback=lambda _: DraftResult(outcome="directive", directive="use docker")
     )
-    engine = create_engine({"premise": None, "policies": {}, "version": 2})
 
-    result = drafter.draft_directive("please use docker", engine)
+    result = drafter.draft_directive("please use docker")
 
     assert result == DraftResult(outcome="directive", directive="use docker")
-    assert refined_calls == ["use docker"]

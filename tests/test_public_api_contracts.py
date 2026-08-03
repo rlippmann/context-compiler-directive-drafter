@@ -3,8 +3,6 @@ import json
 from importlib import import_module
 from pathlib import Path
 
-from context_compiler import create_engine
-
 import context_compiler_directive_drafter as package
 
 _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
@@ -157,17 +155,11 @@ def _assert_render_prompt_behavior_probe_schema(probe: dict[str, object], label:
 
 
 def _assert_directive_drafter_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
-    _assert_exact_keys(
-        probe,
-        {"kind", "engine_state", "user_input", "expect_result", "expect_engine_unchanged"},
-        label,
-    )
+    _assert_exact_keys(probe, {"kind", "user_input", "expect_result"}, label)
     assert probe["kind"] == "directive_drafter_draft", label
-    assert isinstance(probe["engine_state"], dict), label
     assert isinstance(probe["user_input"], str), label
     assert isinstance(probe["expect_result"], dict), label
     _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
-    assert isinstance(probe["expect_engine_unchanged"], bool), label
 
 
 def _assert_export_kind(name: str, exported: object, expected_kind: str) -> None:
@@ -271,13 +263,9 @@ def _assert_render_prompt_behavior_probe(
 
 
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
-    engine = create_engine(probe["engine_state"])
-    before = engine.state
     drafter = exported()
-    result = drafter.draft_directive(probe["user_input"], engine)
+    result = drafter.draft_directive(probe["user_input"])
     _assert_shape(result.__dict__, probe["expect_result"])
-    if probe["expect_engine_unchanged"]:
-        assert engine.state == before
 
 
 def _assert_callable_contract(
@@ -474,7 +462,6 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "DirectiveDrafter",
         "parse_preprocessor_output",
         "preprocess_heuristic",
-        "refine_directive",
         "render_prompt",
         "validate_preprocessor_output",
     }
