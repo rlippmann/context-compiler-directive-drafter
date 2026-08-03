@@ -9,14 +9,16 @@ positives.
 import re
 from typing import TypedDict
 
-from context_compiler.grammar import validate_directive
+from context_compiler.grammar import (
+    contains_multiple_canonical_directives,
+    validate_directive,
+)
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
     DRAFT_OUTCOME_NO_DIRECTIVE,
     DRAFT_OUTCOME_UNKNOWN,
     DraftOutcome,
-    count_canonical_directive_starts,
 )
 
 
@@ -191,7 +193,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized_candidate = _normalize_candidate(message)
 
-    if count_canonical_directive_starts(normalized_candidate) > 1:
+    if contains_multiple_canonical_directives(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,

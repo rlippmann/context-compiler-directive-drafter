@@ -10,7 +10,10 @@ Internal helpers are implementation details and may change.
 import json
 from typing import TypedDict
 
-from context_compiler.grammar import is_canonical_directive
+from context_compiler.grammar import (
+    contains_multiple_canonical_directives,
+    is_canonical_directive,
+)
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
@@ -18,7 +21,6 @@ from .constants import (
     DRAFT_OUTCOME_UNKNOWN,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DraftOutcome,
-    count_canonical_directive_starts,
 )
 
 __all__ = [
@@ -49,7 +51,7 @@ def _is_allowed_directive(text: str) -> bool:
 
 
 def _contains_multiple_candidate_directives(text: str) -> bool:
-    return count_canonical_directive_starts(text) > 1
+    return contains_multiple_canonical_directives(text)
 
 
 def _validate_structured_output(raw_output: object) -> PreprocessorValidationResult:
