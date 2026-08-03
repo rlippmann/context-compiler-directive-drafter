@@ -3,13 +3,9 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from context_compiler import Engine
-from context_compiler.grammar import decompose_directive
-
 from context_compiler_directive_drafter.constants import DRAFT_OUTCOME_DIRECTIVE, DraftOutcome
 from context_compiler_directive_drafter.heuristic_preprocessor import preprocess_heuristic
 from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
-from context_compiler_directive_drafter.refiner import refine_directive
 
 
 @dataclass(frozen=True)
@@ -31,10 +27,10 @@ DraftFallback = Callable[[str], DraftResult]
 class DirectiveDrafter:
     """Synchronous high-level drafting API over the public helper functions.
 
-    This class orchestrates preprocessing and deterministic refinement without
-    becoming an authority over compiler state. It proposes at most one
-    canonical directive per call and leaves authoritative review and
-    application to `context-compiler`.
+    This class orchestrates preprocessing and validation without becoming an
+    authority over compiler state. It proposes at most one canonical directive
+    per call and leaves authoritative review and application to
+    `context-compiler`.
     """
 
     def __init__(self, fallback: DraftFallback | None = None) -> None:
@@ -48,14 +44,11 @@ class DirectiveDrafter:
 
         self._fallback = fallback
 
-    def draft_directive(self, user_input: str, engine: Engine) -> DraftResult:
+    def draft_directive(self, user_input: str) -> DraftResult:
         """Draft at most one canonical directive from one user input.
 
         Args:
             user_input: Raw user text to interpret as a possible directive.
-            engine: Read-only compiler context used only for deterministic
-                refinement decisions. This method does not apply directives or
-                mutate authoritative state through the engine.
 
         Returns:
             A DraftResult containing the explicit drafting outcome and the
@@ -78,18 +71,4 @@ class DirectiveDrafter:
         if validated_directive is None:
             return DraftResult(outcome="unknown", directive=None)
 
-        drafted = DraftResult(outcome=drafted.outcome, directive=validated_directive)
-        return self._refine_draft_result(drafted, engine)
-
-    def _refine_draft_result(self, drafted: DraftResult, engine: Engine) -> DraftResult:
-        """Refine a drafted canonical directive without mutating the result."""
-
-        assert drafted.directive is not None
-        canonical_directive = decompose_directive(drafted.directive)
-        assert canonical_directive is not None
-
-        refined = refine_directive(canonical_directive, engine)
-        if refined.text == drafted.directive:
-            return drafted
-
-        return DraftResult(outcome=drafted.outcome, directive=refined.text)
+        return DraftResult(outcome=drafted.outcome, directive=validated_directive)

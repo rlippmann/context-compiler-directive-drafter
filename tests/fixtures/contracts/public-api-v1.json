@@ -17,7 +17,6 @@
       "DirectiveDrafter",
       "parse_preprocessor_output",
       "preprocess_heuristic",
-      "refine_directive",
       "render_prompt",
       "validate_preprocessor_output"
     ],
@@ -60,11 +59,6 @@
                     "name": "user_input",
                     "kind": "POSITIONAL_OR_KEYWORD",
                     "has_default": false
-                  },
-                  {
-                    "name": "engine",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
                   }
                 ]
               }
@@ -105,24 +99,6 @@
           "params": [
             {
               "name": "raw_output",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            }
-          ]
-        }
-      },
-      "refine_directive": {
-        "kind": "callable",
-        "signature": {
-          "is_async": false,
-          "params": [
-            {
-              "name": "directive",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            },
-            {
-              "name": "engine",
               "kind": "POSITIONAL_OR_KEYWORD",
               "has_default": false
             }
