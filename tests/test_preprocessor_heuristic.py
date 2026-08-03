@@ -1,6 +1,8 @@
 import pytest
+from context_compiler.grammar import is_canonical_directive
 
 from context_compiler_directive_drafter import preprocess_heuristic
+from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
 
 
 def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
@@ -319,6 +321,38 @@ def test_heuristic_accepts_strict_canonical_directives() -> None:
             "directive": directive,
             "rule_id": "canonical.full_match",
         }
+        assert is_canonical_directive(result["directive"])
+        assert parse_preprocessor_output(result["directive"]) == result["directive"]
+
+
+def test_heuristic_directive_output_is_grammar_validated_not_regex_only() -> None:
+    result = preprocess_heuristic("use docker")
+    assert result["outcome"] == "directive"
+    assert result["directive"] == "use docker"
+    assert parse_preprocessor_output(result["directive"]) == "use docker"
+
+
+def test_heuristic_directive_shaped_text_does_not_bypass_grammar_validation() -> None:
+    cases = [
+        "please use docker",
+        "set premise to concise replies",
+        "change premise concise replies",
+        "do not use peanuts",
+    ]
+    for message in cases:
+        result = preprocess_heuristic(message)
+        assert result["outcome"] != "directive"
+        assert result["directive"] is None
+
+
+def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
+    result = preprocess_heuristic("set policy peanuts prohibit")
+    assert result == {
+        "outcome": "unknown",
+        "directive": None,
+        "rule_id": "reject.near_miss_alias",
+    }
+    assert parse_preprocessor_output("set policy peanuts prohibit") is None
 
 
 def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
