@@ -17,13 +17,17 @@ def _canonical(text: str):
 
 
 def test_no_directive_result_is_explicitly_fallback_eligible() -> None:
-    drafted = DraftResult(source="heuristic", result=NoDirective(reason="reject.confident_non_directive"))
+    drafted = DraftResult(
+        source="heuristic", result=NoDirective(reason="reject.confident_non_directive")
+    )
 
     assert drafter_module._is_fallback_eligible(drafted) is True
 
 
 def test_unknown_result_is_explicitly_fallback_eligible() -> None:
-    drafted = DraftResult(source="heuristic", result=UnknownDirective(reason="reject.directive_adjacent_unsafe"))
+    drafted = DraftResult(
+        source="heuristic", result=UnknownDirective(reason="reject.directive_adjacent_unsafe")
+    )
 
     assert drafter_module._is_fallback_eligible(drafted) is True
 
