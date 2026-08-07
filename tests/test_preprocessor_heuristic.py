@@ -28,7 +28,7 @@ def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
         result = preprocess_heuristic(message)
         assert result["outcome"] == "unknown"
         assert result["directive"] is None
-        assert result["rule_id"] is not None
+        assert result["reason"] is not None
 
 
 def test_heuristic_accepts_trailing_period_or_bang_for_whole_message_directives() -> None:
@@ -41,7 +41,6 @@ def test_heuristic_accepts_trailing_period_or_bang_for_whole_message_directives(
         assert preprocess_heuristic(message) == {
             "outcome": "directive",
             "directive": expected,
-            "rule_id": "canonical.full_match",
         }
 
 
@@ -54,7 +53,6 @@ def test_heuristic_allows_exact_full_message_wrappers_for_directives() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "directive",
             "directive": expected,
-            "rule_id": "canonical.full_match",
         }
 
 
@@ -68,7 +66,7 @@ def test_heuristic_rejects_quoted_or_backticked_exact_directives() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.quoted_exact",
+            "reason": "reject.quoted_exact",
         }
 
 
@@ -82,7 +80,6 @@ def test_heuristic_case_normalizes_exact_command_shapes() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "directive",
             "directive": expected,
-            "rule_id": "canonical.full_match",
         }
 
 
@@ -90,7 +87,7 @@ def test_heuristic_question_mark_only_non_directive_is_confident() -> None:
     assert preprocess_heuristic("can you help with lunch?") == {
         "outcome": "no_directive",
         "directive": None,
-        "rule_id": "reject.confident_non_directive",
+        "reason": "reject.confident_non_directive",
     }
 
 
@@ -104,7 +101,7 @@ def test_heuristic_rejects_directive_adjacent_question_mark_as_unknown() -> None
         result = preprocess_heuristic(message)
         assert result["outcome"] == "unknown"
         assert result["directive"] is None
-        assert result["rule_id"] is not None
+        assert result["reason"] is not None
 
 
 def test_heuristic_rejects_meta_reporting_or_example_prefixes() -> None:
@@ -119,7 +116,7 @@ def test_heuristic_rejects_meta_reporting_or_example_prefixes() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.meta_or_reporting",
+            "reason": "reject.meta_or_reporting",
         }
 
 
@@ -133,7 +130,7 @@ def test_heuristic_rejects_list_or_enumeration_inputs() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.list_or_enumeration",
+            "reason": "reject.list_or_enumeration",
         }
 
 
@@ -146,7 +143,7 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.multi_segment_or_mixed_prose",
+            "reason": "reject.multi_segment_or_mixed_prose",
         }
 
 
@@ -162,7 +159,7 @@ def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.multi_candidate_directive",
+            "reason": "reject.multi_candidate_directive",
         }
 
 
@@ -170,7 +167,6 @@ def test_heuristic_does_not_reject_single_directive_payload_with_ordinary_and() 
     assert preprocess_heuristic("use bread and butter") == {
         "outcome": "directive",
         "directive": "use bread and butter",
-        "rule_id": "canonical.full_match",
     }
 
 
@@ -178,7 +174,7 @@ def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start
     assert preprocess_heuristic("misuse docker and prohibitively expensive peanuts") == {
         "outcome": "no_directive",
         "directive": None,
-        "rule_id": "reject.confident_non_directive",
+        "reason": "reject.confident_non_directive",
     }
 
 
@@ -191,7 +187,7 @@ def test_heuristic_rejects_malformed_replacement_syntax() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.malformed_replacement_syntax",
+            "reason": "reject.malformed_replacement_syntax",
         }
 
 
@@ -204,7 +200,7 @@ def test_heuristic_rejects_admin_near_miss_aliases() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.admin_near_miss_alias",
+            "reason": "reject.admin_near_miss_alias",
         }
 
 
@@ -218,7 +214,7 @@ def test_heuristic_rejects_notes_and_reporting_with_bracketed_mentions() -> None
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.quoted_reported_bracket",
+            "reason": "reject.quoted_reported_bracket",
         }
 
 
@@ -226,7 +222,6 @@ def test_heuristic_accepts_bracket_wrapper_without_reporting_marker() -> None:
     assert preprocess_heuristic("[clear state]") == {
         "outcome": "directive",
         "directive": "clear state",
-        "rule_id": "canonical.full_match",
     }
 
 
@@ -239,7 +234,7 @@ def test_heuristic_set_premise_to_forms_are_unknown_not_rewritten() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.directive_adjacent_unsafe",
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
 
@@ -252,7 +247,7 @@ def test_heuristic_dont_use_forms_are_unknown_not_rewritten() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.directive_adjacent_unsafe",
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
 
@@ -260,7 +255,7 @@ def test_heuristic_does_not_canonicalize_set_premise_to_with_empty_payload() -> 
     assert preprocess_heuristic("set premise to   ") == {
         "outcome": "unknown",
         "directive": None,
-        "rule_id": "reject.directive_adjacent_unsafe",
+        "reason": "reject.directive_adjacent_unsafe",
     }
 
 
@@ -268,7 +263,7 @@ def test_heuristic_does_not_canonicalize_set_premise_to_when_not_whole_message()
     assert preprocess_heuristic("please set premise to concise replies") == {
         "outcome": "unknown",
         "directive": None,
-        "rule_id": "reject.directive_adjacent_unsafe",
+        "reason": "reject.directive_adjacent_unsafe",
     }
 
 
@@ -281,7 +276,7 @@ def test_heuristic_change_premise_missing_to_forms_are_unknown_not_rewritten() -
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.directive_adjacent_unsafe",
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
 
@@ -289,7 +284,7 @@ def test_heuristic_does_not_canonicalize_change_premise_with_empty_payload() -> 
     assert preprocess_heuristic("change premise   ") == {
         "outcome": "unknown",
         "directive": None,
-        "rule_id": "reject.directive_adjacent_unsafe",
+        "reason": "reject.directive_adjacent_unsafe",
     }
 
 
@@ -297,7 +292,7 @@ def test_heuristic_does_not_canonicalize_change_premise_when_not_whole_message()
     assert preprocess_heuristic("please change premise concise replies") == {
         "outcome": "unknown",
         "directive": None,
-        "rule_id": "reject.directive_adjacent_unsafe",
+        "reason": "reject.directive_adjacent_unsafe",
     }
 
 
@@ -319,17 +314,20 @@ def test_heuristic_accepts_strict_canonical_directives() -> None:
         assert result == {
             "outcome": "directive",
             "directive": directive,
-            "rule_id": "canonical.full_match",
         }
         assert is_canonical_directive(result["directive"])
-        assert parse_preprocessor_output(result["directive"]) == result["directive"]
+        parsed = parse_preprocessor_output(result["directive"])
+        assert parsed is not None
+        assert parsed.text == result["directive"]
 
 
 def test_heuristic_directive_output_is_grammar_validated_not_regex_only() -> None:
     result = preprocess_heuristic("use docker")
     assert result["outcome"] == "directive"
     assert result["directive"] == "use docker"
-    assert parse_preprocessor_output(result["directive"]) == "use docker"
+    parsed = parse_preprocessor_output(result["directive"])
+    assert parsed is not None
+    assert parsed.text == "use docker"
 
 
 def test_heuristic_directive_shaped_text_does_not_bypass_grammar_validation() -> None:
@@ -350,7 +348,7 @@ def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
     assert result == {
         "outcome": "unknown",
         "directive": None,
-        "rule_id": "reject.near_miss_alias",
+        "reason": "reject.near_miss_alias",
     }
     assert parse_preprocessor_output("set policy peanuts prohibit") is None
 
@@ -362,7 +360,7 @@ def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "rule_id": "reject.directive_adjacent_unsafe",
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
 
@@ -375,7 +373,7 @@ def test_heuristic_returns_no_directive_for_ordinary_non_directive_content() -> 
         assert preprocess_heuristic(message) == {
             "outcome": "no_directive",
             "directive": None,
-            "rule_id": "reject.confident_non_directive",
+            "reason": "reject.confident_non_directive",
         }
 
 

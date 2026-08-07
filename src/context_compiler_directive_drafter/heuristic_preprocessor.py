@@ -7,7 +7,7 @@ positives.
 """
 
 import re
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from context_compiler.grammar import (
     contains_multiple_canonical_directives,
@@ -18,14 +18,21 @@ from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
     DRAFT_OUTCOME_NO_DIRECTIVE,
     DRAFT_OUTCOME_UNKNOWN,
-    DraftOutcome,
 )
 
 
-class PreprocessResult(TypedDict):
-    outcome: DraftOutcome
-    directive: str | None
-    rule_id: str | None
+class DirectivePreprocessResult(TypedDict):
+    outcome: Literal["directive"]
+    directive: str
+
+
+class NonDirectivePreprocessResult(TypedDict):
+    outcome: Literal["no_directive", "unknown"]
+    directive: None
+    reason: str
+
+
+PreprocessResult = DirectivePreprocessResult | NonDirectivePreprocessResult
 
 
 _QUOTED_OR_REPORTED_CASES = {
@@ -144,7 +151,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.list_or_enumeration",
+            "reason": "reject.list_or_enumeration",
         }
 
     normalized = _normalized_for_match(message)
@@ -153,42 +160,42 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.question_form",
+            "reason": "reject.question_form",
         }
 
     if _META_PREFIX_PATTERN.match(normalized):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.meta_or_reporting",
+            "reason": "reject.meta_or_reporting",
         }
 
     if _MULTI_SEGMENT_PATTERN.match(normalized):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.multi_segment_or_mixed_prose",
+            "reason": "reject.multi_segment_or_mixed_prose",
         }
 
     if _contains_reporting_bracket_mention(message):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.quoted_reported_bracket",
+            "reason": "reject.quoted_reported_bracket",
         }
 
     if _is_quoted_or_backtick_wrapped(message):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.quoted_exact",
+            "reason": "reject.quoted_exact",
         }
 
     if normalized in _QUOTED_OR_REPORTED_CASES:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.quoted_reported",
+            "reason": "reject.quoted_reported",
         }
 
     normalized_candidate = _normalize_candidate(message)
@@ -197,21 +204,21 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.multi_candidate_directive",
+            "reason": "reject.multi_candidate_directive",
         }
 
     if normalized in _NEAR_MISS_ALIAS_CASES:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.near_miss_alias",
+            "reason": "reject.near_miss_alias",
         }
 
     if normalized in _ADMIN_NEAR_MISS_CASES:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.admin_near_miss_alias",
+            "reason": "reject.admin_near_miss_alias",
         }
 
     if (
@@ -221,7 +228,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.malformed_replacement_syntax",
+            "reason": "reject.malformed_replacement_syntax",
         }
 
     validated = validate_directive(normalized_candidate)
@@ -229,18 +236,17 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_DIRECTIVE,
             "directive": validated.text,
-            "rule_id": "canonical.full_match",
         }
 
     if _DIRECTIVE_CUE_PATTERN.search(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "rule_id": "reject.directive_adjacent_unsafe",
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
     return {
         "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
         "directive": None,
-        "rule_id": "reject.confident_non_directive",
+        "reason": "reject.confident_non_directive",
     }

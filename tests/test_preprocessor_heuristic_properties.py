@@ -59,7 +59,8 @@ def test_heuristic_accepts_canonical_directive_with_trailing_period_or_bang(
     result = preprocess_heuristic(f"{directive}{punctuation}")
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     parsed = parse_preprocessor_output(result["directive"])
-    assert parsed == result["directive"]
+    assert parsed is not None
+    assert parsed.text == result["directive"]
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
@@ -77,7 +78,8 @@ def test_heuristic_accepts_single_layer_exact_wrapper(
     result = preprocess_heuristic(f"{left}{directive}{right}")
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     parsed = parse_preprocessor_output(result["directive"])
-    assert parsed == result["directive"]
+    assert parsed is not None
+    assert parsed.text == result["directive"]
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), QUOTED_WRAPPERS)
@@ -119,7 +121,9 @@ def test_heuristic_directive_output_is_always_validator_safe(message: str) -> No
         return
     directive = result["directive"]
     assert isinstance(directive, str)
-    assert parse_preprocessor_output(directive) == directive
+    parsed = parse_preprocessor_output(directive)
+    assert parsed is not None
+    assert parsed.text == directive
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), NON_EMPTY_TEXT, NON_EMPTY_TEXT)

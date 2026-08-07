@@ -11,7 +11,9 @@ import json
 from typing import TypedDict
 
 from context_compiler.grammar import (
+    CanonicalDirective,
     contains_multiple_canonical_directives,
+    decompose_directive,
     is_canonical_directive,
 )
 
@@ -135,8 +137,8 @@ def validate_preprocessor_output(raw_output: object) -> PreprocessorValidationRe
     return validated
 
 
-def parse_preprocessor_output(raw_output: object) -> str | None:
-    """Return only the validated canonical directive from raw drafting output.
+def parse_preprocessor_output(raw_output: object) -> CanonicalDirective | None:
+    """Return only the parsed canonical directive from raw drafting output.
 
     This is a narrowing convenience over `validate_preprocessor_output(...)`.
     It preserves the non-authoritative boundary by returning a canonical
@@ -144,5 +146,7 @@ def parse_preprocessor_output(raw_output: object) -> str | None:
     """
     validated = validate_preprocessor_output(raw_output)
     if validated["classification"] == DRAFT_OUTCOME_DIRECTIVE:
-        return validated["output"]
+        output = validated["output"]
+        assert isinstance(output, str)
+        return decompose_directive(output)
     return None

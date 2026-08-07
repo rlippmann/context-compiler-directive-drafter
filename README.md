@@ -66,6 +66,7 @@ Draft a candidate directive:
 
 ```python
 from context_compiler_directive_drafter import DirectiveDrafter
+from context_compiler_directive_drafter import NoDirective, UnknownDirective
 
 drafter = DirectiveDrafter()
 
@@ -73,10 +74,12 @@ result = drafter.draft_directive(
     "Please use Docker for container examples.",
 )
 
-if result.directive is not None:
-    print("Candidate directive:", result.directive)
-else:
-    print("No canonical directive drafted.")
+if hasattr(result.result, "text"):
+    print("Candidate directive:", result.result.text)
+elif isinstance(result.result, NoDirective):
+    print("No canonical directive drafted:", result.result.reason)
+elif isinstance(result.result, UnknownDirective):
+    print("Need clarification before drafting:", result.result.reason)
 ```
 
 The host validates drafted output before passing it to engine.step(...).
@@ -90,6 +93,7 @@ Public interface:
 
 - `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing plus output validation.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
+- `NoDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
 - `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
@@ -98,30 +102,31 @@ Public interface:
 
 ### Output Contract
 
-The intended acquisition boundary is:
+The intended drafting boundary is:
 
 - input: user text
-- output: one of `directive`, `no_directive`, or `unknown`
+- output: `DraftResult(source=<final producer>, result=<drafting-layer variant>)`
 
-Every drafting path should end in one of three host-visible outcomes:
+Every drafting path should end in one of three host-visible result variants:
 
-- `directive`: a canonical directive string that is ready for compiler review
-  and independent policy checks
-- `no_directive`: the input is not asking for a directive
-- `unknown`: the input appears directive-related or interpretation failed, but
-  the drafter should not guess
+- `CanonicalDirective`: a proposed canonical directive that is ready for compiler review and independent policy checks
+- `NoDirective(reason=...)`: the input is not asking for a directive
+- `UnknownDirective(reason=...)`: the input appears directive-related or interpretation failed, but the drafter should not guess
 
-`directive` means "this is a proposed canonical directive," not "this directive
-is permitted" and not "this directive has been applied."
+The `source` field records only the final producer of the returned drafting
+result, such as `heuristic` or `llm`. It does not track fallback history.
+
+A returned `CanonicalDirective` means "this is a proposed canonical directive,"
+not "this directive is permitted" and not "this directive has been applied."
 
 ## Recommended Host Flow
 
 1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API, or call the helpers directly if your host needs lower-level control.
-2. If the result yields a candidate directive, pass that canonical directive to
+2. If the result yields a `CanonicalDirective`, pass that canonical directive to
    `context-compiler` for authoritative review and application.
-3. If the result yields `no_directive`, continue the host flow without a
+3. If the result yields `NoDirective`, continue the host flow without a
    directive handoff.
-4. If the result yields `unknown`, preserve the boundary: ask for
+4. If the result yields `UnknownDirective`, preserve the boundary: ask for
    clarification, show resubmission guidance, or retry drafting in a safer
    workflow.
 
@@ -140,7 +145,7 @@ The public helpers remain available unchanged for hosts that prefer to orchestra
 - A structurally valid drafted directive may still be the wrong interpretation of the user's meaning.
 - Reviewed semantic drafting belongs in a separate higher-level workflow such as preview, approval, or engine application.
 
-Hosts may use the `unknown` outcome to trigger clarification, confirmation, or
+Hosts may use `UnknownDirective` to trigger clarification, confirmation, or
 resubmission guidance. That interaction is part of the human-input drafting
 boundary, but any eventual canonical directive must still be revalidated before
 compiler handoff.

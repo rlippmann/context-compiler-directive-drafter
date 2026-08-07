@@ -124,6 +124,8 @@ def test_validate_text_parses_and_validates_json_contract() -> None:
 
 
 def test_parse_returns_validated_directive_only() -> None:
-    assert parse_preprocessor_output("prohibit peanuts") == "prohibit peanuts"
+    parsed = parse_preprocessor_output("prohibit peanuts")
+    assert parsed is not None
+    assert parsed.text == "prohibit peanuts"
     assert parse_preprocessor_output("<NO_DIRECTIVE>") is None
     assert parse_preprocessor_output("set premise to concise replies") is None

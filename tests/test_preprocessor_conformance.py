@@ -59,7 +59,7 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
 
     _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected_parsed"}, label)
     expected_parsed = fixture["expected_parsed"]
-    assert isinstance(expected_parsed, str) or expected_parsed is None, label
+    assert isinstance(expected_parsed, dict) or expected_parsed is None, label
 
 
 def _normalize_result(message: str) -> dict[str, object]:
@@ -90,8 +90,15 @@ def _normalize_validator_result(raw_output: object) -> dict[str, object]:
     }
 
 
-def _normalize_parse_result(raw_output: object) -> str | None:
-    return parse_preprocessor_output(raw_output)
+def _normalize_parse_result(raw_output: object) -> dict[str, object] | None:
+    parsed = parse_preprocessor_output(raw_output)
+    if parsed is None:
+        return None
+    return {
+        "text": parsed.text,
+        "kind": parsed.kind.value,
+        "operands": dict(parsed.operands),
+    }
 
 
 def test_preprocessor_conformance_fixtures() -> None:
@@ -134,7 +141,7 @@ def test_preprocessor_conformance_fixtures() -> None:
         assert kind == "parse", fixture_name
         assert "expected_parsed" in fixture, fixture_name
         expected_parsed = fixture["expected_parsed"]
-        assert isinstance(expected_parsed, str) or expected_parsed is None, fixture_name
+        assert isinstance(expected_parsed, dict) or expected_parsed is None, fixture_name
 
         # Deterministic replay check.
         first_parsed = _normalize_parse_result(raw_output)

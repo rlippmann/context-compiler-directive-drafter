@@ -22,8 +22,7 @@
             "type": "object",
             "required_keys": [
               "outcome",
-              "directive",
-              "rule_id"
+              "directive"
             ],
             "properties": {
               "outcome": {
@@ -34,9 +33,6 @@
               },
               "directive": {
                 "type": "string"
-              },
-              "rule_id": {
-                "type": "string"
               }
             }
           },
@@ -45,7 +41,7 @@
             "required_keys": [
               "outcome",
               "directive",
-              "rule_id"
+              "reason"
             ],
             "properties": {
               "outcome": {
@@ -58,7 +54,7 @@
               "directive": {
                 "type": "null"
               },
-              "rule_id": {
+              "reason": {
                 "type": "string"
               }
             }

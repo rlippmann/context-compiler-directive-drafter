@@ -62,7 +62,9 @@ def test_parse_valid_canonical_directive_always_passes(
     directive: str, leading_ws: str, trailing_ws: str
 ) -> None:
     raw = f"{leading_ws}{directive}{trailing_ws}"
-    assert parse_preprocessor_output(raw) == directive
+    parsed = parse_preprocessor_output(raw)
+    assert parsed is not None
+    assert parsed.text == directive
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), NON_EMPTY_TEXT, NON_EMPTY_TEXT)
@@ -181,4 +183,4 @@ def test_parse_and_validate_agree_on_directive_round_trip(raw_output: object) ->
         assert validated["classification"] != "directive"
         assert validated["output"] is None
     else:
-        assert validated == {"classification": "directive", "output": parsed}
+        assert validated == {"classification": "directive", "output": parsed.text}

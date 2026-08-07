@@ -6,7 +6,13 @@ from context_compiler_directive_drafter.constants import (
     DRAFT_OUTCOME_UNKNOWN,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
 )
-from context_compiler_directive_drafter.drafter import DirectiveDrafter, DraftResult
+from context_compiler_directive_drafter.drafter import (
+    DirectiveDrafter,
+    DraftResult,
+    DraftResultType,
+    NoDirective,
+    UnknownDirective,
+)
 from context_compiler_directive_drafter.heuristic_preprocessor import (
     preprocess_heuristic,
 )
@@ -22,7 +28,10 @@ __all__ = [
     "DRAFT_OUTCOME_NO_DIRECTIVE",
     "DRAFT_OUTCOME_UNKNOWN",
     "DraftResult",
+    "DraftResultType",
     "DirectiveDrafter",
+    "NoDirective",
+    "UnknownDirective",
     "parse_preprocessor_output",
     "preprocess_heuristic",
     "render_prompt",

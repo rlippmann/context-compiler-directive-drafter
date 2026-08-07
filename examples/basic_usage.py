@@ -13,14 +13,17 @@ def main() -> None:
     print("heuristic result:", result)
 
     candidate = parse_preprocessor_output(result["directive"])
-    print("validated candidate:", candidate)
+    print("validated candidate:", candidate.text if candidate is not None else None)
 
     ambiguous_message = "Can you use docker?"
     ambiguous_result = preprocess_heuristic(ambiguous_message)
     ambiguous_candidate = parse_preprocessor_output(ambiguous_result["directive"])
 
     print("ambiguous result:", ambiguous_result)
-    print("ambiguous candidate:", ambiguous_candidate)
+    print(
+        "ambiguous candidate:",
+        ambiguous_candidate.text if ambiguous_candidate is not None else None,
+    )
 
 
 if __name__ == "__main__":
