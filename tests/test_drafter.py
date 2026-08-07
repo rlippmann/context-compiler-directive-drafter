@@ -34,6 +34,43 @@ def test_canonical_directive_result_is_not_fallback_eligible() -> None:
     assert drafter_module._is_fallback_eligible(drafted) is False
 
 
+def test_fallback_callback_defaults_to_none() -> None:
+    drafter = DirectiveDrafter()
+
+    assert drafter.fallback is None
+
+
+def test_fallback_callback_can_be_configured_at_construction() -> None:
+    fallback = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
+
+    drafter = DirectiveDrafter(fallback=fallback)
+
+    assert drafter.fallback is fallback
+
+
+def test_fallback_callback_can_be_updated_after_construction() -> None:
+    first = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="first"))
+    second = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="second"))
+    drafter = DirectiveDrafter(fallback=first)
+
+    drafter.fallback = second
+
+    assert drafter.fallback is second
+
+
+def test_fallback_callback_can_be_cleared_after_construction() -> None:
+    fallback = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
+    drafter = DirectiveDrafter(fallback=fallback)
+
+    drafter.fallback = None
+
+    assert drafter.fallback is None
+    assert drafter.draft_directive("can you help with lunch?") == DraftResult(
+        source="heuristic",
+        result=NoDirective(reason="reject.confident_non_directive"),
+    )
+
+
 def test_fallback_is_used_when_heuristic_returns_no_directive() -> None:
     calls: list[str] = []
 

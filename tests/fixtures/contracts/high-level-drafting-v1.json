@@ -12,6 +12,9 @@
       "public_members": {
         "mode": "exact",
         "members": {
+          "fallback": {
+            "kind": "property"
+          },
           "draft_directive": {
             "kind": "method",
             "signature": {
