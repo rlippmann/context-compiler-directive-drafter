@@ -45,7 +45,8 @@ def test_fallback_callback_defaults_to_none() -> None:
 
 
 def test_fallback_callback_can_be_configured_at_construction() -> None:
-    fallback = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
+    def fallback(_: str) -> DraftResult:
+        return DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
 
     drafter = DirectiveDrafter(fallback=fallback)
 
@@ -53,8 +54,12 @@ def test_fallback_callback_can_be_configured_at_construction() -> None:
 
 
 def test_fallback_callback_can_be_updated_after_construction() -> None:
-    first = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="first"))
-    second = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="second"))
+    def first(_: str) -> DraftResult:
+        return DraftResult(source="llm", result=UnknownDirective(reason="first"))
+
+    def second(_: str) -> DraftResult:
+        return DraftResult(source="llm", result=UnknownDirective(reason="second"))
+
     drafter = DirectiveDrafter(fallback=first)
 
     drafter.fallback = second
@@ -63,7 +68,9 @@ def test_fallback_callback_can_be_updated_after_construction() -> None:
 
 
 def test_fallback_callback_can_be_cleared_after_construction() -> None:
-    fallback = lambda _: DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
+    def fallback(_: str) -> DraftResult:
+        return DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
+
     drafter = DirectiveDrafter(fallback=fallback)
 
     drafter.fallback = None

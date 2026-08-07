@@ -119,9 +119,7 @@ def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> Dra
 def _is_fallback_eligible(drafted: DraftResult) -> bool:
     if isinstance(drafted.result, CanonicalDirective):
         return False
-    if isinstance(drafted.result, NoDirective | UnknownDirective):
-        return True
-    return False
+    return isinstance(drafted.result, NoDirective | UnknownDirective)
 
 
 def _validate_draft_result(drafted: DraftResult) -> DraftResult:
