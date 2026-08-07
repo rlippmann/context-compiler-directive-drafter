@@ -66,6 +66,18 @@ class DirectiveDrafter:
 
         self._fallback = fallback
 
+    @property
+    def fallback(self) -> DraftFallback | None:
+        """Return the configured fallback acquisition callback, if any."""
+
+        return self._fallback
+
+    @fallback.setter
+    def fallback(self, fallback: DraftFallback | None) -> None:
+        """Set or clear the fallback acquisition callback."""
+
+        self._fallback = fallback
+
     def draft_directive(self, user_input: str) -> DraftResult:
         """Draft at most one canonical directive from one user input.
 
