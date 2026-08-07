@@ -91,7 +91,7 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 
 Public interface:
 
-- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing plus output validation.
+- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, and output validation.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `NoDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
@@ -114,14 +114,15 @@ Every drafting path should end in one of three host-visible result variants:
 - `UnknownDirective(reason=...)`: the input appears directive-related or interpretation failed, but the drafter should not guess
 
 The `source` field records only the final producer of the returned drafting
-result, such as `heuristic` or `llm`. It does not track fallback history.
+result, such as `heuristic` or a host-provided fallback acquisition callback.
+It does not track fallback history.
 
 A returned `CanonicalDirective` means "this is a proposed canonical directive,"
 not "this directive is permitted" and not "this directive has been applied."
 
 ## Recommended Host Flow
 
-1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API, or call the helpers directly if your host needs lower-level control.
+1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API. It always tries heuristic drafting first and may optionally call a non-authoritative fallback acquisition callback when the heuristic result is not directly returnable.
 2. If the result yields a `CanonicalDirective`, pass that canonical directive to
    `context-compiler` for authoritative review and application.
 3. If the result yields `NoDirective`, continue the host flow without a
