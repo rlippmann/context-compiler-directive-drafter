@@ -48,10 +48,10 @@ DraftFallback = Callable[[str], DraftResult]
 class DirectiveDrafter:
     """Synchronous high-level drafting API over the public helper functions.
 
-    This class orchestrates heuristic preprocessing and validation without
-    becoming an authority over compiler state. It proposes at most one
-    canonical directive per call and leaves authoritative review and
-    application to `context-compiler`.
+    This class orchestrates heuristic preprocessing, optional fallback
+    acquisition, and result validation without becoming an authority over
+    compiler state. It proposes at most one canonical directive per call and
+    leaves authoritative review and application to `context-compiler`.
     """
 
     def __init__(self, fallback: DraftFallback | None = None) -> None:
@@ -60,22 +60,29 @@ class DirectiveDrafter:
         Args:
             fallback: Optional non-authoritative callback that accepts the
                 original user input and returns a DraftResult. The callback is
-                only used when heuristic drafting does not produce a canonical
-                directive.
+                only used when heuristic drafting does not produce a directly
+                returnable result.
         """
 
         self._fallback = fallback
 
     def draft_directive(self, user_input: str) -> DraftResult:
-        """Draft at most one canonical directive from one user input."""
+        """Draft at most one canonical directive from one user input.
+
+        The drafter always attempts heuristic preprocessing first. When that
+        heuristic result is not fallback-eligible, it is returned immediately.
+        When it is, the drafter may invoke the optional fallback acquisition
+        callback and returns that callback's DraftResult instead.
+        """
 
         heuristic_result = preprocess_heuristic(user_input)
-        drafted = _heuristic_result_to_draft_result(heuristic_result)
+        heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
-        if not isinstance(drafted.result, CanonicalDirective) and self._fallback is not None:
-            drafted = self._fallback(user_input)
+        if not _is_fallback_eligible(heuristic_draft) or self._fallback is None:
+            return _validate_draft_result(heuristic_draft)
 
-        return _validate_draft_result(drafted)
+        fallback_draft = self._fallback(user_input)
+        return _validate_draft_result(fallback_draft)
 
 
 def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> DraftResult:
@@ -95,6 +102,14 @@ def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> Dra
         return DraftResult(source="heuristic", result=UnknownDirective(reason=reason))
 
     return DraftResult(source="heuristic", result=NoDirective(reason=reason))
+
+
+def _is_fallback_eligible(drafted: DraftResult) -> bool:
+    if isinstance(drafted.result, CanonicalDirective):
+        return False
+    if isinstance(drafted.result, NoDirective | UnknownDirective):
+        return True
+    return False
 
 
 def _validate_draft_result(drafted: DraftResult) -> DraftResult:

@@ -16,7 +16,25 @@ def _canonical(text: str):
     return parsed
 
 
-def test_fallback_is_used_when_heuristic_does_not_produce_a_directive() -> None:
+def test_no_directive_result_is_explicitly_fallback_eligible() -> None:
+    drafted = DraftResult(source="heuristic", result=NoDirective(reason="reject.confident_non_directive"))
+
+    assert drafter_module._is_fallback_eligible(drafted) is True
+
+
+def test_unknown_result_is_explicitly_fallback_eligible() -> None:
+    drafted = DraftResult(source="heuristic", result=UnknownDirective(reason="reject.directive_adjacent_unsafe"))
+
+    assert drafter_module._is_fallback_eligible(drafted) is True
+
+
+def test_canonical_directive_result_is_not_fallback_eligible() -> None:
+    drafted = DraftResult(source="heuristic", result=_canonical("use docker"))
+
+    assert drafter_module._is_fallback_eligible(drafted) is False
+
+
+def test_fallback_is_used_when_heuristic_returns_no_directive() -> None:
     calls: list[str] = []
 
     def fallback(user_input: str) -> DraftResult:
@@ -29,6 +47,31 @@ def test_fallback_is_used_when_heuristic_does_not_produce_a_directive() -> None:
 
     assert result == DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
     assert calls == ["can you help with lunch?"]
+
+
+def test_fallback_is_used_when_heuristic_abstains_with_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    def heuristic(user_input: str) -> dict[str, str | None]:
+        calls.append(f"heuristic:{user_input}")
+        return {
+            "outcome": "unknown",
+            "directive": None,
+            "reason": "reject.directive_adjacent_unsafe",
+        }
+
+    def fallback(user_input: str) -> DraftResult:
+        calls.append(f"fallback:{user_input}")
+        return DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
+
+    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+    drafter = DirectiveDrafter(fallback=fallback)
+    result = drafter.draft_directive("use docker?")
+
+    assert calls == ["heuristic:use docker?", "fallback:use docker?"]
+    assert result == DraftResult(source="llm", result=UnknownDirective(reason="llm_ambiguous"))
 
 
 def test_fallback_is_not_used_when_heuristic_produces_a_directive() -> None:
@@ -49,7 +92,7 @@ def test_fallback_is_not_used_when_heuristic_produces_a_directive() -> None:
     assert calls == []
 
 
-def test_fallback_directive_receives_the_same_validation_path() -> None:
+def test_fallback_canonical_directive_receives_the_same_validation_path() -> None:
     def fallback(user_input: str) -> DraftResult:
         assert user_input == "please make replies concise"
         return DraftResult(source="llm", result=_canonical("set premise concise replies"))
@@ -83,7 +126,7 @@ def test_drafting_does_not_require_engine_state_to_return_a_directive() -> None:
     )
 
 
-def test_fallback_non_directive_result_is_returned_unchanged() -> None:
+def test_fallback_no_directive_result_is_returned_unchanged() -> None:
     expected = DraftResult(source="llm", result=NoDirective(reason="llm_not_a_directive"))
     drafter = DirectiveDrafter(fallback=lambda _: expected)
 
@@ -101,7 +144,7 @@ def test_fallback_unknown_result_is_returned_unchanged() -> None:
     assert result == expected
 
 
-def test_invalid_fallback_directive_returns_unknown() -> None:
+def test_fallback_invalid_canonical_directive_text_returns_unknown_from_drafter() -> None:
     invalid = _canonical("use docker")
     object.__setattr__(invalid, "text", "please use docker")
     drafter = DirectiveDrafter(fallback=lambda _: DraftResult(source="llm", result=invalid))
