@@ -54,10 +54,31 @@
             "fallback": {
               "kind": "property"
             },
+            "async_fallback": {
+              "kind": "property"
+            },
             "draft_directive": {
               "kind": "method",
               "signature": {
                 "is_async": false,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "user_input",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  }
+                ]
+              }
+            },
+            "async_draft_directive": {
+              "kind": "method",
+              "signature": {
+                "is_async": true,
                 "params": [
                   {
                     "name": "self",

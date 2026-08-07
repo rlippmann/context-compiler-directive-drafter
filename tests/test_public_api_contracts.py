@@ -496,7 +496,10 @@ def test_directive_drafter_constructor_supports_optional_fallback() -> None:
     signature = inspect.signature(package.DirectiveDrafter)
     parameters = list(signature.parameters.values())
 
-    assert len(parameters) == 1
+    assert len(parameters) == 2
     assert parameters[0].name == "fallback"
     assert parameters[0].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
     assert parameters[0].default is None
+    assert parameters[1].name == "async_fallback"
+    assert parameters[1].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+    assert parameters[1].default is None

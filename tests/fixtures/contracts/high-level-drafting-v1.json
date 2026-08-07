@@ -9,17 +9,20 @@
     },
     "DirectiveDrafter": {
       "kind": "class",
-      "public_members": {
-        "mode": "exact",
-        "members": {
-          "fallback": {
-            "kind": "property"
-          },
-          "draft_directive": {
-            "kind": "method",
-            "signature": {
-              "is_async": false,
-              "params": [
+        "public_members": {
+          "mode": "exact",
+          "members": {
+            "fallback": {
+              "kind": "property"
+            },
+            "async_fallback": {
+              "kind": "property"
+            },
+            "draft_directive": {
+              "kind": "method",
+              "signature": {
+                "is_async": false,
+                "params": [
                 {
                   "name": "self",
                   "kind": "POSITIONAL_OR_KEYWORD",
@@ -29,12 +32,30 @@
                   "name": "user_input",
                   "kind": "POSITIONAL_OR_KEYWORD",
                   "has_default": false
-                }
-              ]
+                  }
+                ]
+              }
+            },
+            "async_draft_directive": {
+              "kind": "method",
+              "signature": {
+                "is_async": true,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "user_input",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  }
+                ]
+              }
             }
           }
-        }
-      },
+        },
       "behavior_probes": [
         {
           "kind": "directive_drafter_draft",
