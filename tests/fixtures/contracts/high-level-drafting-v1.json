@@ -39,17 +39,43 @@
           "expect_result": {
             "type": "object",
             "required_keys": [
-              "outcome",
-              "directive"
+              "source",
+              "result"
             ],
             "properties": {
-              "outcome": {
+              "source": {
                 "type": "string",
-                "const": "directive"
+                "const": "heuristic"
               },
-              "directive": {
-                "type": "string",
-                "const": "set premise concise replies"
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "text",
+                  "kind",
+                  "operands"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "const": "set premise concise replies"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "const": "set_premise"
+                  },
+                  "operands": {
+                    "type": "object",
+                    "required_keys": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "string",
+                        "const": "concise replies"
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -60,16 +86,25 @@
           "expect_result": {
             "type": "object",
             "required_keys": [
-              "outcome",
-              "directive"
+              "source",
+              "result"
             ],
             "properties": {
-              "outcome": {
+              "source": {
                 "type": "string",
-                "const": "no_directive"
+                "const": "heuristic"
               },
-              "directive": {
-                "type": "null"
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "const": "reject.confident_non_directive"
+                  }
+                }
               }
             }
           }

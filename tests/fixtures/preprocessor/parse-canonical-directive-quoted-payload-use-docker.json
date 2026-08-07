@@ -2,5 +2,11 @@
   "name": "parse-canonical-directive-quoted-payload-use-docker",
   "kind": "parse",
   "raw_output": "use \"docker\"",
-  "expected_parsed": "use \"docker\""
+  "expected_parsed": {
+    "text": "use \"docker\"",
+    "kind": "use_item",
+    "operands": {
+      "item": "\"docker\""
+    }
+  }
 }

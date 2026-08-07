@@ -1,5 +1,6 @@
 import inspect
 import json
+from dataclasses import is_dataclass
 from importlib import import_module
 from pathlib import Path
 
@@ -58,6 +59,21 @@ def _assert_shape(value: object, shape: dict[str, object]) -> None:
 
     if "enum" in shape:
         assert value in shape["enum"]
+
+
+def _normalize_public_value(value: object) -> object:
+    if is_dataclass(value):
+        normalized: dict[str, object] = {}
+        for field_name in value.__dataclass_fields__:
+            normalized[field_name] = _normalize_public_value(getattr(value, field_name))
+        return normalized
+    if isinstance(value, dict):
+        return {key: _normalize_public_value(nested) for key, nested in value.items()}
+    if hasattr(value, "items"):
+        return {key: _normalize_public_value(nested) for key, nested in value.items()}
+    if isinstance(value, list):
+        return [_normalize_public_value(item) for item in value]
+    return value
 
 
 def _assert_shape_schema(shape: dict[str, object], label: str) -> None:
@@ -265,7 +281,7 @@ def _assert_render_prompt_behavior_probe(
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
     drafter = exported()
     result = drafter.draft_directive(probe["user_input"])
-    _assert_shape(result.__dict__, probe["expect_result"])
+    _assert_shape(_normalize_public_value(result), probe["expect_result"])
 
 
 def _assert_callable_contract(
@@ -279,7 +295,7 @@ def _assert_callable_contract(
         result = exported(**kwargs)
         return_shape = spec.get("return_shape")
         if return_shape is not None:
-            _assert_shape(result, return_shape)
+            _assert_shape(_normalize_public_value(result), return_shape)
 
     for probe in spec.get("behavior_probes", []):
         if name == "render_prompt":
@@ -459,7 +475,10 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "DRAFT_OUTCOME_NO_DIRECTIVE",
         "DRAFT_OUTCOME_UNKNOWN",
         "DraftResult",
+        "DraftResultType",
         "DirectiveDrafter",
+        "NoDirective",
+        "UnknownDirective",
         "parse_preprocessor_output",
         "preprocess_heuristic",
         "render_prompt",
