@@ -14,7 +14,7 @@ from context_compiler.grammar import (
     CanonicalDirective,
     contains_multiple_canonical_directives,
     decompose_directive,
-    is_canonical_directive,
+    validate_directive,
 )
 
 from .constants import (
@@ -49,7 +49,7 @@ def _no_directive() -> PreprocessorValidationResult:
 
 
 def _is_allowed_directive(text: str) -> bool:
-    return is_canonical_directive(text)
+    return validate_directive(text) is not None
 
 
 def _contains_multiple_candidate_directives(text: str) -> bool:
