@@ -33,7 +33,7 @@ DraftResultType = CanonicalDirective | UnknownDirective | NoDirective
 class DraftResult:
     """Structured non-authoritative result for one high-level drafting pass.
 
-    The result exposes only the final drafting producer plus one validated
+    The result exposes only the final drafting producer plus one parsed
     drafting-layer result variant. It does not imply compiler approval,
     directive application, or authoritative state mutation.
     """
@@ -113,10 +113,10 @@ class DirectiveDrafter:
         heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
         if not _is_fallback_eligible(heuristic_draft) or self._fallback is None:
-            return _validate_draft_result(heuristic_draft)
+            return _normalize_draft_result(heuristic_draft)
 
         fallback_draft = self._fallback(user_input)
-        return _validate_draft_result(fallback_draft)
+        return _normalize_draft_result(fallback_draft)
 
     async def async_draft_directive(self, user_input: str) -> DraftResult:
         """Draft at most one canonical directive from one user input asynchronously.
@@ -131,10 +131,10 @@ class DirectiveDrafter:
         heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
         if not _is_fallback_eligible(heuristic_draft) or self._async_fallback is None:
-            return _validate_draft_result(heuristic_draft)
+            return _normalize_draft_result(heuristic_draft)
 
         fallback_draft = await self._async_fallback(user_input)
-        return _validate_draft_result(fallback_draft)
+        return _normalize_draft_result(fallback_draft)
 
 
 def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> DraftResult:
@@ -162,15 +162,15 @@ def _is_fallback_eligible(drafted: DraftResult) -> bool:
     return isinstance(drafted.result, NoDirective | UnknownDirective)
 
 
-def _validate_draft_result(drafted: DraftResult) -> DraftResult:
+def _normalize_draft_result(drafted: DraftResult) -> DraftResult:
     if not isinstance(drafted.result, CanonicalDirective):
         return drafted
 
-    validated_directive = parse_preprocessor_output(drafted.result.text)
-    if validated_directive is None:
+    decomposed_directive = parse_preprocessor_output(drafted.result.text)
+    if decomposed_directive is None:
         return DraftResult(
             source=drafted.source,
             result=UnknownDirective(reason="invalid_canonical_directive"),
         )
 
-    return DraftResult(source=drafted.source, result=validated_directive)
+    return DraftResult(source=drafted.source, result=decomposed_directive)
