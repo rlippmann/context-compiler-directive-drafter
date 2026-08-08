@@ -1,5 +1,5 @@
 import pytest
-from context_compiler.grammar import validate_directive
+from context_compiler.grammar import decompose_directive
 
 from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
@@ -315,7 +315,7 @@ def test_heuristic_accepts_strict_canonical_directives() -> None:
             "outcome": "directive",
             "directive": directive,
         }
-        assert validate_directive(result["directive"]) is not None
+        assert decompose_directive(result["directive"]) is not None
         parsed = parse_preprocessor_output(result["directive"])
         assert parsed is not None
         assert parsed.text == result["directive"]

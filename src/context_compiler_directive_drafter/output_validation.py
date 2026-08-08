@@ -14,7 +14,6 @@ from context_compiler.grammar import (
     CanonicalDirective,
     contains_multiple_canonical_directives,
     decompose_directive,
-    validate_directive,
 )
 
 from .constants import (
@@ -49,7 +48,7 @@ def _no_directive() -> PreprocessorValidationResult:
 
 
 def _is_allowed_directive(text: str) -> bool:
-    return validate_directive(text) is not None
+    return decompose_directive(text) is not None
 
 
 def _contains_multiple_candidate_directives(text: str) -> bool:
@@ -144,9 +143,9 @@ def parse_preprocessor_output(raw_output: object) -> CanonicalDirective | None:
     It preserves the non-authoritative boundary by returning a canonical
     directive proposal or `None`, never an applied compiler result.
     """
-    validated = validate_preprocessor_output(raw_output)
-    if validated["classification"] == DRAFT_OUTCOME_DIRECTIVE:
-        output = validated["output"]
+    normalized = validate_preprocessor_output(raw_output)
+    if normalized["classification"] == DRAFT_OUTCOME_DIRECTIVE:
+        output = normalized["output"]
         assert isinstance(output, str)
         return decompose_directive(output)
     return None

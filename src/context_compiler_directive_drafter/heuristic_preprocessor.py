@@ -11,7 +11,7 @@ from typing import Literal, TypedDict
 
 from context_compiler.grammar import (
     contains_multiple_canonical_directives,
-    validate_directive,
+    decompose_directive,
 )
 
 from .constants import (
@@ -231,11 +231,11 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "reason": "reject.malformed_replacement_syntax",
         }
 
-    validated = validate_directive(normalized_candidate)
-    if validated is not None:
+    decomposed = decompose_directive(normalized_candidate)
+    if decomposed is not None:
         return {
             "outcome": DRAFT_OUTCOME_DIRECTIVE,
-            "directive": validated.text,
+            "directive": decomposed.text,
         }
 
     if _DIRECTIVE_CUE_PATTERN.search(normalized_candidate):

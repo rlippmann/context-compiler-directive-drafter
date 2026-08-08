@@ -1,6 +1,6 @@
 import re
 
-from context_compiler.grammar import validate_directive
+from context_compiler.grammar import decompose_directive
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
@@ -135,7 +135,7 @@ def test_heuristic_whole_message_discipline_for_surrounded_directive(
     assume(prefix.strip() not in {'"', "'", "`", "(", "["})
     assume(suffix.strip() not in {'"', "'", "`", ")", "]"})
     assume(not message.strip().lower().startswith("change premise "))
-    assume(validate_directive(normalized) is None)
+    assume(decompose_directive(normalized) is None)
     result = preprocess_heuristic(message)
     assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
 
