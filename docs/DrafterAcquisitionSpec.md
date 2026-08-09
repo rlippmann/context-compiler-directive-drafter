@@ -52,6 +52,12 @@ The drafter may return one of these outcomes to the host:
 - a request for clarification or resubmission from the user
 - abstention, leaving the input as ordinary non-directive text
 
+When a host configures a fallback acquisition callback, that callback is still
+non-authoritative. It may return candidate canonical directive text or `None`,
+plus host-provided source metadata at registration time. The drafter remains
+responsible for parsing, validation, normalization, and final `DraftResult`
+construction before compiler handoff.
+
 The drafter must not:
 
 - emit more than one canonical directive for a single user input

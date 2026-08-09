@@ -91,7 +91,7 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 
 Public interface:
 
-- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, and output validation.
+- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, fallback output parsing and validation, and final result construction.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `NoDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
@@ -114,7 +114,8 @@ Every drafting path should end in one of three host-visible result variants:
 - `UnknownDirective(reason=...)`: the input appears directive-related or interpretation failed, but the drafter should not guess
 
 The `source` field records only the final producer of the returned drafting
-result, such as `heuristic` or a host-provided fallback acquisition callback.
+result, such as `heuristic` or the source metadata configured for a
+host-provided fallback acquisition callback.
 It does not track fallback history.
 
 A returned `CanonicalDirective` means "this is a proposed canonical directive,"
@@ -123,11 +124,12 @@ not "this directive is permitted" and not "this directive has been applied."
 ## Recommended Host Flow
 
 1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API. It always tries heuristic drafting first and may optionally call a non-authoritative fallback acquisition callback when the heuristic result is not directly returnable.
-2. If the result yields a `CanonicalDirective`, pass that canonical directive to
+2. If you configure a fallback, have it return canonical directive text or `None`, and register the source metadata you want preserved on any fallback-produced `DraftResult`.
+3. If the result yields a `CanonicalDirective`, pass that canonical directive to
    `context-compiler` for authoritative review and application.
-3. If the result yields `NoDirective`, continue the host flow without a
+4. If the result yields `NoDirective`, continue the host flow without a
    directive handoff.
-4. If the result yields `UnknownDirective`, preserve the boundary: ask for
+5. If the result yields `UnknownDirective`, preserve the boundary: ask for
    clarification, show resubmission guidance, or retry drafting in a safer
    workflow.
 
@@ -163,6 +165,11 @@ The package includes prompt templates for integrations that use model-based draf
 Use render_prompt(path, premise, policies) to load a template and fill it with the current prompt-ready premise and policies.
 
 The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
+
+If you wire that model call into `DirectiveDrafter`, configure the fallback
+callback with source metadata and return only candidate directive text or
+`None`. `DirectiveDrafter` performs parsing, validation, normalization, and
+`DraftResult` construction itself.
 
 Any model output should still be validated with parse_preprocessor_output(...) or validate_preprocessor_output(...) before it is shown or used.
 

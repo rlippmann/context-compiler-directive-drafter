@@ -18,6 +18,78 @@
             "async_fallback": {
               "kind": "property"
             },
+            "configure_fallback": {
+              "kind": "method",
+              "signature": {
+                "is_async": false,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "fallback",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "source",
+                    "kind": "KEYWORD_ONLY",
+                    "has_default": false
+                  }
+                ]
+              }
+            },
+            "clear_fallback": {
+              "kind": "method",
+              "signature": {
+                "is_async": false,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  }
+                ]
+              }
+            },
+            "configure_async_fallback": {
+              "kind": "method",
+              "signature": {
+                "is_async": false,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "async_fallback",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  },
+                  {
+                    "name": "source",
+                    "kind": "KEYWORD_ONLY",
+                    "has_default": false
+                  }
+                ]
+              }
+            },
+            "clear_async_fallback": {
+              "kind": "method",
+              "signature": {
+                "is_async": false,
+                "params": [
+                  {
+                    "name": "self",
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "has_default": false
+                  }
+                ]
+              }
+            },
             "draft_directive": {
               "kind": "method",
               "signature": {
