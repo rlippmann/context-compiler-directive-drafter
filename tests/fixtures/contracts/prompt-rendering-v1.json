@@ -1,44 +1,28 @@
 {
-  "id": "prompt-rendering-capability-v1",
+  "id": "converter-prompt-capability-v1",
   "kind": "api-capability-contract",
   "module": "context_compiler_directive_drafter",
-  "capability": "prompt-rendering",
+  "capability": "converter-prompt",
   "members": {
-    "render_prompt": {
+    "get_converter_prompt": {
       "kind": "callable",
       "signature": {
         "is_async": false,
-        "params": [
-          {
-            "name": "path",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          },
-          {
-            "name": "premise",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          },
-          {
-            "name": "policies",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          }
-        ]
+        "params": []
       },
       "behavior_probes": [
         {
-          "kind": "render_prompt_from_file",
-          "path": "render-prompt-contract-probe.txt",
-          "template": "source=file-template\npremise=<NULL_OR_VALUE>\npolicies=<SET OF CURRENT POLICY ITEMS>\npath-literal=render-prompt-contract-probe.txt\n",
-          "premise": "concise replies",
-          "policies": {
-            "docker": "use"
-          },
-          "expect_result": "source=file-template\npremise=concise replies\npolicies=docker\npath-literal=render-prompt-contract-probe.txt",
+          "kind": "get_converter_prompt",
+          "expect_substrings": [
+            "You are a directive converter that drafts candidate",
+            "Canonical directive forms:",
+            "What premise vs policy means:",
+            "Output: <NO_DIRECTIVE>"
+          ],
           "reject_substrings": [
-            "premise=<NULL_OR_VALUE>",
-            "policies=<SET OF CURRENT POLICY ITEMS>"
+            "<NULL_OR_VALUE>",
+            "<SET OF CURRENT POLICY ITEMS>",
+            "Current compiler state:"
           ]
         }
       ]

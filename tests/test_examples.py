@@ -26,7 +26,6 @@ def test_prompt_rendering_example_runs(capsys) -> None:
 
     output = capsys.readouterr().out
     assert output.strip()
-    assert "* premise: concise replies" in output
-    assert "* policies: docker, peanuts" in output
-    assert "<NULL_OR_VALUE>" not in output
-    assert "<SET OF CURRENT POLICY ITEMS>" not in output
+    assert "You are a directive converter that drafts candidate" in output
+    assert "Directive categories:" in output
+    assert "Canonical directive forms:" in output

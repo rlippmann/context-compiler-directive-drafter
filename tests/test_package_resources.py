@@ -1,19 +1,10 @@
-from importlib.resources import as_file, files
 from pathlib import Path
 
-from context_compiler import PolicyValue
-
-from context_compiler_directive_drafter import render_prompt
+from context_compiler_directive_drafter import get_converter_prompt
 
 _PACKAGE = "context_compiler_directive_drafter"
 _RESOURCE_PATHS = [
-    "prompts/default.txt",
-    "prompts/llama.txt",
     "py.typed",
-]
-_NON_EMPTY_RESOURCE_PATHS = [
-    "prompts/default.txt",
-    "prompts/llama.txt",
 ]
 _LEGACY_IMPORT = ".".join(("experimental", "preprocessor"))
 _SCAN_ROOTS = [
@@ -24,120 +15,39 @@ _SCAN_ROOTS = [
 ]
 
 
-def _empty_policies() -> dict[str, PolicyValue]:
-    return {}
-
-
-def _policies_with_duplicate_policy_name() -> dict[str, PolicyValue]:
-    return {"shared": "prohibit"}
-
-
-def _premise_with_punctuation_and_newline() -> str:
-    return "first line second line!"
-
-
-def _policies_with_multiple_names() -> dict[str, PolicyValue]:
-    return {"zeta": "use", "beta": "use", "alpha": "prohibit"}
-
-
 def test_packaged_resources_exist_and_are_non_empty() -> None:
+    from importlib.resources import files
+
     package_files = files(_PACKAGE)
 
     for relative_path in _RESOURCE_PATHS:
         resource = package_files.joinpath(relative_path)
         assert resource.is_file(), relative_path
 
-    for relative_path in _NON_EMPTY_RESOURCE_PATHS:
-        resource = package_files.joinpath(relative_path)
-        assert resource.read_text(encoding="utf-8").strip(), relative_path
+
+def test_packaged_converter_prompt_is_static_and_context_free() -> None:
+    prompt = get_converter_prompt()
+
+    assert "Current compiler state:" not in prompt
+    assert "<NULL_OR_VALUE>" not in prompt
+    assert "<SET OF CURRENT POLICY ITEMS>" not in prompt
+    assert "policies:" not in prompt.lower()
+    assert "premise:" not in prompt.lower()
 
 
-def test_packaged_default_prompt_renders_from_installed_resource_text() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/default.txt")
+def test_packaged_converter_prompt_mentions_directive_categories_and_examples() -> None:
+    prompt = get_converter_prompt()
 
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, None, _empty_policies())
-
-    assert rendered is not None
-    assert rendered.strip()
-    assert "<NULL_OR_VALUE>" not in rendered
-    assert "<SET OF CURRENT POLICY ITEMS>" not in rendered
+    assert "Premise directives" in prompt
+    assert "Policy directives" in prompt
+    assert "Administrative directives" in prompt
+    assert "User: switch from docker to podman" in prompt
 
 
-def test_packaged_llama_prompt_renders_from_installed_resource_text() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/llama.txt")
+def test_packaged_converter_prompt_is_available_without_resource_file_lookup() -> None:
+    prompt = get_converter_prompt()
 
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, None, _empty_policies())
-
-    assert rendered is not None
-    assert rendered.strip()
-    assert "<NULL_OR_VALUE>" not in rendered
-    assert "<SET OF CURRENT POLICY ITEMS>" not in rendered
-
-
-def test_packaged_default_prompt_duplicate_policy_names_render_once() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/default.txt")
-
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, None, _policies_with_duplicate_policy_name())
-
-    assert rendered is not None
-    assert "* policies: shared" in rendered
-    assert rendered.count("shared") == 1
-
-
-def test_packaged_llama_prompt_duplicate_policy_names_render_once() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/llama.txt")
-
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, None, _policies_with_duplicate_policy_name())
-
-    assert rendered is not None
-    assert "* policies: shared" in rendered
-    assert rendered.count("shared") == 1
-
-
-def test_packaged_default_prompt_renders_sorted_multiple_policy_names() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/default.txt")
-
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, None, _policies_with_multiple_names())
-
-    assert rendered is not None
-    assert "* policies: alpha, beta, zeta" in rendered
-
-
-def test_packaged_llama_prompt_renders_sorted_multiple_policy_names() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/llama.txt")
-
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, None, _policies_with_multiple_names())
-
-    assert rendered is not None
-    assert "* policies: alpha, beta, zeta" in rendered
-
-
-def test_packaged_default_prompt_renders_punctuation_and_newline_premise_deterministically() -> (
-    None
-):
-    prompt_resource = files(_PACKAGE).joinpath("prompts/default.txt")
-
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, _premise_with_punctuation_and_newline(), {})
-
-    assert rendered is not None
-    assert "* premise: first line second line!" in rendered
-
-
-def test_packaged_llama_prompt_renders_punctuation_and_newline_premise_deterministically() -> None:
-    prompt_resource = files(_PACKAGE).joinpath("prompts/llama.txt")
-
-    with as_file(prompt_resource) as prompt_path:
-        rendered = render_prompt(prompt_path, _premise_with_punctuation_and_newline(), {})
-
-    assert rendered is not None
-    assert "* premise: first line second line!" in rendered
+    assert prompt.startswith("You are a directive converter that drafts candidate")
 
 
 def test_repo_files_do_not_reference_legacy_preprocessor_import_path() -> None:
