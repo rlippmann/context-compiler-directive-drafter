@@ -20,7 +20,7 @@ from context_compiler_directive_drafter.output_validation import (
     parse_preprocessor_output,
     validate_preprocessor_output,
 )
-from context_compiler_directive_drafter.prompt_utils import render_prompt
+from context_compiler_directive_drafter.prompt_utils import get_converter_prompt
 
 __all__ = [
     "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
@@ -34,6 +34,6 @@ __all__ = [
     "UnknownDirective",
     "parse_preprocessor_output",
     "preprocess_heuristic",
-    "render_prompt",
+    "get_converter_prompt",
     "validate_preprocessor_output",
 ]

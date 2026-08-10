@@ -20,7 +20,7 @@
       "UnknownDirective",
       "parse_preprocessor_output",
       "preprocess_heuristic",
-      "render_prompt",
+      "get_converter_prompt",
       "validate_preprocessor_output"
     ],
     "members": {
@@ -213,27 +213,11 @@
           ]
         }
       },
-      "render_prompt": {
+      "get_converter_prompt": {
         "kind": "callable",
         "signature": {
           "is_async": false,
-          "params": [
-            {
-              "name": "path",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            },
-            {
-              "name": "premise",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            },
-            {
-              "name": "policies",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            }
-          ]
+          "params": []
         }
       }
     }

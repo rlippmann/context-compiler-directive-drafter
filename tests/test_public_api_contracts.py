@@ -152,19 +152,16 @@ def _assert_signature_schema(signature_spec: dict[str, object], label: str) -> N
         assert isinstance(parameter["has_default"], bool), f"{label}.params[{index}]"
 
 
-def _assert_render_prompt_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
+def _assert_converter_prompt_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
     _assert_exact_keys(
         probe,
-        {"kind", "path", "template", "premise", "policies", "expect_result"}
-        | ({"reject_substrings"} & set(probe.keys())),
+        {"kind", "expect_substrings"} | ({"reject_substrings"} & set(probe.keys())),
         label,
     )
-    assert probe["kind"] == "render_prompt_from_file"
-    assert isinstance(probe["path"], str)
-    assert isinstance(probe["template"], str)
-    assert probe["premise"] is None or isinstance(probe["premise"], str)
-    assert isinstance(probe["policies"], dict)
-    assert isinstance(probe["expect_result"], str)
+    assert probe["kind"] == "get_converter_prompt"
+    expect_substrings = probe["expect_substrings"]
+    assert isinstance(expect_substrings, list)
+    assert all(isinstance(item, str) for item in expect_substrings)
     reject_substrings = probe.get("reject_substrings", [])
     assert isinstance(reject_substrings, list)
     assert all(isinstance(item, str) for item in reject_substrings)
@@ -222,8 +219,8 @@ def _assert_callable_spec_schema(spec: dict[str, object], label: str) -> None:
         assert isinstance(behavior_probes, list), f"{label}.behavior_probes"
         for index, probe in enumerate(behavior_probes):
             assert isinstance(probe, dict), f"{label}.behavior_probes[{index}]"
-            if probe.get("kind") == "render_prompt_from_file":
-                _assert_render_prompt_behavior_probe_schema(
+            if probe.get("kind") == "get_converter_prompt":
+                _assert_converter_prompt_behavior_probe_schema(
                     probe, f"{label}.behavior_probes[{index}]"
                 )
                 continue
@@ -267,13 +264,10 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
             raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
 
 
-def _assert_render_prompt_behavior_probe(
-    exported: object, probe: dict[str, object], tmp_path: Path
-) -> None:
-    template_path = tmp_path / probe["path"]
-    template_path.write_text(probe["template"], encoding="utf-8")
-    result = exported(template_path, probe["premise"], probe["policies"])
-    assert result == probe["expect_result"]
+def _assert_converter_prompt_behavior_probe(exported: object, probe: dict[str, object]) -> None:
+    result = exported()
+    for substring in probe["expect_substrings"]:
+        assert substring in result
     for substring in probe.get("reject_substrings", []):
         assert substring not in result
 
@@ -298,8 +292,8 @@ def _assert_callable_contract(
             _assert_shape(_normalize_public_value(result), return_shape)
 
     for probe in spec.get("behavior_probes", []):
-        if name == "render_prompt":
-            _assert_render_prompt_behavior_probe(exported, probe, tmp_path)
+        if name == "get_converter_prompt":
+            _assert_converter_prompt_behavior_probe(exported, probe)
             continue
         raise AssertionError(f"Unsupported behavior probe for {name}: {probe!r}")
 
@@ -481,7 +475,7 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "UnknownDirective",
         "parse_preprocessor_output",
         "preprocess_heuristic",
-        "render_prompt",
+        "get_converter_prompt",
         "validate_preprocessor_output",
     }
 

@@ -97,7 +97,7 @@ Public interface:
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
 - `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
-- `render_prompt(path, premise, policies)`: Load and fill prompt templates.
+- `get_converter_prompt()`: Load the shared static converter system prompt.
 - Constants and sentinels exported from the package.
 
 ### Output Contract
@@ -157,21 +157,29 @@ Do not pass raw model output to the compiler.
 
 ## Prompt Resources
 
-The package includes prompt templates for integrations that use model-based drafting when heuristic drafting does not produce a result.
+The package includes one shared static converter system prompt for integrations
+that use model-based drafting when heuristic drafting does not produce a
+result.
 
-- prompts/default.txt: recommended default prompt
-- prompts/llama.txt: stricter prompt for Llama-family models
+Use `get_converter_prompt()` to load the canonical shared converter system prompt.
 
-Use render_prompt(path, premise, policies) to load a template and fill it with the current prompt-ready premise and policies.
+The converter prompt is guidance only:
 
-The rendered prompt can be sent to an LLM to attempt directive drafting when heuristic drafting does not produce a result.
+- it teaches the basic directive grammar and drafting boundary
+- it does not inject premise, policy, engine, or user-specific runtime state
+- it does not approve or apply directives
+- it does not replace package parsing or validation
+- its `<NO_DIRECTIVE>` token is part of the LLM/provider prompt protocol, not a
+  `DraftResult` variant and not a Context Compiler grammar rule
 
-If you wire that model call into `DirectiveDrafter`, configure the fallback
-callback with source metadata and return only candidate directive text or
-`None`. `DirectiveDrafter` performs parsing, validation, normalization, and
-`DraftResult` construction itself.
+If you wire that model call into `DirectiveDrafter`, reuse the shared
+converter prompt, configure the fallback callback with source metadata, and
+return only candidate directive text or `None`. `DirectiveDrafter` performs
+parsing, validation, normalization, and `DraftResult` construction itself.
 
-Any model output should still be validated with parse_preprocessor_output(...) or validate_preprocessor_output(...) before it is shown or used.
+Any model output should still be validated with
+`parse_preprocessor_output(...)` or `validate_preprocessor_output(...)` before
+it is shown or used.
 
 ## Current Limits
 
