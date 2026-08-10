@@ -106,7 +106,8 @@ jobs:
       - name: Run installed-wheel import/resource smoke
         shell: bash
         run: |
-          /tmp/ccdd-wheel-smoke/bin/python scripts/check_installed_wheel_smoke.py
+          cd /tmp
+          /tmp/ccdd-wheel-smoke/bin/python "${{ github.workspace }}/scripts/check_installed_wheel_smoke.py"
 
   publish:
     name: Publish to PyPI

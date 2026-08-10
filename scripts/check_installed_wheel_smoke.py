@@ -1,6 +1,7 @@
 """Validate the installed wheel against checked-in public contracts."""
 
 import json
+import sys
 from importlib.resources import files
 from pathlib import Path
 
@@ -14,6 +15,15 @@ def _repo_root() -> Path:
 def _load_contract(relative_path: str) -> dict[str, object]:
     path = _repo_root() / relative_path
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _assert_installed_wheel_import() -> None:
+    package_file = Path(package.__file__).resolve()
+    repo_root = _repo_root()
+    venv_root = Path(sys.prefix).resolve()
+
+    assert not package_file.is_relative_to(repo_root), package_file
+    assert package_file.is_relative_to(venv_root), package_file
 
 
 def _assert_public_exports() -> None:
@@ -48,6 +58,7 @@ def _assert_converter_prompt_behavior() -> None:
 
 
 def main() -> None:
+    _assert_installed_wheel_import()
     _assert_public_exports()
     _assert_packaged_resources()
     _assert_converter_prompt_behavior()
