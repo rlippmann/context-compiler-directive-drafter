@@ -106,7 +106,7 @@ jobs:
       - name: Run installed-wheel import/resource smoke
         shell: bash
         run: |
-          /tmp/ccdd-wheel-smoke/bin/python -c "from importlib.resources import files; import context_compiler_directive_drafter as m; required = {'DRAFT_OUTCOME_DIRECTIVE','DRAFT_OUTCOME_NO_DIRECTIVE','DRAFT_OUTCOME_UNKNOWN','DirectiveDrafter','DraftResult','DraftResultType','NoDirective','UnknownDirective','PREPROCESSOR_NO_DIRECTIVE_SENTINEL','parse_preprocessor_output','preprocess_heuristic','render_prompt','validate_preprocessor_output'}; missing = sorted(name for name in required if not hasattr(m, name)); assert not missing, missing; assert files('context_compiler_directive_drafter').joinpath('prompts/default.txt').read_text(encoding='utf-8'); print('wheel-smoke: ok')"
+          /tmp/ccdd-wheel-smoke/bin/python -c "from importlib.resources import files; import context_compiler_directive_drafter as m; required = {'DRAFT_OUTCOME_DIRECTIVE','DRAFT_OUTCOME_NO_DIRECTIVE','DRAFT_OUTCOME_UNKNOWN','DirectiveDrafter','DraftResult','DraftResultType','NoDirective','UnknownDirective','PREPROCESSOR_NO_DIRECTIVE_SENTINEL','get_converter_prompt','parse_preprocessor_output','preprocess_heuristic','validate_preprocessor_output'}; missing = sorted(name for name in required if not hasattr(m, name)); assert not missing, missing; assert files('context_compiler_directive_drafter').joinpath('py.typed').read_text(encoding='utf-8') == ''; assert 'Canonical directive forms:' in m.get_converter_prompt(); print('wheel-smoke: ok')"
 
   publish:
     name: Publish to PyPI
