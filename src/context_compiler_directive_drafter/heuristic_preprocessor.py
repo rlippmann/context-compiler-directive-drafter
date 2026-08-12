@@ -9,10 +9,7 @@ positives.
 import re
 from typing import Literal, TypedDict
 
-from context_compiler.grammar import (
-    contains_multiple_canonical_directives,
-    decompose_directive,
-)
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
@@ -200,13 +197,6 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized_candidate = _normalize_candidate(message)
 
-    if contains_multiple_canonical_directives(normalized_candidate):
-        return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
-            "directive": None,
-            "reason": "reject.multi_candidate_directive",
-        }
-
     if normalized in _NEAR_MISS_ALIAS_CASES:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
@@ -232,10 +222,17 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         }
 
     decomposed = decompose_directive(normalized_candidate)
-    if decomposed is not None:
+    if isinstance(decomposed, CanonicalDirective):
         return {
             "outcome": DRAFT_OUTCOME_DIRECTIVE,
             "directive": decomposed.text,
+        }
+
+    if decomposed is not None:
+        return {
+            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "directive": None,
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
     if _DIRECTIVE_CUE_PATTERN.search(normalized_candidate):

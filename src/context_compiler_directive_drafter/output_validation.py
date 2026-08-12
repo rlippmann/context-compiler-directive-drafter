@@ -10,11 +10,7 @@ Internal helpers are implementation details and may change.
 import json
 from typing import TypedDict
 
-from context_compiler.grammar import (
-    CanonicalDirective,
-    contains_multiple_canonical_directives,
-    decompose_directive,
-)
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
@@ -48,11 +44,7 @@ def _no_directive() -> PreprocessorValidationResult:
 
 
 def _is_allowed_directive(text: str) -> bool:
-    return decompose_directive(text) is not None
-
-
-def _contains_multiple_candidate_directives(text: str) -> bool:
-    return contains_multiple_canonical_directives(text)
+    return isinstance(decompose_directive(text), CanonicalDirective)
 
 
 def _validate_structured_output(raw_output: object) -> PreprocessorValidationResult:
@@ -72,8 +64,6 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
             return _unknown()
         normalized_output = output.strip()
         if not normalized_output:
-            return _unknown()
-        if _contains_multiple_candidate_directives(normalized_output):
             return _unknown()
         if not _is_allowed_directive(normalized_output):
             return _unknown()
@@ -99,9 +89,6 @@ def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
 
     if stripped.upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
         return _no_directive()
-
-    if _contains_multiple_candidate_directives(stripped):
-        return _unknown()
 
     if _is_allowed_directive(stripped):
         return _directive(stripped)
@@ -147,5 +134,7 @@ def parse_preprocessor_output(raw_output: object) -> CanonicalDirective | None:
     if normalized["classification"] == DRAFT_OUTCOME_DIRECTIVE:
         output = normalized["output"]
         assert isinstance(output, str)
-        return decompose_directive(output)
+        decomposed = decompose_directive(output)
+        assert isinstance(decomposed, CanonicalDirective)
+        return decomposed
     return None

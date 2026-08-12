@@ -159,7 +159,7 @@ def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.multi_candidate_directive",
+            "reason": "reject.directive_adjacent_unsafe",
         }
 
 
