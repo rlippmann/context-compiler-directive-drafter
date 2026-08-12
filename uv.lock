@@ -26,11 +26,11 @@ wheels = [
 
 [[package]]
 name = "context-compiler"
-version = "0.9.0.dev7"
+version = "0.9.0.dev9"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/46/bf/ac08c624496ef2f74b284e05f539f02f798f89b1d7e81758214b568c2803/context_compiler-0.9.0.dev7.tar.gz", hash = "sha256:c2cf459606d7c73da43afbf0aa97f3cba5e459b41845fd76c54b1a96047e282a", size = 52123, upload-time = "2026-08-07T07:41:06.506Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/b0/3416f73c36f6abe7e58c9c34f7533e62a4489526b4469bb87e51b55f836f/context_compiler-0.9.0.dev9.tar.gz", hash = "sha256:1f3a49ca2efd05ae0136ac51802968a7de4e5685d08a8c46458915b6771f5ce9", size = 52026, upload-time = "2026-08-12T06:51:13.675Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/b7/8a8a6f33589a420f20082633e1bae9f863778eaa790bf25b94c1c955dbd7/context_compiler-0.9.0.dev7-py3-none-any.whl", hash = "sha256:8cea54a91a17ed2b912ab1b4e652ad787d4d3201220aadbf77aa3fe6551693f0", size = 23862, upload-time = "2026-08-07T07:41:05.378Z" },
+    { url = "https://files.pythonhosted.org/packages/57/50/aef1a9e03e7034127e226b267ed7e890544bae6eff150695c46b959345da/context_compiler-0.9.0.dev9-py3-none-any.whl", hash = "sha256:f4717482b71e3d76a4764fa6a6e0452d0b01642e66db019332e508da3f157d8b", size = 23693, upload-time = "2026-08-12T06:51:12.506Z" },
 ]
 
 [[package]]
@@ -53,7 +53,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "context-compiler", specifier = "==0.9.0.dev7" }]
+requires-dist = [{ name = "context-compiler", specifier = "==0.9.0.dev9" }]
 
 [package.metadata.requires-dev]
 dev = [
