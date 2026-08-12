@@ -138,7 +138,7 @@ class DirectiveDrafter:
         heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
         if not _is_fallback_eligible(heuristic_draft) or self._fallback is None:
-            return _normalize_draft_result(heuristic_draft)
+            return heuristic_draft
 
         fallback_text = self._fallback(user_input)
         return _draft_result_from_fallback_output(fallback_text, source=self._fallback_source)
@@ -157,7 +157,7 @@ class DirectiveDrafter:
         heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
         if not _is_fallback_eligible(heuristic_draft) or self._async_fallback is None:
-            return _normalize_draft_result(heuristic_draft)
+            return heuristic_draft
 
         fallback_text = await self._async_fallback(user_input)
         return _draft_result_from_fallback_output(fallback_text, source=self._async_fallback_source)
@@ -186,20 +186,6 @@ def _is_fallback_eligible(drafted: DraftResult) -> bool:
     if isinstance(drafted.result, CanonicalDirective):
         return False
     return isinstance(drafted.result, NoDirective | UnknownDirective)
-
-
-def _normalize_draft_result(drafted: DraftResult) -> DraftResult:
-    if not isinstance(drafted.result, CanonicalDirective):
-        return drafted
-
-    decomposed_directive = parse_preprocessor_output(drafted.result.text)
-    if decomposed_directive is None:
-        return DraftResult(
-            source=drafted.source,
-            result=UnknownDirective(reason="invalid_canonical_directive"),
-        )
-
-    return DraftResult(source=drafted.source, result=decomposed_directive)
 
 
 def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str) -> DraftResult:
