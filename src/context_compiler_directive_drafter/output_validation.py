@@ -31,6 +31,19 @@ class PreprocessorValidationResult(TypedDict):
     output: str | None
 
 
+def _parse_canonical_directive(raw_output: object) -> CanonicalDirective | None:
+    if isinstance(raw_output, CanonicalDirective):
+        return raw_output
+
+    if not isinstance(raw_output, str):
+        return None
+
+    decomposed = decompose_directive(raw_output.strip())
+    if isinstance(decomposed, CanonicalDirective):
+        return decomposed
+    return None
+
+
 def _unknown() -> PreprocessorValidationResult:
     return {"classification": DRAFT_OUTCOME_UNKNOWN, "output": None}
 
@@ -41,10 +54,6 @@ def _directive(output: str) -> PreprocessorValidationResult:
 
 def _no_directive() -> PreprocessorValidationResult:
     return {"classification": DRAFT_OUTCOME_NO_DIRECTIVE, "output": None}
-
-
-def _is_allowed_directive(text: str) -> bool:
-    return isinstance(decompose_directive(text), CanonicalDirective)
 
 
 def _validate_structured_output(raw_output: object) -> PreprocessorValidationResult:
@@ -62,12 +71,10 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
     if classification == DRAFT_OUTCOME_DIRECTIVE:
         if not isinstance(output, str):
             return _unknown()
-        normalized_output = output.strip()
-        if not normalized_output:
+        parsed = _parse_canonical_directive(output)
+        if parsed is None:
             return _unknown()
-        if not _is_allowed_directive(normalized_output):
-            return _unknown()
-        return _directive(normalized_output)
+        return _directive(parsed.text)
 
     if classification == DRAFT_OUTCOME_NO_DIRECTIVE:
         if output is not None:
@@ -90,8 +97,9 @@ def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
     if stripped.upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
         return _no_directive()
 
-    if _is_allowed_directive(stripped):
-        return _directive(stripped)
+    parsed = _parse_canonical_directive(stripped)
+    if parsed is not None:
+        return _directive(parsed.text)
 
     if stripped[0] in {"{", "["}:
         try:
@@ -130,11 +138,16 @@ def parse_preprocessor_output(raw_output: object) -> CanonicalDirective | None:
     It preserves the non-authoritative boundary by returning a canonical
     directive proposal or `None`, never an applied compiler result.
     """
+    parsed = _parse_canonical_directive(raw_output)
+    if parsed is not None:
+        return parsed
+
     normalized = validate_preprocessor_output(raw_output)
-    if normalized["classification"] == DRAFT_OUTCOME_DIRECTIVE:
-        output = normalized["output"]
-        assert isinstance(output, str)
-        decomposed = decompose_directive(output)
-        assert isinstance(decomposed, CanonicalDirective)
-        return decomposed
-    return None
+    if normalized["classification"] != DRAFT_OUTCOME_DIRECTIVE:
+        return None
+
+    output = normalized["output"]
+    assert isinstance(output, str)
+    parsed = _parse_canonical_directive(output)
+    assert isinstance(parsed, CanonicalDirective)
+    return parsed
