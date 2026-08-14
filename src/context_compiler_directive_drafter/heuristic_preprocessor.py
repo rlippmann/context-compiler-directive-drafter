@@ -9,7 +9,12 @@ positives.
 import re
 from typing import Literal, TypedDict
 
-from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive
+from context_compiler.grammar import (
+    CanonicalDirective,
+    DirectiveKind,
+    decompose_directive,
+    get_directive_metadata,
+)
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
@@ -42,16 +47,7 @@ _LIST_MARKER_PATTERN = re.compile(r"^\s*(?:\d+[.)]|[-*])\s+\S")
 _META_PREFIX_PATTERN = re.compile(
     r"^\s*(?:example:|for example\b|the command is\b|(?:i|he|she|they) said\b)"
 )
-_MULTI_SEGMENT_PATTERN = re.compile(
-    r"^\s*(?:use|prohibit|remove policy|set premise|change premise to|clear premise|"
-    r"reset policies|clear state)\b"
-    r".*\b(?:because|then continue|and then continue|and explain)\b"
-)
 _PUNCTUATION_TRIM_PATTERN = re.compile(r"[.!]+\s*$")
-_DIRECTIVE_CUE_PATTERN = re.compile(
-    r"\b(set premise|change premise|use|prohibit|remove policy|clear premise|"
-    r"reset policies|clear state)\b"
-)
 _QUOTED_REPORTING_PATTERN = re.compile(
     r"^\s*(?:the\s+(?:doc|docs?|documentation)|\w+)\s+"
     r"(?:literally\s+)?(?:say|says?|said|wrote|quoted)\s*:\s*"
@@ -77,6 +73,39 @@ _WRAPPER_PAIRS = {
 
 def _normalized_for_match(message: str) -> str:
     return re.sub(r"\s+", " ", message.strip()).lower()
+
+
+def _directive_canonical_starts() -> tuple[str, ...]:
+    starts = {metadata.canonical_start for metadata in get_directive_metadata()}
+    return tuple(sorted(starts, key=len, reverse=True))
+
+
+def _directive_cues() -> tuple[str, ...]:
+    cues = set(_directive_canonical_starts())
+    cues.update(
+        canonical_start.removesuffix(" to")
+        for canonical_start in _directive_canonical_starts()
+        if canonical_start.endswith(" to")
+    )
+    return tuple(sorted(cues, key=len, reverse=True))
+
+
+def _directive_alternation(phrases: tuple[str, ...]) -> str:
+    return "|".join(re.escape(phrase) for phrase in phrases)
+
+
+def _matches_multi_segment_pattern(message: str) -> bool:
+    return bool(
+        re.match(
+            rf"^\s*(?:{_directive_alternation(_directive_canonical_starts())})\b"
+            r".*\b(?:because|then continue|and then continue|and explain)\b",
+            message,
+        )
+    )
+
+
+def _contains_directive_cue(message: str) -> bool:
+    return bool(re.search(rf"\b(?:{_directive_alternation(_directive_cues())})\b", message))
 
 
 def _contains_reporting_bracket_mention(message: str) -> bool:
@@ -185,7 +214,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized = _normalized_for_match(message)
 
-    if "?" in message and _DIRECTIVE_CUE_PATTERN.search(normalized):
+    if "?" in message and _contains_directive_cue(normalized):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
@@ -199,7 +228,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "reason": "reject.meta_or_reporting",
         }
 
-    if _MULTI_SEGMENT_PATTERN.match(normalized):
+    if _matches_multi_segment_pattern(normalized):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
@@ -263,7 +292,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "reason": "reject.directive_adjacent_unsafe",
         }
 
-    if _DIRECTIVE_CUE_PATTERN.search(normalized_candidate):
+    if _contains_directive_cue(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
