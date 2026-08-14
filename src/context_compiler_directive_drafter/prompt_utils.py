@@ -36,7 +36,7 @@ Output: <NO_DIRECTIVE>
 User: What does clear state do?
 Output: <NO_DIRECTIVE>
 
-Examples of ambiguous or directive-like input where you must not guess:
+Examples of directive discussion or unresolved multi-directive input where you must not guess:
 User: use docker?
 Output: <NO_DIRECTIVE>
 
@@ -69,14 +69,15 @@ Conversion rules:
 - Do not guess missing intent, omitted items, hidden context, or unstated replacements.
 - Do not infer semantic intent from directive payload contents.
 - Do not invent directives from ordinary conversation.
-- If the input is ambiguous, mixed, quoted, reported, hypothetical, or only
-  directive-like, output `<NO_DIRECTIVE>`.
+- If the input is ordinary conversation, quoted or reported directive text,
+  directive discussion, or a mixed request you cannot safely reduce to one
+  directive, output `<NO_DIRECTIVE>`.
 
 When to output `<NO_DIRECTIVE>`:
 - Ordinary conversation, questions, explanations, or comments.
 - Requests that do not ask to change compiler-managed behavior.
-- Ambiguous requests where more than one directive could fit.
-- Near-miss wording that does not clearly map to a canonical directive.
+- Questions or discussion about directives rather than a request to change behavior.
+- Requests that remain too ambiguous to draft as one directive.
 - Inputs containing multiple directive requests.
 - Quoted, cited, reported, example, or discussed directive text rather than a direct request."""
 
@@ -168,7 +169,7 @@ def _render_canonical_forms() -> str:
 
 def _render_positive_acquisition_examples() -> str:
     metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
-    lines = ["Examples of interpretation-guided requests that may become directives:"]
+    lines = ["Examples of user requests that may be drafted as directives:"]
     for example in _POSITIVE_ACQUISITION_EXAMPLES:
         metadata = metadata_by_kind[example.kind]
         canonical_output = _render_example_output(metadata, example.operand_values)

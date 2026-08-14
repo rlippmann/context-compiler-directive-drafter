@@ -17,6 +17,7 @@
             "You are a directive converter that drafts candidate",
             "Canonical directive forms:",
             "What premise vs policy means:",
+            "Questions or discussion about directives",
             "Output: <NO_DIRECTIVE>"
           ],
           "reject_substrings": [

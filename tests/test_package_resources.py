@@ -42,7 +42,7 @@ def test_packaged_converter_prompt_mentions_directive_categories_and_examples() 
     assert "Policy directives" in prompt
     assert "Administrative directives" in prompt
     assert "`use <new item> instead of <old item>`" in prompt
-    assert "Examples of interpretation-guided requests that may become directives:" in prompt
+    assert "Examples of user requests that may be drafted as directives:" in prompt
 
 
 def test_packaged_converter_prompt_is_available_without_resource_file_lookup() -> None:
