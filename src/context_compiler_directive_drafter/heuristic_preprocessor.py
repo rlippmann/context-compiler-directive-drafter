@@ -9,7 +9,7 @@ positives.
 import re
 from typing import Literal, TypedDict
 
-from context_compiler.grammar import CanonicalDirective, decompose_directive
+from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
@@ -119,7 +119,7 @@ def _is_quoted_or_backtick_wrapped(message: str) -> bool:
 
 
 def _looks_like_unsafe_replacement_acquisition_case(directive: CanonicalDirective) -> bool:
-    if directive.kind.value != "use_item":
+    if directive.kind is not DirectiveKind.USE_ITEM:
         return False
 
     item = directive.operands.get("item")
