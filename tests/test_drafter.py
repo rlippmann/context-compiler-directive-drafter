@@ -201,6 +201,26 @@ def test_fallback_canonical_directive_receives_the_same_validation_path() -> Non
     assert result == DraftResult(source="llm", result=_canonical("set premise concise replies"))
 
 
+def test_invalid_heuristic_directive_is_downgraded_to_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def heuristic(_: str) -> dict[str, str | None]:
+        return {
+            "outcome": "directive",
+            "directive": "set premise to concise replies",
+        }
+
+    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+
+    drafter = DirectiveDrafter()
+    result = drafter.draft_directive("please make replies concise")
+
+    assert result == DraftResult(
+        source="heuristic",
+        result=UnknownDirective(reason="invalid_canonical_directive"),
+    )
+
+
 def test_no_fallback_preserves_existing_non_directive_behavior() -> None:
     drafter = DirectiveDrafter()
 
