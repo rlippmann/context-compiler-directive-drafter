@@ -1,11 +1,18 @@
 from types import MappingProxyType, SimpleNamespace
 
 import pytest
-from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive
+from context_compiler.grammar import CanonicalDirective, DirectiveKind
 
 from context_compiler_directive_drafter import heuristic_preprocessor as heuristic_module
 from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
+
+
+def _assert_directive_result(result: dict[str, object], expected: str) -> None:
+    assert result["outcome"] == "directive"
+    directive = result["directive"]
+    assert isinstance(directive, CanonicalDirective)
+    assert directive.text == expected
 
 
 def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
@@ -60,10 +67,7 @@ def test_heuristic_accepts_trailing_period_or_bang_for_whole_message_directives(
         ("use docker.", "use docker"),
     ]
     for message, expected in cases:
-        assert preprocess_heuristic(message) == {
-            "outcome": "directive",
-            "directive": expected,
-        }
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_allows_exact_full_message_wrappers_for_directives() -> None:
@@ -72,10 +76,7 @@ def test_heuristic_allows_exact_full_message_wrappers_for_directives() -> None:
         ("[prohibit peanuts]", "prohibit peanuts"),
     ]
     for message, expected in cases:
-        assert preprocess_heuristic(message) == {
-            "outcome": "directive",
-            "directive": expected,
-        }
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_rejects_quoted_or_backticked_exact_directives() -> None:
@@ -99,10 +100,7 @@ def test_heuristic_case_normalizes_exact_command_shapes() -> None:
         ("Prohibit Peanuts", "prohibit peanuts"),
     ]
     for message, expected in cases:
-        assert preprocess_heuristic(message) == {
-            "outcome": "directive",
-            "directive": expected,
-        }
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_question_mark_only_non_directive_is_confident() -> None:
@@ -231,10 +229,7 @@ def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
 
 
 def test_heuristic_does_not_reject_single_directive_payload_with_ordinary_and() -> None:
-    assert preprocess_heuristic("use bread and butter") == {
-        "outcome": "directive",
-        "directive": "use bread and butter",
-    }
+    _assert_directive_result(preprocess_heuristic("use bread and butter"), "use bread and butter")
 
 
 def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start() -> None:
@@ -286,10 +281,7 @@ def test_heuristic_rejects_notes_and_reporting_with_bracketed_mentions() -> None
 
 
 def test_heuristic_accepts_bracket_wrapper_without_reporting_marker() -> None:
-    assert preprocess_heuristic("[clear state]") == {
-        "outcome": "directive",
-        "directive": "clear state",
-    }
+    _assert_directive_result(preprocess_heuristic("[clear state]"), "clear state")
 
 
 def test_heuristic_set_premise_to_forms_are_unknown_not_rewritten() -> None:
@@ -378,20 +370,26 @@ def test_heuristic_accepts_strict_canonical_directives() -> None:
 
     for directive in directives:
         result = preprocess_heuristic(directive)
-        assert result == {
-            "outcome": "directive",
-            "directive": directive,
-        }
-        assert decompose_directive(result["directive"]) is not None
+        _assert_directive_result(result, directive)
+        assert isinstance(result["directive"], CanonicalDirective)
         parsed = parse_preprocessor_output(result["directive"])
         assert parsed is not None
-        assert parsed.text == result["directive"]
+        assert parsed is result["directive"]
+
+
+def test_heuristic_results_preserve_canonical_directive_object() -> None:
+    result = preprocess_heuristic("use docker")
+
+    assert result["outcome"] == "directive"
+    assert isinstance(result["directive"], CanonicalDirective)
+    assert result["directive"].text == "use docker"
 
 
 def test_heuristic_directive_output_is_grammar_validated_not_regex_only() -> None:
     result = preprocess_heuristic("use docker")
     assert result["outcome"] == "directive"
-    assert result["directive"] == "use docker"
+    assert isinstance(result["directive"], CanonicalDirective)
+    assert result["directive"].text == "use docker"
     parsed = parse_preprocessor_output(result["directive"])
     assert parsed is not None
     assert parsed.text == "use docker"

@@ -10,7 +10,13 @@ def main() -> None:
     user_message = "use docker"
     result = preprocess_heuristic(user_message)
 
-    print("heuristic result:", result)
+    print(
+        "heuristic result:",
+        {
+            "outcome": result["outcome"],
+            "directive": result["directive"].text if result["outcome"] == "directive" else None,
+        },
+    )
 
     candidate = parse_preprocessor_output(result["directive"])
     print("validated candidate:", candidate.text if candidate is not None else None)
