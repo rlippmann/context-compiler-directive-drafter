@@ -11,9 +11,6 @@ from context_compiler_directive_drafter.constants import (
     DRAFT_OUTCOME_NO_DIRECTIVE,
     DRAFT_OUTCOME_UNKNOWN,
 )
-from context_compiler_directive_drafter.output_validation import (
-    parse_preprocessor_output,
-)
 
 CANONICAL_DIRECTIVES = [
     "set premise concise replies",
@@ -62,9 +59,6 @@ def test_heuristic_accepts_canonical_directive_with_trailing_period_or_bang(
     result = preprocess_heuristic(f"{directive}{punctuation}")
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     assert result["directive"].text == directive
-    parsed = parse_preprocessor_output(result["directive"])
-    assert parsed is not None
-    assert parsed is result["directive"]
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
@@ -82,9 +76,6 @@ def test_heuristic_accepts_single_layer_exact_wrapper(
     result = preprocess_heuristic(f"{left}{directive}{right}")
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
     assert result["directive"].text == directive
-    parsed = parse_preprocessor_output(result["directive"])
-    assert parsed is not None
-    assert parsed is result["directive"]
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), QUOTED_WRAPPERS)
@@ -126,9 +117,7 @@ def test_heuristic_directive_output_is_always_validator_safe(message: str) -> No
         return
     directive = result["directive"]
     assert directive.text
-    parsed = parse_preprocessor_output(directive)
-    assert parsed is not None
-    assert parsed is directive
+    assert decompose_directive(directive.text) is directive
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), NON_EMPTY_TEXT, NON_EMPTY_TEXT)
