@@ -1,6 +1,7 @@
 from context_compiler.grammar import DirectiveKind, get_directive_metadata
 
 from context_compiler_directive_drafter import get_converter_prompt
+from context_compiler_directive_drafter import prompt_utils as prompt_module
 
 
 def _expected_prompt_forms() -> list[str]:
@@ -35,6 +36,7 @@ def _positive_acquisition_examples_section(prompt: str) -> str:
 
 
 def test_get_converter_prompt_returns_non_empty_static_text() -> None:
+    prompt_module._build_converter_prompt.cache_clear()
     prompt = get_converter_prompt()
 
     assert prompt
@@ -118,3 +120,23 @@ def test_get_converter_prompt_preserves_behavioral_examples() -> None:
     assert "User: use docker?" in behavior_examples
     assert 'User: He said "use docker".' in behavior_examples
     assert "Output: set premise concise replies" in positive_examples
+
+
+def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> None:
+    prompt_module._build_converter_prompt.cache_clear()
+    calls = 0
+    original = prompt_module._render_canonical_forms
+
+    def counting_render_canonical_forms() -> str:
+        nonlocal calls
+        calls += 1
+        return original()
+
+    monkeypatch.setattr(prompt_module, "_render_canonical_forms", counting_render_canonical_forms)
+
+    first = get_converter_prompt()
+    second = get_converter_prompt()
+
+    assert first == second
+    assert first is second
+    assert calls == 1

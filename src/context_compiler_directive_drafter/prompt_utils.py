@@ -1,6 +1,7 @@
 """Converter prompt accessors for directive-drafter integrations."""
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 from context_compiler.grammar import DirectiveKind, DirectiveMetadata, get_directive_metadata
 
@@ -191,9 +192,8 @@ def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[st
     return f"{canonical_start} {payload}"
 
 
-def get_converter_prompt() -> str:
-    """Return the shared converter system prompt with metadata-derived grammar facts."""
-
+@lru_cache(maxsize=1)
+def _build_converter_prompt() -> str:
     sections = [
         "You are a directive converter that drafts candidate",
         "Context Compiler directives from user requests.",
@@ -216,3 +216,9 @@ def get_converter_prompt() -> str:
         _BEHAVIOR_EXAMPLES,
     ]
     return "\n".join(sections).strip()
+
+
+def get_converter_prompt() -> str:
+    """Return the shared converter system prompt with metadata-derived grammar facts."""
+
+    return _build_converter_prompt()
