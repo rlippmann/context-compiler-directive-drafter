@@ -32,27 +32,6 @@ class NonDirectivePreprocessResult(TypedDict):
 PreprocessResult = DirectivePreprocessResult | NonDirectivePreprocessResult
 
 
-_QUOTED_OR_REPORTED_CASES = {
-    '"set premise concise replies" is invalid syntax, right?',
-    'for example, you could "remove policy docker".',
-    'he said "use docker".',
-    'the doc literally says: "clear premise".',
-}
-
-_NEAR_MISS_ALIAS_CASES = {
-    "allow docker",
-    "set policy peanuts prohibit",
-    "stop using peanuts",
-    "use instead of docker",
-    "use podman instead of",
-    "use podman not docker",
-    "wipe policies",
-}
-_ADMIN_NEAR_MISS_CASES = {
-    "reset policy",
-    "remove policies docker",
-}
-
 _REPORTING_BRACKET_MARKERS = (
     "in my notes",
     "notes:",
@@ -73,7 +52,20 @@ _DIRECTIVE_CUE_PATTERN = re.compile(
     r"\b(set premise|change premise|use|prohibit|remove policy|clear premise|"
     r"reset policies|clear state)\b"
 )
-_MALFORMED_REPLACEMENT_PATTERN = re.compile(r"\buse\b.*\binstead\b")
+_QUOTED_REPORTING_PATTERN = re.compile(
+    r"^\s*(?:the\s+(?:doc|docs?|documentation)|\w+)\s+"
+    r"(?:literally\s+)?(?:say|says?|said|wrote|quoted)\s*:\s*"
+    r'["\'`].+["\'`][.!]?\s*$',
+    re.IGNORECASE,
+)
+_USE_ALIAS_PATTERN = re.compile(r"^\s*allow\s+\S(?:.*\S)?\s*$")
+_PROHIBIT_ALIAS_PATTERN = re.compile(r"^\s*stop\s+using\s+\S(?:.*\S)?\s*$")
+_RESET_POLICIES_ALIAS_PATTERN = re.compile(r"^\s*wipe\s+policies\s*$")
+_PROHIBIT_TRANSPOSED_PATTERN = re.compile(r"^\s*set\s+policy\s+\S(?:.*\S)?\s+prohibit\s*$")
+_REPLACE_MISSING_NEW_ITEM_PATTERN = re.compile(r"^\s*use\s+instead\s+of\s+\S(?:.*\S)?\s*$")
+_REPLACE_NOT_ALIAS_PATTERN = re.compile(r"^\s*use\s+\S(?:.*\S)?\s+not\s+\S(?:.*\S)?\s*$")
+_RESET_POLICY_SINGULAR_PATTERN = re.compile(r"^\s*reset\s+policy\s*$")
+_REMOVE_POLICY_PLURALIZED_PATTERN = re.compile(r"^\s*remove\s+policies\s+\S(?:.*\S)?\s*$")
 _WRAPPER_PAIRS = {
     ('"', '"'),
     ("'", "'"),
@@ -124,6 +116,46 @@ def _is_quoted_or_backtick_wrapped(message: str) -> bool:
     if len(stripped) < 2:
         return False
     return (stripped[0], stripped[-1]) in {('"', '"'), ("'", "'"), ("`", "`")}
+
+
+def _looks_like_unsafe_replacement_acquisition_case(directive: CanonicalDirective) -> bool:
+    if directive.kind.value != "use_item":
+        return False
+
+    item = directive.operands.get("item")
+    if not isinstance(item, str):
+        return False
+
+    normalized_item = item.lower()
+    return " instead " in normalized_item or " in stead of " in normalized_item
+
+
+def _is_reported_quoted_directive(message: str) -> bool:
+    return bool(_QUOTED_REPORTING_PATTERN.match(message))
+
+
+def _is_near_miss_alias(message: str) -> bool:
+    return any(
+        pattern.match(message)
+        for pattern in (
+            _USE_ALIAS_PATTERN,
+            _PROHIBIT_ALIAS_PATTERN,
+            _RESET_POLICIES_ALIAS_PATTERN,
+            _PROHIBIT_TRANSPOSED_PATTERN,
+            _REPLACE_MISSING_NEW_ITEM_PATTERN,
+            _REPLACE_NOT_ALIAS_PATTERN,
+        )
+    )
+
+
+def _is_admin_near_miss_alias(message: str) -> bool:
+    return any(
+        pattern.match(message)
+        for pattern in (
+            _RESET_POLICY_SINGULAR_PATTERN,
+            _REMOVE_POLICY_PLURALIZED_PATTERN,
+        )
+    )
 
 
 def preprocess_heuristic(message: str) -> PreprocessResult:
@@ -188,7 +220,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "reason": "reject.quoted_exact",
         }
 
-    if normalized in _QUOTED_OR_REPORTED_CASES:
+    if _is_reported_quoted_directive(message):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
@@ -197,32 +229,28 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized_candidate = _normalize_candidate(message)
 
-    if normalized in _NEAR_MISS_ALIAS_CASES:
+    if _is_near_miss_alias(normalized):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": "reject.near_miss_alias",
         }
 
-    if normalized in _ADMIN_NEAR_MISS_CASES:
+    if _is_admin_near_miss_alias(normalized):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": "reject.admin_near_miss_alias",
         }
 
-    if (
-        _MALFORMED_REPLACEMENT_PATTERN.search(normalized_candidate)
-        and " instead of " not in normalized_candidate
-    ) or (" in stead of " in normalized_candidate):
-        return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
-            "directive": None,
-            "reason": "reject.malformed_replacement_syntax",
-        }
-
     decomposed = decompose_directive(normalized_candidate)
     if isinstance(decomposed, CanonicalDirective):
+        if _looks_like_unsafe_replacement_acquisition_case(decomposed):
+            return {
+                "outcome": DRAFT_OUTCOME_UNKNOWN,
+                "directive": None,
+                "reason": "reject.malformed_replacement_syntax",
+            }
         return {
             "outcome": DRAFT_OUTCOME_DIRECTIVE,
             "directive": decomposed.text,
