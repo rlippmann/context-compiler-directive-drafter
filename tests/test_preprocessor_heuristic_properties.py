@@ -1,9 +1,10 @@
 import re
 
-from context_compiler.grammar import decompose_directive
+from context_compiler.grammar import decompose_directive, get_directive_metadata
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
+from context_compiler_directive_drafter import heuristic_preprocessor as heuristic_module
 from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.constants import (
     DRAFT_OUTCOME_DIRECTIVE,
@@ -50,6 +51,8 @@ CANONICAL_LOOKALIKE_WORDS = st.sampled_from(
         "near reset-policy docs",
     ]
 )
+CANONICAL_STARTS = tuple({metadata.canonical_start for metadata in get_directive_metadata()})
+DIRECTIVE_FRAGMENTS = tuple({cue for cue in heuristic_module._directive_cues() if " " not in cue})
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), st.sampled_from([".", "!"]))
@@ -203,4 +206,45 @@ def test_heuristic_singular_payload_with_canonical_looking_words_can_still_pass(
 @given(st.sampled_from(["misuse", "re-use", "nonuse"]), NON_EMPTY_TEXT)
 def test_heuristic_lexical_boundary_prevents_embedded_use_matches(prefix: str, suffix: str) -> None:
     result = preprocess_heuristic(f"{prefix} docker {suffix}")
+    assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
+
+
+@given(st.sampled_from(CANONICAL_STARTS))
+def test_heuristic_metadata_cues_cover_every_canonical_start(canonical_start: str) -> None:
+    assert heuristic_module._contains_directive_cue(f"please {canonical_start} later")
+
+
+@given(
+    st.text(
+        alphabet=st.characters(
+            whitelist_categories=("Ll", "Lu", "Nd"),
+            whitelist_characters=(" ",),
+        ),
+        min_size=1,
+        max_size=20,
+    ).filter(lambda s: s.strip() != ""),
+    st.sampled_from(DIRECTIVE_FRAGMENTS),
+    st.text(
+        alphabet=st.characters(
+            whitelist_categories=("Ll", "Lu", "Nd"),
+            whitelist_characters=(" ",),
+        ),
+        min_size=1,
+        max_size=20,
+    ).filter(lambda s: s.strip() != ""),
+)
+def test_ordinary_prose_with_directive_like_fragment_does_not_become_directive(
+    prefix: str, fragment: str, suffix: str
+) -> None:
+    message = f"{prefix} {fragment} {suffix}"
+    assume("?" not in message)
+    assume(
+        not re.match(
+            r"^\s*(?:example:|for example\b|the command is\b|(?:i|he|she|they) said\b)",
+            message.lower(),
+        )
+    )
+    assume(not re.match(r"^\s*(?:\d+[.)]|[-*])\s+\S", message))
+
+    result = preprocess_heuristic(message)
     assert result["outcome"] != DRAFT_OUTCOME_DIRECTIVE
