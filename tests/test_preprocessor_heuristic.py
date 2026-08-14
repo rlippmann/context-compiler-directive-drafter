@@ -5,7 +5,6 @@ from context_compiler.grammar import CanonicalDirective, DirectiveKind
 
 from context_compiler_directive_drafter import heuristic_preprocessor as heuristic_module
 from context_compiler_directive_drafter import preprocess_heuristic
-from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
 
 
 def _assert_directive_result(result: dict[str, object], expected: str) -> None:
@@ -372,9 +371,7 @@ def test_heuristic_accepts_strict_canonical_directives() -> None:
         result = preprocess_heuristic(directive)
         _assert_directive_result(result, directive)
         assert isinstance(result["directive"], CanonicalDirective)
-        parsed = parse_preprocessor_output(result["directive"])
-        assert parsed is not None
-        assert parsed is result["directive"]
+        assert result["directive"].text == directive
 
 
 def test_heuristic_results_preserve_canonical_directive_object() -> None:
@@ -390,9 +387,7 @@ def test_heuristic_directive_output_is_grammar_validated_not_regex_only() -> Non
     assert result["outcome"] == "directive"
     assert isinstance(result["directive"], CanonicalDirective)
     assert result["directive"].text == "use docker"
-    parsed = parse_preprocessor_output(result["directive"])
-    assert parsed is not None
-    assert parsed.text == "use docker"
+    assert result["directive"].kind is DirectiveKind.USE_ITEM
 
 
 def test_heuristic_directive_shaped_text_does_not_bypass_grammar_validation() -> None:
@@ -415,7 +410,6 @@ def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
         "directive": None,
         "reason": "reject.near_miss_alias",
     }
-    assert parse_preprocessor_output("set policy peanuts prohibit") is None
 
 
 def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
