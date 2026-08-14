@@ -30,7 +30,7 @@ def _behavior_examples_section(prompt: str) -> str:
 
 
 def _positive_acquisition_examples_section(prompt: str) -> str:
-    start = prompt.index("Examples of interpretation-guided requests that may become directives:")
+    start = prompt.index("Examples of user requests that may be drafted as directives:")
     end = prompt.index("Examples of ordinary conversation that must not become directives:")
     return prompt[start:end]
 
@@ -58,6 +58,7 @@ def test_get_converter_prompt_teaches_output_contract_and_scope() -> None:
     assert "You are a directive converter that drafts candidate" in prompt
     assert "output exactly `<NO_DIRECTIVE>`" in prompt
     assert "Your output is a draft candidate only." in prompt
+    assert "Questions or discussion about directives" in prompt
     assert "DirectiveDrafter" not in prompt
 
 
