@@ -18,6 +18,7 @@ def test_basic_usage_example_runs(capsys) -> None:
             "'reason': 'reject.question_form'}"
         ),
         "ambiguous candidate: None",
+        "fallback candidate: use podman",
     ]
 
 

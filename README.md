@@ -95,7 +95,7 @@ Public interface:
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `NoDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive.
-- `parse_preprocessor_output(raw_output)`: Validate and parse drafting output.
+- `parse_preprocessor_output(raw_output)`: Parse fallback candidate output into a `CanonicalDirective` when valid.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
 - `get_converter_prompt()`: Load the shared static converter system prompt.
 - Constants and sentinels exported from the package.
@@ -177,7 +177,7 @@ converter prompt, configure the fallback callback with source metadata, and
 return only candidate directive text or `None`. `DirectiveDrafter` performs
 parsing, validation, normalization, and `DraftResult` construction itself.
 
-Any model output should still be validated with
+Any fallback or model-produced candidate output should still be validated with
 `parse_preprocessor_output(...)` or `validate_preprocessor_output(...)` before
 it is shown or used.
 
