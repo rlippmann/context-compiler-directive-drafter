@@ -94,6 +94,9 @@ def test_get_converter_prompt_includes_positive_acquisition_examples() -> None:
     assert "User: switch from docker to podman" in positive_examples
     assert "User: make replies concise from now on" in positive_examples
     assert "User: change the standing premise to formal tone" in positive_examples
+    assert "User: set premise to concise replies" in positive_examples
+    assert "User: allow docker" in positive_examples
+    assert "User: stop using peanuts" in positive_examples
     assert "User: I prefer concise replies." in positive_examples
 
 
@@ -106,6 +109,7 @@ def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() ->
         "Output: use podman instead of docker",
         "Output: set premise concise replies",
         "Output: change premise to formal tone",
+        "Output: prohibit peanuts",
     ):
         assert expected_output in positive_examples
 
@@ -116,9 +120,11 @@ def test_get_converter_prompt_preserves_behavioral_examples() -> None:
     positive_examples = _positive_acquisition_examples_section(prompt)
 
     assert "User: can you help with lunch?" in behavior_examples
-    assert "User: set premise to concise replies" in behavior_examples
     assert "User: use docker?" in behavior_examples
     assert 'User: He said "use docker".' in behavior_examples
+    assert "User: set premise to concise replies" not in behavior_examples
+    assert "User: allow docker" not in behavior_examples
+    assert "User: stop using peanuts" not in behavior_examples
     assert "Output: set premise concise replies" in positive_examples
 
 

@@ -40,15 +40,6 @@ Examples of ambiguous or directive-like input where you must not guess:
 User: use docker?
 Output: <NO_DIRECTIVE>
 
-User: set premise to concise replies
-Output: <NO_DIRECTIVE>
-
-User: allow docker
-Output: <NO_DIRECTIVE>
-
-User: stop using peanuts
-Output: <NO_DIRECTIVE>
-
 User: He said "use docker".
 Output: <NO_DIRECTIVE>
 
@@ -121,6 +112,21 @@ _POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
         kind=DirectiveKind.CHANGE_PREMISE,
         user_input="change the standing premise to formal tone",
         operand_values=("formal tone",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.SET_PREMISE,
+        user_input="set premise to concise replies",
+        operand_values=("concise replies",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.USE_ITEM,
+        user_input="allow docker",
+        operand_values=("docker",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.PROHIBIT_ITEM,
+        user_input="stop using peanuts",
+        operand_values=("peanuts",),
     ),
     _AcquisitionExample(
         kind=DirectiveKind.SET_PREMISE,
