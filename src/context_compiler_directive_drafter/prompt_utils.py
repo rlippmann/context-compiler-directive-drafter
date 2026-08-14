@@ -48,8 +48,9 @@ Output: <NO_DIRECTIVE>"""
 
 _PROMPT_SUFFIX = """Your task:
 - Read one user message.
-- If the user clearly requests one directive that matches the canonical
-  grammar, produce exactly one candidate directive in canonical form.
+- If the user clearly requests one behavior change that can be represented
+  by a canonical directive, produce exactly one candidate directive in
+  canonical form.
 - Otherwise output exactly `<NO_DIRECTIVE>`.
 
 Output contract:
