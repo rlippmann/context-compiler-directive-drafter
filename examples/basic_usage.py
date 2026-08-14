@@ -1,4 +1,4 @@
-"""Minimal package-owned example for heuristic drafting and validation."""
+"""Minimal package-owned example for heuristic drafting and fallback parsing."""
 
 from context_compiler_directive_drafter import (
     parse_preprocessor_output,
@@ -19,7 +19,7 @@ def main() -> None:
     )
 
     candidate = result["directive"] if result["outcome"] == "directive" else None
-    print("validated candidate:", candidate.text if candidate is not None else None)
+    print("heuristic candidate:", candidate.text if candidate is not None else None)
 
     ambiguous_message = "Can you use docker?"
     ambiguous_result = preprocess_heuristic(ambiguous_message)
