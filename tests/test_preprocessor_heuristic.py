@@ -1,4 +1,4 @@
-from types import MappingProxyType
+from types import MappingProxyType, SimpleNamespace
 
 import pytest
 from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive
@@ -180,6 +180,38 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
             "directive": None,
             "reason": "reject.multi_segment_or_mixed_prose",
         }
+
+
+def test_heuristic_directive_cues_follow_grammar_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        heuristic_module,
+        "get_directive_metadata",
+        lambda: (
+            SimpleNamespace(canonical_start="adopt"),
+            SimpleNamespace(canonical_start="drop"),
+            SimpleNamespace(canonical_start="change premise to"),
+        ),
+    )
+
+    assert heuristic_module._contains_directive_cue("can you adopt docker?") is True
+    assert heuristic_module._contains_directive_cue("please change premise concise replies") is True
+    assert heuristic_module._contains_directive_cue("use docker") is False
+
+
+def test_heuristic_multi_segment_detection_follows_grammar_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        heuristic_module,
+        "get_directive_metadata",
+        lambda: (
+            SimpleNamespace(canonical_start="adopt"),
+            SimpleNamespace(canonical_start="drop"),
+        ),
+    )
+
+    assert heuristic_module._matches_multi_segment_pattern("adopt docker because it helps") is True
+    assert heuristic_module._matches_multi_segment_pattern("use docker because it helps") is False
 
 
 def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
