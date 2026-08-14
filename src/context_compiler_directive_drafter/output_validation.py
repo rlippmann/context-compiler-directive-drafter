@@ -1,4 +1,4 @@
-"""Shared preprocessor output normalization and validation helpers.
+"""Shared fallback-candidate normalization and validation helpers.
 
 Public API:
 - parse_preprocessor_output
@@ -132,11 +132,12 @@ def validate_preprocessor_output(raw_output: object) -> PreprocessorValidationRe
 
 
 def parse_preprocessor_output(raw_output: object) -> CanonicalDirective | None:
-    """Return only the parsed canonical directive from raw drafting output.
+    """Return only the parsed canonical directive from raw fallback candidate output.
 
-    This is a narrowing convenience over `validate_preprocessor_output(...)`.
-    It preserves the non-authoritative boundary by returning a canonical
-    directive proposal or `None`, never an applied compiler result.
+    This helper is intended for fallback candidate parsing and other
+    host-managed raw drafting-output flows. It narrows
+    `validate_preprocessor_output(...)` to a canonical directive proposal or
+    `None`, never an applied compiler result.
     """
     parsed = _parse_canonical_directive(raw_output)
     if parsed is not None:
