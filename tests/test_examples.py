@@ -12,7 +12,7 @@ def test_basic_usage_example_runs(capsys) -> None:
     output = capsys.readouterr().out.strip().splitlines()
     assert output == [
         "heuristic result: {'outcome': 'directive', 'directive': 'use docker'}",
-        "validated candidate: use docker",
+        "heuristic candidate: use docker",
         (
             "ambiguous result: {'outcome': 'unknown', 'directive': None, "
             "'reason': 'reject.question_form'}"
