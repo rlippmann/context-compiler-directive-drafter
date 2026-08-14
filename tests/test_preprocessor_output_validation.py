@@ -129,3 +129,10 @@ def test_parse_returns_validated_directive_only() -> None:
     assert parsed.text == "prohibit peanuts"
     assert parse_preprocessor_output("<NO_DIRECTIVE>") is None
     assert parse_preprocessor_output("set premise to concise replies") is None
+
+
+def test_parse_accepts_canonical_directive_objects_directly() -> None:
+    parsed = decompose_directive("use docker")
+    assert parsed is not None
+
+    assert parse_preprocessor_output(parsed) is parsed

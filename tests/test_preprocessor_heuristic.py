@@ -1,6 +1,9 @@
-import pytest
-from context_compiler.grammar import decompose_directive
+from types import MappingProxyType
 
+import pytest
+from context_compiler.grammar import CanonicalDirective, DirectiveKind, decompose_directive
+
+from context_compiler_directive_drafter import heuristic_preprocessor as heuristic_module
 from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
 
@@ -407,6 +410,16 @@ def test_heuristic_returns_no_directive_for_ordinary_non_directive_content() -> 
             "directive": None,
             "reason": "reject.confident_non_directive",
         }
+
+
+def test_replacement_acquisition_guard_handles_non_string_item_operand() -> None:
+    directive = CanonicalDirective(
+        text="use docker",
+        kind=DirectiveKind.USE_ITEM,
+        operands=MappingProxyType({"item": object()}),
+    )
+
+    assert heuristic_module._looks_like_unsafe_replacement_acquisition_case(directive) is False
 
 
 @pytest.mark.parametrize("message", ['""', "''", "()", "[]", "``"])
