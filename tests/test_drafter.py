@@ -151,7 +151,7 @@ def test_fallback_is_used_when_heuristic_abstains_with_unknown(
 ) -> None:
     calls: list[str] = []
 
-    def heuristic(user_input: str) -> dict[str, str | None]:
+    def heuristic(user_input: str) -> dict[str, object]:
         calls.append(f"heuristic:{user_input}")
         return {
             "outcome": "unknown",
@@ -225,24 +225,17 @@ def test_fallback_canonical_directive_receives_the_same_validation_path() -> Non
     assert result == DraftResult(source="llm", result=_canonical("set premise concise replies"))
 
 
-def test_invalid_heuristic_directive_is_downgraded_to_unknown(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def heuristic(_: str) -> dict[str, str | None]:
-        return {
+def test_heuristic_directive_results_are_preserved_without_transformation() -> None:
+    canonical = _canonical("set premise concise replies")
+
+    result = drafter_module._heuristic_result_to_draft_result(
+        {
             "outcome": "directive",
-            "directive": "set premise to concise replies",
+            "directive": canonical,
         }
-
-    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
-
-    drafter = DirectiveDrafter()
-    result = drafter.draft_directive("please make replies concise")
-
-    assert result == DraftResult(
-        source="heuristic",
-        result=UnknownDirective(reason="invalid_canonical_directive"),
     )
+
+    assert result == DraftResult(source="heuristic", result=canonical)
 
 
 def test_no_fallback_preserves_existing_non_directive_behavior() -> None:
@@ -299,7 +292,7 @@ def test_heuristic_attempt_happens_before_fallback_callback(
 ) -> None:
     calls: list[str] = []
 
-    def heuristic(user_input: str) -> dict[str, str | None]:
+    def heuristic(user_input: str) -> dict[str, object]:
         calls.append(f"heuristic:{user_input}")
         return {
             "outcome": "unknown",
@@ -376,7 +369,7 @@ def test_async_unknown_directive_invokes_async_fallback(
 ) -> None:
     calls: list[str] = []
 
-    def heuristic(user_input: str) -> dict[str, str | None]:
+    def heuristic(user_input: str) -> dict[str, object]:
         calls.append(f"heuristic:{user_input}")
         return {
             "outcome": "unknown",
