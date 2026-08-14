@@ -1,39 +1,60 @@
-"""Static converter prompt accessors for directive-drafter integrations."""
+"""Converter prompt accessors for directive-drafter integrations."""
 
-_CONVERTER_PROMPT = """You are a directive converter that drafts candidate
-Context Compiler directives from user requests.
+from dataclasses import dataclass
 
-Context Compiler directives are compact canonical instructions that propose
-persistent compiler behavior changes. Your output is a draft candidate only.
-It is not an approval, not an execution result, and not an authoritative
-state change.
+from context_compiler.grammar import DirectiveKind, DirectiveMetadata, get_directive_metadata
 
-Directive categories:
-- Premise directives set or change a standing instruction for how the
-  assistant should generally behave.
-- Policy directives add, prohibit, remove, or replace named policy items.
-- Administrative directives clear premise, reset policies, or clear all
-  compiler-managed state.
+_DIRECTIVE_CATEGORY_LINES = """Directive categories:
+- Premise directives change a standing instruction for how the assistant
+  should generally behave.
+- Policy directives manage named policy items.
+- Administrative directives change compiler-managed state."""
 
-Canonical directive forms:
-- `set premise <value>`
-- `change premise to <value>`
-- `use <item>`
-- `prohibit <item>`
-- `remove policy <item>`
-- `use <new item> instead of <old item>`
-- `clear premise`
-- `reset policies`
-- `clear state`
-
-What premise vs policy means:
+_PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
 - A premise is a broad standing behavior instruction such as tone, style, or
   ongoing reply guidance.
 - A policy is a named item that should be used, prohibited, removed, or replaced.
 - Do not infer premise or policy meaning from payload words alone. Only
-  encode what the user explicitly requests.
+  encode what the user explicitly requests."""
 
-Your task:
+
+@dataclass(frozen=True)
+class _AcquisitionExample:
+    kind: DirectiveKind
+    user_input: str
+    operand_values: tuple[str, ...]
+
+
+_BEHAVIOR_EXAMPLES = """Examples of ordinary conversation that must not become directives:
+User: can you help with lunch?
+Output: <NO_DIRECTIVE>
+
+User: Docker seems popular in this repo.
+Output: <NO_DIRECTIVE>
+
+User: What does clear state do?
+Output: <NO_DIRECTIVE>
+
+Examples of ambiguous or directive-like input where you must not guess:
+User: use docker?
+Output: <NO_DIRECTIVE>
+
+User: set premise to concise replies
+Output: <NO_DIRECTIVE>
+
+User: allow docker
+Output: <NO_DIRECTIVE>
+
+User: stop using peanuts
+Output: <NO_DIRECTIVE>
+
+User: He said "use docker".
+Output: <NO_DIRECTIVE>
+
+User: prohibit peanuts and use almonds
+Output: <NO_DIRECTIVE>"""
+
+_PROMPT_SUFFIX = """Your task:
 - Read one user message.
 - If the user clearly requests one directive that matches the canonical
   grammar, produce exactly one candidate directive in canonical form.
@@ -65,79 +86,133 @@ When to output `<NO_DIRECTIVE>`:
 - Ambiguous requests where more than one directive could fit.
 - Near-miss wording that does not clearly map to a canonical directive.
 - Inputs containing multiple directive requests.
-- Quoted, cited, reported, example, or discussed directive text rather than a direct request.
+- Quoted, cited, reported, example, or discussed directive text rather than a direct request."""
 
-Examples of valid directive candidates:
-User: please use docker
-Output: use docker
+_DIRECTIVE_KIND_TO_CATEGORY: dict[DirectiveKind, str] = {
+    DirectiveKind.SET_PREMISE: "Premise",
+    DirectiveKind.CHANGE_PREMISE: "Premise",
+    DirectiveKind.USE_ITEM: "Policy",
+    DirectiveKind.PROHIBIT_ITEM: "Policy",
+    DirectiveKind.REMOVE_POLICY: "Policy",
+    DirectiveKind.REPLACE_USE: "Policy",
+    DirectiveKind.CLEAR_PREMISE: "Administrative",
+    DirectiveKind.RESET_POLICIES: "Administrative",
+    DirectiveKind.CLEAR_STATE: "Administrative",
+}
 
-User: prohibit peanuts
-Output: prohibit peanuts
+_POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
+    _AcquisitionExample(
+        kind=DirectiveKind.USE_ITEM,
+        user_input="please use docker",
+        operand_values=("docker",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.REPLACE_USE,
+        user_input="switch from docker to podman",
+        operand_values=("podman", "docker"),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.SET_PREMISE,
+        user_input="make replies concise from now on",
+        operand_values=("concise replies",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.CHANGE_PREMISE,
+        user_input="change the standing premise to formal tone",
+        operand_values=("formal tone",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.SET_PREMISE,
+        user_input="I prefer concise replies.",
+        operand_values=("concise replies",),
+    ),
+)
 
-User: remove policy docker
-Output: remove policy docker
 
-User: switch from docker to podman
-Output: use podman instead of docker
+def _placeholder(name: str) -> str:
+    return f"<{name.replace('_', ' ')}>"
 
-User: make replies concise from now on
-Output: set premise concise replies
 
-User: change the standing premise to formal tone
-Output: change premise to formal tone
+def _format_canonical_form(
+    kind: DirectiveKind, canonical_start: str, operand_names: tuple[str, ...]
+) -> str:
+    if not operand_names:
+        return canonical_start
 
-User: clear premise
-Output: clear premise
+    if kind is DirectiveKind.REPLACE_USE and operand_names == ("new_item", "old_item"):
+        return f"{canonical_start} {_placeholder('new_item')} instead of {_placeholder('old_item')}"
 
-User: reset policies
-Output: reset policies
+    operands = " ".join(_placeholder(name) for name in operand_names)
+    return f"{canonical_start} {operands}"
 
-User: clear state
-Output: clear state
 
-Examples of ordinary conversation that must not become directives:
-User: can you help with lunch?
-Output: <NO_DIRECTIVE>
+def _render_canonical_forms() -> str:
+    lines = ["Canonical directive forms:"]
+    for metadata in get_directive_metadata():
+        category = _DIRECTIVE_KIND_TO_CATEGORY[metadata.kind]
+        canonical_form = _format_canonical_form(
+            metadata.kind,
+            metadata.canonical_start,
+            metadata.operand_names,
+        )
+        lines.append(f"- `{canonical_form}` ({category})")
+    return "\n".join(lines)
 
-User: I prefer concise replies.
-Output: set premise concise replies
 
-User: Docker seems popular in this repo.
-Output: <NO_DIRECTIVE>
+def _render_positive_acquisition_examples() -> str:
+    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
+    lines = ["Examples of interpretation-guided requests that may become directives:"]
+    for example in _POSITIVE_ACQUISITION_EXAMPLES:
+        metadata = metadata_by_kind[example.kind]
+        canonical_output = _render_example_output(metadata, example.operand_values)
+        lines.extend(
+            [
+                f"User: {example.user_input}",
+                f"Output: {canonical_output}",
+            ]
+        )
+        lines.append("")
+    return "\n".join(lines[:-1])
 
-User: What does clear state do?
-Output: <NO_DIRECTIVE>
 
-Examples of ambiguous or directive-like input where you must not guess:
-User: use docker?
-Output: <NO_DIRECTIVE>
+def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[str, ...]) -> str:
+    canonical_start = metadata.canonical_start
+    operand_names = metadata.operand_names
+    kind = metadata.kind
 
-User: set premise to concise replies
-Output: <NO_DIRECTIVE>
+    if not operand_names:
+        return canonical_start
 
-User: change premise concise replies
-Output: <NO_DIRECTIVE>
+    if kind is DirectiveKind.REPLACE_USE and operand_names == ("new_item", "old_item"):
+        new_item, old_item = operand_values
+        return f"{canonical_start} {new_item} instead of {old_item}"
 
-User: allow docker
-Output: <NO_DIRECTIVE>
-
-User: stop using peanuts
-Output: <NO_DIRECTIVE>
-
-User: He said "use docker".
-Output: <NO_DIRECTIVE>
-
-User: for example, "remove policy docker"
-Output: <NO_DIRECTIVE>
-
-User: prohibit peanuts and use almonds
-Output: <NO_DIRECTIVE>
-
-User: clear premise then clear state
-Output: <NO_DIRECTIVE>"""
+    payload = " ".join(operand_values)
+    return f"{canonical_start} {payload}"
 
 
 def get_converter_prompt() -> str:
-    """Return the shared static system prompt for directive conversion."""
+    """Return the shared converter system prompt with metadata-derived grammar facts."""
 
-    return _CONVERTER_PROMPT
+    sections = [
+        "You are a directive converter that drafts candidate",
+        "Context Compiler directives from user requests.",
+        "",
+        "Context Compiler directives are compact canonical instructions that propose",
+        "persistent compiler behavior changes. Your output is a draft candidate only.",
+        "It is not an approval, not an execution result, and not an authoritative",
+        "state change.",
+        "",
+        _DIRECTIVE_CATEGORY_LINES,
+        "",
+        _render_canonical_forms(),
+        "",
+        _PREMISE_POLICY_GUIDANCE,
+        "",
+        _PROMPT_SUFFIX,
+        "",
+        _render_positive_acquisition_examples(),
+        "",
+        _BEHAVIOR_EXAMPLES,
+    ]
+    return "\n".join(sections).strip()

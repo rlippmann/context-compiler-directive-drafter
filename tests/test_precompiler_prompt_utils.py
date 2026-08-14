@@ -1,4 +1,37 @@
+from context_compiler.grammar import DirectiveKind, get_directive_metadata
+
 from context_compiler_directive_drafter import get_converter_prompt
+
+
+def _expected_prompt_forms() -> list[str]:
+    forms: list[str] = []
+    for metadata in get_directive_metadata():
+        if metadata.kind is DirectiveKind.REPLACE_USE:
+            form = "`use <new item> instead of <old item>`"
+        elif metadata.operand_names:
+            operands = " ".join(f"<{name.replace('_', ' ')}>" for name in metadata.operand_names)
+            form = f"`{metadata.canonical_start} {operands}`"
+        else:
+            form = f"`{metadata.canonical_start}`"
+        forms.append(form)
+    return forms
+
+
+def _canonical_forms_section(prompt: str) -> str:
+    start = prompt.index("Canonical directive forms:")
+    end = prompt.index("What premise vs policy means:")
+    return prompt[start:end]
+
+
+def _behavior_examples_section(prompt: str) -> str:
+    start = prompt.index("Examples of ordinary conversation that must not become directives:")
+    return prompt[start:]
+
+
+def _positive_acquisition_examples_section(prompt: str) -> str:
+    start = prompt.index("Examples of interpretation-guided requests that may become directives:")
+    end = prompt.index("Examples of ordinary conversation that must not become directives:")
+    return prompt[start:end]
 
 
 def test_get_converter_prompt_returns_non_empty_static_text() -> None:
@@ -26,12 +59,62 @@ def test_get_converter_prompt_teaches_output_contract_and_scope() -> None:
     assert "DirectiveDrafter" not in prompt
 
 
-def test_get_converter_prompt_includes_valid_and_non_directive_examples() -> None:
+def test_get_converter_prompt_reflects_metadata_derived_canonical_inventory() -> None:
     prompt = get_converter_prompt()
+    canonical_forms_section = _canonical_forms_section(prompt)
 
-    assert "User: please use docker" in prompt
-    assert "Output: use docker" in prompt
-    assert "User: can you help with lunch?" in prompt
-    assert "User: I prefer concise replies." in prompt
-    assert "Output: set premise concise replies" in prompt
-    assert "User: set premise to concise replies" in prompt
+    assert "Canonical directive forms:" in prompt
+    assert "Examples of canonical directive outputs:" not in prompt
+    for form in _expected_prompt_forms():
+        assert form in canonical_forms_section
+
+
+def test_get_converter_prompt_keeps_grammar_inventory_out_of_behavior_examples() -> None:
+    prompt = get_converter_prompt()
+    behavior_examples = _behavior_examples_section(prompt)
+
+    for inventory_example in (
+        "`prohibit <item>`",
+        "`remove policy <item>`",
+        "`clear premise`",
+        "`reset policies`",
+        "`clear state`",
+        "`use <new item> instead of <old item>`",
+    ):
+        assert inventory_example not in behavior_examples
+
+
+def test_get_converter_prompt_includes_positive_acquisition_examples() -> None:
+    prompt = get_converter_prompt()
+    positive_examples = _positive_acquisition_examples_section(prompt)
+
+    assert "User: please use docker" in positive_examples
+    assert "User: switch from docker to podman" in positive_examples
+    assert "User: make replies concise from now on" in positive_examples
+    assert "User: change the standing premise to formal tone" in positive_examples
+    assert "User: I prefer concise replies." in positive_examples
+
+
+def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() -> None:
+    prompt = get_converter_prompt()
+    positive_examples = _positive_acquisition_examples_section(prompt)
+
+    for expected_output in (
+        "Output: use docker",
+        "Output: use podman instead of docker",
+        "Output: set premise concise replies",
+        "Output: change premise to formal tone",
+    ):
+        assert expected_output in positive_examples
+
+
+def test_get_converter_prompt_preserves_behavioral_examples() -> None:
+    prompt = get_converter_prompt()
+    behavior_examples = _behavior_examples_section(prompt)
+    positive_examples = _positive_acquisition_examples_section(prompt)
+
+    assert "User: can you help with lunch?" in behavior_examples
+    assert "User: set premise to concise replies" in behavior_examples
+    assert "User: use docker?" in behavior_examples
+    assert 'User: He said "use docker".' in behavior_examples
+    assert "Output: set premise concise replies" in positive_examples
