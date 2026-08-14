@@ -1,6 +1,7 @@
 import inspect
 import json
 from dataclasses import is_dataclass
+from enum import Enum
 from importlib import import_module
 from pathlib import Path
 
@@ -62,6 +63,8 @@ def _assert_shape(value: object, shape: dict[str, object]) -> None:
 
 
 def _normalize_public_value(value: object) -> object:
+    if isinstance(value, Enum):
+        return value.value
     if is_dataclass(value):
         normalized: dict[str, object] = {}
         for field_name in value.__dataclass_fields__:

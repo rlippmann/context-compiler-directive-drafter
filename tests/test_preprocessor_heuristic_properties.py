@@ -61,9 +61,10 @@ def test_heuristic_accepts_canonical_directive_with_trailing_period_or_bang(
 ) -> None:
     result = preprocess_heuristic(f"{directive}{punctuation}")
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert result["directive"].text == directive
     parsed = parse_preprocessor_output(result["directive"])
     assert parsed is not None
-    assert parsed.text == result["directive"]
+    assert parsed is result["directive"]
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
@@ -80,9 +81,10 @@ def test_heuristic_accepts_single_layer_exact_wrapper(
     left, right = wrapper
     result = preprocess_heuristic(f"{left}{directive}{right}")
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert result["directive"].text == directive
     parsed = parse_preprocessor_output(result["directive"])
     assert parsed is not None
-    assert parsed.text == result["directive"]
+    assert parsed is result["directive"]
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), QUOTED_WRAPPERS)
@@ -123,10 +125,10 @@ def test_heuristic_directive_output_is_always_validator_safe(message: str) -> No
     if result["outcome"] != DRAFT_OUTCOME_DIRECTIVE:
         return
     directive = result["directive"]
-    assert isinstance(directive, str)
+    assert directive.text
     parsed = parse_preprocessor_output(directive)
     assert parsed is not None
-    assert parsed.text == directive
+    assert parsed is directive
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), NON_EMPTY_TEXT, NON_EMPTY_TEXT)
@@ -200,7 +202,7 @@ def test_heuristic_singular_payload_with_canonical_looking_words_can_still_pass(
     message = f"{directive_seed} {suffix}"
     result = preprocess_heuristic(message)
     assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
-    assert result["directive"] == message
+    assert result["directive"].text == message
 
 
 @given(st.sampled_from(["misuse", "re-use", "nonuse"]), NON_EMPTY_TEXT)

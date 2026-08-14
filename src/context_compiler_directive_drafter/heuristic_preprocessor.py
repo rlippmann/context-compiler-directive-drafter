@@ -25,7 +25,7 @@ from .constants import (
 
 class DirectivePreprocessResult(TypedDict):
     outcome: Literal["directive"]
-    directive: str
+    directive: CanonicalDirective
 
 
 class NonDirectivePreprocessResult(TypedDict):
@@ -195,7 +195,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     Returns:
         A PreprocessResult with:
-        - outcome="directive" and a canonical directive string when matched
+        - outcome="directive" and a canonical directive object when matched
         - outcome="no_directive" when the heuristic abstains/rejects
         - outcome="unknown" when unresolved and the host should avoid guessing
 
@@ -282,7 +282,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             }
         return {
             "outcome": DRAFT_OUTCOME_DIRECTIVE,
-            "directive": decomposed.text,
+            "directive": decomposed,
         }
 
     if decomposed is not None:

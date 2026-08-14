@@ -166,6 +166,9 @@ class DirectiveDrafter:
 def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> DraftResult:
     if heuristic_result["outcome"] == "directive":
         directive = heuristic_result["directive"]
+        if isinstance(directive, CanonicalDirective):
+            return DraftResult(source="heuristic", result=directive)
+
         canonical = parse_preprocessor_output(directive)
         if canonical is None:
             return DraftResult(

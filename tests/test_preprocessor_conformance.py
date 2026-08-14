@@ -64,7 +64,7 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
 
 def _normalize_result(message: str) -> dict[str, object]:
     result = preprocess_heuristic(message)
-    output = result["directive"] if result["outcome"] == "directive" else None
+    output = result["directive"].text if result["outcome"] == "directive" else None
     normalized = {
         "classification": result["outcome"],
         "output": output,

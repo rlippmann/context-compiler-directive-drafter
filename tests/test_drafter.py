@@ -189,6 +189,30 @@ def test_fallback_is_not_used_when_heuristic_produces_a_directive() -> None:
     assert calls == []
 
 
+def test_heuristic_canonical_directive_skips_second_parse(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    canonical = _canonical("use docker")
+
+    def heuristic(_: str) -> dict[str, object]:
+        return {
+            "outcome": "directive",
+            "directive": canonical,
+        }
+
+    def fail_parse(_: object):
+        raise AssertionError("heuristic canonical directives should not be reparsed")
+
+    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+    monkeypatch.setattr(drafter_module, "parse_preprocessor_output", fail_parse)
+
+    drafter = DirectiveDrafter()
+
+    assert drafter.draft_directive("use docker") == DraftResult(
+        source="heuristic", result=canonical
+    )
+
+
 def test_fallback_canonical_directive_receives_the_same_validation_path() -> None:
     def fallback(user_input: str) -> str | None:
         assert user_input == "please make replies concise"
