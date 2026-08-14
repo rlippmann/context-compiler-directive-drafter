@@ -31,6 +31,25 @@ def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
         assert result["reason"] is not None
 
 
+def test_heuristic_rejects_structural_near_miss_alias_forms() -> None:
+    cases = [
+        ("allow podman", "reject.near_miss_alias"),
+        ("stop using shell scripts", "reject.near_miss_alias"),
+        ("set policy almonds prohibit", "reject.near_miss_alias"),
+        ("use instead of pytest", "reject.near_miss_alias"),
+        ("use uv not pip", "reject.near_miss_alias"),
+        ("wipe policies", "reject.near_miss_alias"),
+        ("reset policy", "reject.admin_near_miss_alias"),
+        ("remove policies shell", "reject.admin_near_miss_alias"),
+    ]
+    for message, reason in cases:
+        assert preprocess_heuristic(message) == {
+            "outcome": "unknown",
+            "directive": None,
+            "reason": reason,
+        }
+
+
 def test_heuristic_accepts_trailing_period_or_bang_for_whole_message_directives() -> None:
     cases = [
         ("clear state.", "clear state"),
@@ -117,6 +136,19 @@ def test_heuristic_rejects_meta_reporting_or_example_prefixes() -> None:
             "outcome": "unknown",
             "directive": None,
             "reason": "reject.meta_or_reporting",
+        }
+
+
+def test_heuristic_rejects_reported_quoted_directives_structurally() -> None:
+    cases = [
+        'The docs say: "clear state".',
+        'Alice wrote: "use docker".',
+    ]
+    for message in cases:
+        assert preprocess_heuristic(message) == {
+            "outcome": "unknown",
+            "directive": None,
+            "reason": "reject.quoted_reported",
         }
 
 
