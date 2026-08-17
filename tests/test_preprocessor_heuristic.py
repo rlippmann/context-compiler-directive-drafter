@@ -436,14 +436,12 @@ def test_heuristic_returns_no_directive_for_ordinary_non_directive_content() -> 
         }
 
 
-def test_replacement_acquisition_guard_handles_non_string_item_operand() -> None:
-    directive = CanonicalDirective(
-        text="use docker",
-        kind=DirectiveKind.USE_ITEM,
-        operands=MappingProxyType({"item": object()}),
-    )
-
-    assert heuristic_module._looks_like_unsafe_replacement_acquisition_case(directive) is False
+def test_canonical_directive_rejects_non_string_item_operand() -> None:
+    with pytest.raises(ValueError, match="Operand 'item' for use_item must be a string"):
+        CanonicalDirective(
+            kind=DirectiveKind.USE_ITEM,
+            operands=MappingProxyType({"item": object()}),
+        )
 
 
 @pytest.mark.parametrize("message", ['""', "''", "()", "[]", "``"])

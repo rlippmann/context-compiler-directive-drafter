@@ -146,15 +146,10 @@
               "result": {
                 "type": "object",
                 "required_keys": [
-                  "text",
                   "kind",
                   "operands"
                 ],
                 "properties": {
-                  "text": {
-                    "type": "string",
-                    "const": "set premise concise replies"
-                  },
                   "kind": {
                     "type": "string",
                     "const": "set_premise"
