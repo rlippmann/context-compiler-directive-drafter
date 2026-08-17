@@ -1,4 +1,6 @@
-from context_compiler.grammar import DirectiveKind, get_directive_metadata
+from types import MappingProxyType
+
+from context_compiler.grammar import CanonicalDirective, DirectiveKind, get_directive_metadata
 
 from context_compiler_directive_drafter import get_converter_prompt
 from context_compiler_directive_drafter import prompt_utils as prompt_module
@@ -113,6 +115,20 @@ def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() ->
         "Output: prohibit peanuts",
     ):
         assert expected_output in positive_examples
+
+
+def test_get_converter_prompt_positive_outputs_use_core_canonical_serialization() -> None:
+    prompt = get_converter_prompt()
+    positive_examples = _positive_acquisition_examples_section(prompt)
+    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
+
+    for example in prompt_module._POSITIVE_ACQUISITION_EXAMPLES:
+        metadata = metadata_by_kind[example.kind]
+        operands = MappingProxyType(
+            dict(zip(metadata.operand_names, example.operand_values, strict=True))
+        )
+        expected_output = CanonicalDirective(kind=example.kind, operands=operands).text
+        assert f"Output: {expected_output}" in positive_examples
 
 
 def test_get_converter_prompt_preserves_behavioral_examples() -> None:
