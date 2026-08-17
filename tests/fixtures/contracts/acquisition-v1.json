@@ -34,14 +34,10 @@
               "directive": {
                 "type": "object",
                 "required_keys": [
-                  "text",
                   "kind",
                   "operands"
                 ],
                 "properties": {
-                  "text": {
-                    "type": "string"
-                  },
                   "kind": {
                     "type": "string"
                   },
