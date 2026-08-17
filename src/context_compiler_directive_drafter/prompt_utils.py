@@ -2,8 +2,14 @@
 
 from dataclasses import dataclass
 from functools import lru_cache
+from types import MappingProxyType
 
-from context_compiler.grammar import DirectiveKind, DirectiveMetadata, get_directive_metadata
+from context_compiler.grammar import (
+    CanonicalDirective,
+    DirectiveKind,
+    DirectiveMetadata,
+    get_directive_metadata,
+)
 
 _DIRECTIVE_CATEGORY_LINES = """Directive categories:
 - Premise directives change a standing instruction for how the assistant
@@ -185,19 +191,8 @@ def _render_positive_acquisition_examples() -> str:
 
 
 def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[str, ...]) -> str:
-    canonical_start = metadata.canonical_start
-    operand_names = metadata.operand_names
-    kind = metadata.kind
-
-    if not operand_names:
-        return canonical_start
-
-    if kind is DirectiveKind.REPLACE_USE and operand_names == ("new_item", "old_item"):
-        new_item, old_item = operand_values
-        return f"{canonical_start} {new_item} instead of {old_item}"
-
-    payload = " ".join(operand_values)
-    return f"{canonical_start} {payload}"
+    operands = MappingProxyType(dict(zip(metadata.operand_names, operand_values, strict=True)))
+    return CanonicalDirective(kind=metadata.kind, operands=operands).text
 
 
 @lru_cache(maxsize=1)
