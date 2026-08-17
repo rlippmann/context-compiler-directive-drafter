@@ -151,10 +151,7 @@ def _looks_like_unsafe_replacement_acquisition_case(directive: CanonicalDirectiv
     if directive.kind is not DirectiveKind.USE_ITEM:
         return False
 
-    item = directive.operands.get("item")
-    if not isinstance(item, str):
-        return False
-
+    item = directive.operands["item"]
     normalized_item = item.lower()
     return " instead " in normalized_item or " in stead of " in normalized_item
 
