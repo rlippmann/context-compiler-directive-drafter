@@ -82,7 +82,8 @@ elif isinstance(result.result, UnknownDirective):
     print("Need clarification before drafting:", result.result.reason)
 ```
 
-The host validates drafted output before passing it to engine.step(...).
+The host validates drafted output before passing a `CanonicalDirective` candidate
+to `engine.apply_directive(...)` for authoritative evaluation and application.
 
 For small runnable examples, see [examples/basic_usage.py](examples/basic_usage.py)
 and [examples/prompt_rendering.py](examples/prompt_rendering.py).
