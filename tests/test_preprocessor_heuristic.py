@@ -374,6 +374,16 @@ def test_heuristic_accepts_strict_canonical_directives() -> None:
         assert result["directive"].text == directive
 
 
+def test_heuristic_normalizes_mixed_case_payload_before_core_parsing() -> None:
+    result = preprocess_heuristic("Use Docker")
+
+    assert result["outcome"] == "directive"
+    directive = result["directive"]
+    assert isinstance(directive, CanonicalDirective)
+    assert directive.text == "use docker"
+    assert directive.operands["item"] == "docker"
+
+
 def test_heuristic_results_preserve_canonical_directive_object() -> None:
     result = preprocess_heuristic("use docker")
 
