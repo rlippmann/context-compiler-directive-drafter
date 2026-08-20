@@ -2,7 +2,8 @@
   "name": "natural-language-dont-use-unknown",
   "input": "don't use peanuts",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.directive_adjacent_unsafe"
   }
 }

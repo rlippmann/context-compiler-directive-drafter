@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from context_compiler.grammar import CanonicalDirective
+
 from context_compiler_directive_drafter import (
     parse_preprocessor_output,
     preprocess_heuristic,
@@ -8,6 +10,7 @@ from context_compiler_directive_drafter import (
 )
 
 _PREPROCESSOR_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
+_REQUIRED_FIXTURE_FAMILIES = {"heuristic", "validator", "parse"}
 
 
 def _behavior_fixture_paths() -> list[Path]:
@@ -22,7 +25,16 @@ def _assert_exact_keys(payload: dict[str, object], expected: set[str], label: st
     assert set(payload.keys()) == expected, label
 
 
-def _assert_expected_contract(expected: object, label: str) -> None:
+def _assert_public_data_attributes(value: object, expected: set[str]) -> None:
+    actual = {
+        name
+        for name in dir(value)
+        if not name.startswith("_") and not callable(getattr(value, name))
+    }
+    assert actual == expected, value
+
+
+def _assert_validation_expected_contract(expected: object, label: str) -> None:
     assert isinstance(expected, dict), label
     _assert_exact_keys(expected, {"classification", "output"}, label)
     classification = expected["classification"]
@@ -33,6 +45,23 @@ def _assert_expected_contract(expected: object, label: str) -> None:
         assert isinstance(output, str), label
     else:
         assert output is None, label
+
+
+def _assert_heuristic_expected_contract(expected: object, label: str) -> None:
+    assert isinstance(expected, dict), label
+    _assert_exact_keys(expected, {"outcome", "directive"} | ({"reason"} & set(expected)), label)
+    outcome = expected["outcome"]
+    directive = expected["directive"]
+    assert outcome in {"directive", "no_directive", "unknown"}, label
+    if outcome == "directive":
+        assert isinstance(directive, dict), label
+        _assert_exact_keys(directive, {"text", "kind", "operands"}, label)
+        assert isinstance(directive["text"], str), label
+        assert isinstance(directive["kind"], str), label
+        assert isinstance(directive["operands"], dict), label
+    else:
+        assert directive is None, label
+        assert isinstance(expected.get("reason"), str), label
 
 
 def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> None:
@@ -49,12 +78,12 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
             fixture, {"name", "input", "expected"} | ({"kind"} & set(fixture.keys())), label
         )
         assert isinstance(fixture["input"], str), label
-        _assert_expected_contract(fixture["expected"], label)
+        _assert_heuristic_expected_contract(fixture["expected"], label)
         return
 
     if kind == "validator":
         _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected"}, label)
-        _assert_expected_contract(fixture["expected"], label)
+        _assert_validation_expected_contract(fixture["expected"], label)
         return
 
     _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected_parsed"}, label)
@@ -62,35 +91,48 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
     assert isinstance(expected_parsed, dict) or expected_parsed is None, label
 
 
-def _normalize_result(message: str) -> dict[str, object]:
+def _serialize_heuristic_result(message: str) -> dict[str, object]:
     result = preprocess_heuristic(message)
-    output = result["directive"].text if result["outcome"] == "directive" else None
-    normalized = {
-        "classification": result["outcome"],
-        "output": output,
-    }
+    if set(result) == {"outcome", "directive"}:
+        assert result["outcome"] == "directive"
+        assert isinstance(result["directive"], CanonicalDirective)
+        _assert_public_data_attributes(result["directive"], {"text", "kind", "operands"})
+        output = result["directive"].text
+    else:
+        assert set(result) == {"outcome", "directive", "reason"}
+        assert result["directive"] is None
+        output = None
+
+    if result["outcome"] == "directive":
+        directive = result["directive"]
+        serialized = {
+            "outcome": result["outcome"],
+            "directive": {
+                "text": directive.text,
+                "kind": directive.kind.value,
+                "operands": dict(directive.operands),
+            },
+        }
+    else:
+        serialized = {
+            "outcome": result["outcome"],
+            "directive": None,
+            "reason": result["reason"],
+        }
 
     # Enforce the validation boundary: only validated directive output may pass.
     validated = validate_preprocessor_output(output)
-    if normalized["classification"] == "directive":
+    if serialized["outcome"] == "directive":
         assert validated["classification"] == "directive"
         assert validated["output"] == output
     else:
         assert output is None
         assert validated["output"] is None
 
-    return normalized
+    return serialized
 
 
-def _normalize_validator_result(raw_output: object) -> dict[str, object]:
-    validated = validate_preprocessor_output(raw_output)
-    return {
-        "classification": validated["classification"],
-        "output": validated["output"],
-    }
-
-
-def _normalize_parse_result(raw_output: object) -> dict[str, object] | None:
+def _serialize_parse_result(raw_output: object) -> dict[str, object] | None:
     parsed = parse_preprocessor_output(raw_output)
     if parsed is None:
         return None
@@ -101,8 +143,21 @@ def _normalize_parse_result(raw_output: object) -> dict[str, object] | None:
     }
 
 
+def _fixture_families(paths: list[Path]) -> set[str]:
+    families = set()
+    for path in paths:
+        if path.name.startswith("public-api-"):
+            continue
+        fixture = _load_fixture(path)
+        families.add(fixture.get("kind", "heuristic"))
+    return families
+
+
 def test_preprocessor_conformance_fixtures() -> None:
-    for path in _behavior_fixture_paths():
+    paths = _behavior_fixture_paths()
+    assert _fixture_families(paths) >= _REQUIRED_FIXTURE_FAMILIES
+
+    for path in paths:
         fixture = _load_fixture(path)
         if path.name.startswith("public-api-"):
             continue
@@ -114,13 +169,13 @@ def test_preprocessor_conformance_fixtures() -> None:
 
         if kind == "heuristic":
             expected = fixture.get("expected")
-            _assert_expected_contract(expected, fixture_name)
+            _assert_heuristic_expected_contract(expected, fixture_name)
             input_text = fixture.get("input")
             assert isinstance(input_text, str), fixture_name
 
             # Deterministic replay check.
-            first = _normalize_result(input_text)
-            second = _normalize_result(input_text)
+            first = _serialize_heuristic_result(input_text)
+            second = _serialize_heuristic_result(input_text)
             assert first == second, fixture_name
             assert first == expected, fixture_name
             continue
@@ -130,10 +185,10 @@ def test_preprocessor_conformance_fixtures() -> None:
 
         if kind == "validator":
             expected = fixture.get("expected")
-            _assert_expected_contract(expected, fixture_name)
+            _assert_validation_expected_contract(expected, fixture_name)
             # Deterministic replay check.
-            first = _normalize_validator_result(raw_output)
-            second = _normalize_validator_result(raw_output)
+            first = validate_preprocessor_output(raw_output)
+            second = validate_preprocessor_output(raw_output)
             assert first == second, fixture_name
             assert first == expected, fixture_name
             continue
@@ -144,7 +199,7 @@ def test_preprocessor_conformance_fixtures() -> None:
         assert isinstance(expected_parsed, dict) or expected_parsed is None, fixture_name
 
         # Deterministic replay check.
-        first_parsed = _normalize_parse_result(raw_output)
-        second_parsed = _normalize_parse_result(raw_output)
+        first_parsed = _serialize_parse_result(raw_output)
+        second_parsed = _serialize_parse_result(raw_output)
         assert first_parsed == second_parsed, fixture_name
         assert first_parsed == expected_parsed, fixture_name

@@ -2,7 +2,8 @@
   "name": "near-miss-use-instead-of-missing-new-item-unknown",
   "input": "use instead of docker",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.near_miss_alias"
   }
 }

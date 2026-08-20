@@ -145,12 +145,16 @@
               },
               "result": {
                 "type": "object",
-                "required_keys": [
-                  "kind",
-                  "operands"
-                ],
-                "properties": {
-                  "kind": {
+                  "required_keys": [
+                    "text",
+                    "kind",
+                    "operands"
+                  ],
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "kind": {
                     "type": "string",
                     "const": "set_premise"
                   },

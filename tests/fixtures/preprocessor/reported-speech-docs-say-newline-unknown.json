@@ -2,7 +2,8 @@
   "name": "reported-speech-docs-say-newline-unknown",
   "input": "docs say:\n\"use docker\"",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.quoted_reported"
   }
 }

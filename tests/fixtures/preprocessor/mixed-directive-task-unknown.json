@@ -2,7 +2,8 @@
   "name": "mixed-directive-task-unknown",
   "input": "use docker and explain why",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.multi_segment_or_mixed_prose"
   }
 }

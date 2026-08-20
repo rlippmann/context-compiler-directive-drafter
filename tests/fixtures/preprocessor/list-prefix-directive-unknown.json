@@ -2,7 +2,8 @@
   "name": "list-prefix-directive-unknown",
   "input": "1. use docker",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.list_or_enumeration"
   }
 }

@@ -2,7 +2,11 @@
   "name": "canonical-directive-clear-state-period",
   "input": "clear state.",
   "expected": {
-    "classification": "directive",
-    "output": "clear state"
+    "outcome": "directive",
+    "directive": {
+      "text": "clear state",
+      "kind": "clear_state",
+      "operands": {}
+    }
   }
 }

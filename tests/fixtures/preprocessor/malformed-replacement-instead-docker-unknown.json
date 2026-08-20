@@ -2,7 +2,8 @@
   "name": "malformed-replacement-instead-docker-unknown",
   "input": "use podman instead docker",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.malformed_replacement_syntax"
   }
 }

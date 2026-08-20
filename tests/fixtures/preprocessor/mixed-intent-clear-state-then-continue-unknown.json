@@ -2,7 +2,8 @@
   "name": "mixed-intent-clear-state-then-continue-unknown",
   "input": "clear state then continue",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.multi_segment_or_mixed_prose"
   }
 }

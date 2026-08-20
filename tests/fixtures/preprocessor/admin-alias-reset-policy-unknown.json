@@ -2,7 +2,8 @@
   "name": "admin-alias-reset-policy-unknown",
   "input": "reset policy",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.admin_near_miss_alias"
   }
 }

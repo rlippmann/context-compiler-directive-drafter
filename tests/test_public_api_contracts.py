@@ -1,13 +1,21 @@
 import inspect
 import json
-from dataclasses import is_dataclass
-from enum import Enum
 from importlib import import_module
 from pathlib import Path
 
+from context_compiler.grammar import CanonicalDirective
+
 import context_compiler_directive_drafter as package
+from context_compiler_directive_drafter.drafter import DraftResult, NoDirective, UnknownDirective
 
 _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
+_REQUIRED_CONTRACT_FILES = {
+    "acquisition-v1.json",
+    "high-level-drafting-v1.json",
+    "prompt-rendering-v1.json",
+    "public-api-v1.json",
+    "validation-v1.json",
+}
 
 
 def _contract_paths() -> list[Path]:
@@ -54,7 +62,10 @@ def _assert_shape(value: object, shape: dict[str, object]) -> None:
     if isinstance(value, dict):
         required_keys = shape.get("required_keys", [])
         assert set(required_keys).issubset(value)
-        for key, property_shape in shape.get("properties", {}).items():
+        properties = shape.get("properties", {})
+        if properties:
+            assert set(value) == set(required_keys) | set(properties)
+        for key, property_shape in properties.items():
             if key in value:
                 _assert_shape(value[key], property_shape)
 
@@ -62,20 +73,34 @@ def _assert_shape(value: object, shape: dict[str, object]) -> None:
         assert value in shape["enum"]
 
 
-def _normalize_public_value(value: object) -> object:
-    if isinstance(value, Enum):
-        return value.value
-    if is_dataclass(value):
-        normalized: dict[str, object] = {}
-        for field_name in value.__dataclass_fields__:
-            normalized[field_name] = _normalize_public_value(getattr(value, field_name))
-        return normalized
+def _assert_public_data_attributes(value: object, expected: set[str]) -> None:
+    actual = {
+        name
+        for name in dir(value)
+        if not name.startswith("_") and not callable(getattr(value, name))
+    }
+    assert actual == expected, value
+
+
+def _serialize_contract_value(value: object) -> object:
+    """Serialize the documented public runtime variants for JSON contracts."""
+    if isinstance(value, CanonicalDirective):
+        _assert_public_data_attributes(value, {"text", "kind", "operands"})
+        return {
+            "text": value.text,
+            "kind": value.kind.value,
+            "operands": dict(value.operands),
+        }
+    if isinstance(value, DraftResult):
+        _assert_public_data_attributes(value, {"source", "result"})
+        return {"source": value.source, "result": _serialize_contract_value(value.result)}
+    if isinstance(value, NoDirective | UnknownDirective):
+        _assert_public_data_attributes(value, {"reason"})
+        return {"reason": value.reason}
     if isinstance(value, dict):
-        return {key: _normalize_public_value(nested) for key, nested in value.items()}
-    if hasattr(value, "items"):
-        return {key: _normalize_public_value(nested) for key, nested in value.items()}
+        return {key: _serialize_contract_value(nested) for key, nested in value.items()}
     if isinstance(value, list):
-        return [_normalize_public_value(item) for item in value]
+        return [_serialize_contract_value(item) for item in value]
     return value
 
 
@@ -278,7 +303,7 @@ def _assert_converter_prompt_behavior_probe(exported: object, probe: dict[str, o
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
     drafter = exported()
     result = drafter.draft_directive(probe["user_input"])
-    _assert_shape(_normalize_public_value(result), probe["expect_result"])
+    _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
 def _assert_callable_contract(
@@ -292,7 +317,7 @@ def _assert_callable_contract(
         result = exported(**kwargs)
         return_shape = spec.get("return_shape")
         if return_shape is not None:
-            _assert_shape(_normalize_public_value(result), return_shape)
+            _assert_shape(_serialize_contract_value(result), return_shape)
 
     for probe in spec.get("behavior_probes", []):
         if name == "get_converter_prompt":
@@ -379,6 +404,11 @@ def test_public_api_contract_fixtures_have_valid_schema() -> None:
             _assert_member_specs_schema(exports["members"], path.name)
             continue
         _assert_member_specs_schema(contract["members"], path.name)
+
+
+def test_required_public_api_contract_fixtures_are_present() -> None:
+    actual = {path.name for path in _contract_paths()}
+    assert actual >= _REQUIRED_CONTRACT_FILES
 
 
 def test_public_api_surface_contract_matches_package_root_exports() -> None:

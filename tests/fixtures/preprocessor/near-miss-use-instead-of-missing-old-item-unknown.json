@@ -2,7 +2,8 @@
   "name": "near-miss-use-instead-of-missing-old-item-unknown",
   "input": "use podman instead of",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.directive_adjacent_unsafe"
   }
 }
