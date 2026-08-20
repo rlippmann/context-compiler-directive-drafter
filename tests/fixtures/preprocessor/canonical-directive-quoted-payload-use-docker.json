@@ -2,7 +2,13 @@
   "name": "canonical-directive-quoted-payload-use-docker",
   "input": "use \"docker\"",
   "expected": {
-    "classification": "directive",
-    "output": "use \"docker\""
+    "outcome": "directive",
+    "directive": {
+      "text": "use \"docker\"",
+      "kind": "use_item",
+      "operands": {
+        "item": "\"docker\""
+      }
+    }
   }
 }

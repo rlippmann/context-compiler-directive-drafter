@@ -2,7 +2,8 @@
   "name": "question-use-docker-unknown",
   "input": "use docker?",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.question_form"
   }
 }

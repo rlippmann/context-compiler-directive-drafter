@@ -2,7 +2,13 @@
   "name": "singular-use-and-payload",
   "input": "use bread and butter",
   "expected": {
-    "classification": "directive",
-    "output": "use bread and butter"
+    "outcome": "directive",
+    "directive": {
+      "text": "use bread and butter",
+      "kind": "use_item",
+      "operands": {
+        "item": "bread and butter"
+      }
+    }
   }
 }

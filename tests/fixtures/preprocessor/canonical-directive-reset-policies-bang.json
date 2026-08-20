@@ -2,7 +2,11 @@
   "name": "canonical-directive-reset-policies-bang",
   "input": "reset policies!",
   "expected": {
-    "classification": "directive",
-    "output": "reset policies"
+    "outcome": "directive",
+    "directive": {
+      "text": "reset policies",
+      "kind": "reset_policies",
+      "operands": {}
+    }
   }
 }

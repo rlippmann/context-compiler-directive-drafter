@@ -2,7 +2,8 @@
   "name": "meta-prefix-directive-unknown",
   "input": "example: use docker",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.meta_or_reporting"
   }
 }

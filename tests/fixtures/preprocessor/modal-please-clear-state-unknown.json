@@ -2,7 +2,8 @@
   "name": "modal-please-clear-state-unknown",
   "input": "please clear state",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.directive_adjacent_unsafe"
   }
 }

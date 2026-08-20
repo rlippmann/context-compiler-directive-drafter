@@ -2,7 +2,8 @@
   "name": "question-help-with-lunch-no-directive",
   "input": "can you help with lunch?",
   "expected": {
-    "classification": "no_directive",
-    "output": null
+    "outcome": "no_directive",
+    "directive": null,
+    "reason": "reject.confident_non_directive"
   }
 }

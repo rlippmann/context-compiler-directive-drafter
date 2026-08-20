@@ -2,7 +2,8 @@
   "name": "inline-prose-code-directive-unknown",
   "input": "the command is `use docker`",
   "expected": {
-    "classification": "unknown",
-    "output": null
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.meta_or_reporting"
   }
 }

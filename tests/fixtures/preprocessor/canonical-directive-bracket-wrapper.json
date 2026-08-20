@@ -2,7 +2,13 @@
   "name": "canonical-directive-bracket-wrapper",
   "input": "[prohibit peanuts]",
   "expected": {
-    "classification": "directive",
-    "output": "prohibit peanuts"
+    "outcome": "directive",
+    "directive": {
+      "text": "prohibit peanuts",
+      "kind": "prohibit_item",
+      "operands": {
+        "item": "peanuts"
+      }
+    }
   }
 }
