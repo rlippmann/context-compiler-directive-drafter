@@ -30,6 +30,8 @@ jobs:
         run: uv sync --group dev
 
       - name: Run pre-commit
+        env:
+          SKIP: pytest
         run: uv run pre-commit run --all-files
 
       - name: Run pytest stress loop
