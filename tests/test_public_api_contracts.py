@@ -12,6 +12,7 @@ _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
 _REQUIRED_CONTRACT_FILES = {
     "acquisition-v1.json",
     "high-level-drafting-v1.json",
+    "grammar-v1.json",
     "prompt-rendering-v1.json",
     "public-api-v1.json",
     "validation-v1.json",
@@ -159,6 +160,8 @@ def _assert_signature_matches(obj: object, expected: dict[str, object], label: s
         assert (actual.default is not inspect.Signature.empty) is expected_param["has_default"], (
             label
         )
+        if expected_param.get("has_default") and "default" in expected_param:
+            assert actual.default == expected_param["default"], label
 
 
 def _assert_signature_schema(signature_spec: dict[str, object], label: str) -> None:
@@ -168,7 +171,11 @@ def _assert_signature_schema(signature_spec: dict[str, object], label: str) -> N
     assert isinstance(params, list), label
     for index, parameter in enumerate(params):
         assert isinstance(parameter, dict), f"{label}.params[{index}]"
-        _assert_exact_keys(parameter, {"name", "kind", "has_default"}, f"{label}.params[{index}]")
+        _assert_exact_keys(
+            parameter,
+            {"name", "kind", "has_default"} | ({"default"} if "default" in parameter else set()),
+            f"{label}.params[{index}]",
+        )
         assert isinstance(parameter["name"], str), f"{label}.params[{index}]"
         assert parameter["kind"] in {
             "POSITIONAL_ONLY",
@@ -178,6 +185,38 @@ def _assert_signature_schema(signature_spec: dict[str, object], label: str) -> N
             "VAR_KEYWORD",
         }, f"{label}.params[{index}]"
         assert isinstance(parameter["has_default"], bool), f"{label}.params[{index}]"
+        if "default" in parameter:
+            assert parameter["has_default"], f"{label}.params[{index}]"
+
+
+def _assert_constructor_probe_schema(probe: dict[str, object], label: str) -> None:
+    _assert_exact_keys(probe, {"case", "args", "kwargs", "expect"}, label)
+    assert probe["case"] in {
+        "missing_required",
+        "extra_argument",
+        "wrong_type",
+        "invalid_enum",
+        "semantic_invalid",
+        "valid",
+    }, label
+    assert isinstance(probe["args"], list), label
+    assert isinstance(probe["kwargs"], dict), label
+    expect = probe["expect"]
+    assert isinstance(expect, dict), label
+    if set(expect) == {"success"}:
+        assert isinstance(expect["success"], bool), label
+    else:
+        _assert_exact_keys(expect, {"exception"}, label)
+        assert isinstance(expect["exception"], str), label
+
+
+def _assert_constructor_spec_schema(spec: dict[str, object], label: str) -> None:
+    _assert_exact_keys(spec, {"signature", "probes"}, label)
+    _assert_signature_schema(spec["signature"], f"{label}.signature")
+    assert isinstance(spec["probes"], list) and spec["probes"], label
+    for index, probe in enumerate(spec["probes"]):
+        assert isinstance(probe, dict), f"{label}.probes[{index}]"
+        _assert_constructor_probe_schema(probe, f"{label}.probes[{index}]")
 
 
 def _assert_converter_prompt_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
@@ -257,8 +296,12 @@ def _assert_callable_spec_schema(spec: dict[str, object], label: str) -> None:
 
 def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
     _assert_exact_keys(
-        spec, {"kind"} | ({"public_members", "behavior_probes"} & set(spec.keys())), label
+        spec,
+        {"kind"} | ({"constructor", "public_members", "behavior_probes"} & set(spec.keys())),
+        label,
     )
+    if "constructor" in spec:
+        _assert_constructor_spec_schema(spec["constructor"], f"{label}.constructor")
     public_members = spec.get("public_members")
     if public_members is not None:
         assert isinstance(public_members, dict), f"{label}.public_members"
@@ -306,6 +349,33 @@ def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, 
     _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
+def _resolve_constructor_value(value: object) -> object:
+    if isinstance(value, list):
+        return [_resolve_constructor_value(item) for item in value]
+    if isinstance(value, dict):
+        if set(value) == {"enum"}:
+            module_name, enum_name, member_name = value["enum"].rsplit(".", 2)
+            enum_type = getattr(import_module(module_name), enum_name)
+            return getattr(enum_type, member_name)
+        return {key: _resolve_constructor_value(nested) for key, nested in value.items()}
+    return value
+
+
+def _assert_constructor_contract(exported: object, spec: dict[str, object], label: str) -> None:
+    _assert_signature_matches(exported, spec["signature"], f"{label}.__init__")
+    for probe in spec["probes"]:
+        args = _resolve_constructor_value(probe["args"])
+        kwargs = _resolve_constructor_value(probe["kwargs"])
+        expect = probe["expect"]
+        try:
+            exported(*args, **kwargs)
+        except Exception as error:
+            assert set(expect) == {"exception"}, (label, probe)
+            assert type(error).__name__ == expect["exception"], (label, probe, error)
+        else:
+            assert expect == {"success": True}, (label, probe)
+
+
 def _assert_callable_contract(
     name: str, exported: object, spec: dict[str, object], tmp_path: Path
 ) -> None:
@@ -328,6 +398,9 @@ def _assert_callable_contract(
 
 def _assert_class_contract(name: str, exported: object, spec: dict[str, object]) -> None:
     _assert_export_kind(name, exported, "class")
+
+    if "constructor" in spec:
+        _assert_constructor_contract(exported, spec["constructor"], name)
 
     public_members = spec.get("public_members")
     if public_members is not None:
@@ -459,10 +532,11 @@ def test_public_api_capability_contracts_reference_exported_members_only() -> No
         contract = _load_contract(path)
         if contract["kind"] != "api-capability-contract":
             continue
-        assert contract["module"] == package.__name__, path.name
+        module = import_module(contract["module"])
         for name in contract["members"]:
-            assert hasattr(package, name), f"{path.name}:{name}"
-            assert name in package.__all__, f"{path.name}:{name}"
+            assert hasattr(module, name), f"{path.name}:{name}"
+            if module is package:
+                assert name in package.__all__, f"{path.name}:{name}"
 
 
 def test_public_api_contracts_validate_kinds_signatures_and_shapes(
@@ -470,13 +544,14 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
 ) -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
+        module = import_module(contract["module"])
         members = (
             contract["exports"]["members"]
             if contract["kind"] == "api-surface-contract"
             else contract["members"]
         )
         for name, spec in members.items():
-            exported = getattr(package, name)
+            exported = getattr(module, name)
             kind = spec["kind"]
             _assert_export_kind(name, exported, kind)
             if kind == "callable":
