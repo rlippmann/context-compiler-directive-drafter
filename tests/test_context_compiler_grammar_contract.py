@@ -1,4 +1,8 @@
-from context_compiler.grammar import CanonicalDirective, InvalidDirectiveSyntax, decompose_directive
+from context_compiler.grammar import (
+    CanonicalDirective,
+    InvalidDirectiveSyntax,
+    decompose_directive,
+)
 
 
 def test_consumed_grammar_helpers_are_importable_and_callable() -> None:
