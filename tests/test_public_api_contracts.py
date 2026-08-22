@@ -3,6 +3,7 @@ import json
 from importlib import import_module
 from pathlib import Path
 
+import pytest
 from context_compiler.grammar import CanonicalDirective
 
 import context_compiler_directive_drafter as package
@@ -189,6 +190,12 @@ def _assert_signature_schema(signature_spec: dict[str, object], label: str) -> N
             assert parameter["has_default"], f"{label}.params[{index}]"
 
 
+def _assert_forbidden_names_schema(names: object, label: str) -> None:
+    assert isinstance(names, list), label
+    assert all(isinstance(name, str) and name for name in names), label
+    assert len(names) == len(set(names)), label
+
+
 def _assert_constructor_probe_schema(probe: dict[str, object], label: str) -> None:
     _assert_exact_keys(probe, {"case", "args", "kwargs", "expect"}, label)
     assert probe["case"] in {
@@ -297,9 +304,15 @@ def _assert_callable_spec_schema(spec: dict[str, object], label: str) -> None:
 def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
     _assert_exact_keys(
         spec,
-        {"kind"} | ({"constructor", "public_members", "behavior_probes"} & set(spec.keys())),
+        {"kind"}
+        | (
+            {"constructor", "forbidden_members", "public_members", "behavior_probes"}
+            & set(spec.keys())
+        ),
         label,
     )
+    if "forbidden_members" in spec:
+        _assert_forbidden_names_schema(spec["forbidden_members"], f"{label}.forbidden_members")
     if "constructor" in spec:
         _assert_constructor_spec_schema(spec["constructor"], f"{label}.constructor")
     public_members = spec.get("public_members")
@@ -399,6 +412,9 @@ def _assert_callable_contract(
 def _assert_class_contract(name: str, exported: object, spec: dict[str, object]) -> None:
     _assert_export_kind(name, exported, "class")
 
+    for member_name in spec.get("forbidden_members", []):
+        assert not hasattr(exported, member_name), f"{name}.{member_name}"
+
     if "constructor" in spec:
         _assert_constructor_contract(exported, spec["constructor"], name)
 
@@ -437,7 +453,7 @@ def _assert_contract_schema(path: Path, contract: dict[str, object]) -> None:
         _assert_exact_keys(
             contract, {"id", "kind", "module", "forbidden_exports", "exports"}, label
         )
-        assert isinstance(contract["forbidden_exports"], list), label
+        _assert_forbidden_names_schema(contract["forbidden_exports"], f"{label}.forbidden_exports")
         return
 
     assert kind == "api-capability-contract", label
@@ -592,6 +608,18 @@ def test_typing_only_names_are_not_importable_from_package_root() -> None:
     imported = import_module("context_compiler_directive_drafter")
     for name in ["DraftOutcome", "PreprocessResult"]:
         assert name not in imported.__dict__, name
+
+
+def test_forbidden_class_members_are_rejected_by_the_harness() -> None:
+    class LegacyResult:
+        outcome = "directive"
+
+    with pytest.raises(AssertionError):
+        _assert_class_contract(
+            "LegacyResult",
+            LegacyResult,
+            {"kind": "class", "forbidden_members": ["outcome"]},
+        )
 
 
 def test_directive_drafter_constructor_supports_optional_fallback() -> None:
