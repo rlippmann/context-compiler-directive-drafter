@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import FrozenInstanceError
 
 import pytest
 from context_compiler.grammar import decompose_directive
@@ -38,6 +39,41 @@ def test_canonical_directive_result_is_not_fallback_eligible() -> None:
     drafted = DraftResult(source="heuristic", result=_canonical("use docker"))
 
     assert drafter_module._is_fallback_eligible(drafted) is False
+
+
+def test_returned_draft_result_is_immutable() -> None:
+    value = DirectiveDrafter().draft_directive("use docker")
+
+    with pytest.raises(FrozenInstanceError):
+        value.source = "changed"
+
+
+@pytest.mark.parametrize("user_input", ["can you help with lunch?", "use docker?"])
+def test_returned_noncanonical_results_are_immutable(user_input: str) -> None:
+    value = DirectiveDrafter().draft_directive(user_input)
+
+    assert isinstance(value.result, NoDirective | UnknownDirective)
+    with pytest.raises(FrozenInstanceError):
+        value.result.reason = "changed"
+
+
+def test_draft_result_nested_public_result_is_immutable() -> None:
+    result = DirectiveDrafter().draft_directive("can you help with lunch?")
+
+    with pytest.raises(FrozenInstanceError):
+        result.result.reason = "changed"
+
+
+def test_independent_drafter_results_do_not_share_runtime_objects() -> None:
+    drafter = DirectiveDrafter()
+
+    first = drafter.draft_directive("can you help with lunch?")
+    second = drafter.draft_directive("can you help with lunch?")
+
+    assert first is not second
+    assert isinstance(first.result, NoDirective)
+    assert isinstance(second.result, NoDirective)
+    assert first.result is not second.result
 
 
 def test_fallback_callback_defaults_to_none() -> None:
