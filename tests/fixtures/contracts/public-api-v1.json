@@ -42,6 +42,10 @@
       },
       "DraftResult": {
         "kind": "class",
+        "forbidden_members": [
+          "outcome",
+          "directive"
+        ],
         "constructor": {
           "signature": {
             "is_async": false,
