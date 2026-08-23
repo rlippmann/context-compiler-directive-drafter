@@ -1,0 +1,173 @@
+{
+  "id": "drafter-normalization-v1",
+  "cases": [
+    {
+      "name": "heuristic-ascii-case",
+      "surface": "heuristic",
+      "rule": "ascii casing is normalized",
+      "polarity": "accept",
+      "input": "USE docker",
+      "expected": {"outcome": "directive", "directive": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}}
+    },
+    {
+      "name": "heuristic-whitespace-collapse",
+      "surface": "heuristic",
+      "rule": "outer and internal Unicode whitespace is normalized",
+      "polarity": "accept",
+      "input": "\u00a0USE\t\u2003docker\n",
+      "expected": {"outcome": "directive", "directive": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}}
+    },
+    {
+      "name": "heuristic-terminal-punctuation",
+      "surface": "heuristic",
+      "rule": "terminal periods and exclamation marks are stripped",
+      "polarity": "accept",
+      "input": "use docker...!!!",
+      "expected": {"outcome": "directive", "directive": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}}
+    },
+    {
+      "name": "heuristic-nonterminal-punctuation-preserved",
+      "surface": "heuristic",
+      "rule": "non-terminal punctuation is not stripped",
+      "polarity": "accept",
+      "input": "use docker,",
+      "expected": {"outcome": "directive", "directive": {"text": "use docker,", "kind": "use_item", "operands": {"item": "docker,"}}}
+    },
+    {
+      "name": "heuristic-bracket-wrapper",
+      "surface": "heuristic",
+      "rule": "balanced square-bracket wrappers are removed",
+      "polarity": "accept",
+      "input": "[use docker]",
+      "expected": {"outcome": "directive", "directive": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}}
+    },
+    {
+      "name": "heuristic-parenthesis-wrapper",
+      "surface": "heuristic",
+      "rule": "balanced parenthesis wrappers are removed",
+      "polarity": "accept",
+      "input": "(use docker)",
+      "expected": {"outcome": "directive", "directive": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}}
+    },
+    {
+      "name": "heuristic-quote-wrapper-rejected",
+      "surface": "heuristic",
+      "rule": "quoted wrappers are not accepted as commands",
+      "polarity": "reject",
+      "input": "\"use docker\"",
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.quoted_exact"}
+    },
+    {
+      "name": "heuristic-backtick-wrapper-rejected",
+      "surface": "heuristic",
+      "rule": "backtick wrappers are not accepted as commands",
+      "polarity": "reject",
+      "input": "`use docker`",
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.quoted_exact"}
+    },
+    {
+      "name": "heuristic-mismatched-wrapper-rejected",
+      "surface": "heuristic",
+      "rule": "mismatched wrappers are not removed",
+      "polarity": "reject",
+      "input": "[use docker)",
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.directive_adjacent_unsafe"}
+    },
+    {
+      "name": "heuristic-fullwidth-lookalike-rejected",
+      "surface": "heuristic",
+      "rule": "Unicode fullwidth lookalikes are not ASCII casing",
+      "polarity": "reject",
+      "input": "ＵＳＥ docker",
+      "expected": {"outcome": "no_directive", "directive": null, "reason": "reject.confident_non_directive"}
+    },
+    {
+      "name": "heuristic-cyrillic-lookalike-rejected",
+      "surface": "heuristic",
+      "rule": "Unicode Cyrillic lookalikes are not ASCII casing",
+      "polarity": "reject",
+      "input": "uѕe docker",
+      "expected": {"outcome": "no_directive", "directive": null, "reason": "reject.confident_non_directive"}
+    },
+    {
+      "name": "heuristic-dotted-i-rejected",
+      "surface": "heuristic",
+      "rule": "locale-sensitive dotted-I casing is not folded to ASCII",
+      "polarity": "reject",
+      "input": "İSE docker",
+      "expected": {"outcome": "no_directive", "directive": null, "reason": "reject.confident_non_directive"}
+    },
+    {
+      "name": "validator-ascii-case-and-outer-whitespace",
+      "surface": "validator",
+      "rule": "ASCII directive casing and outer whitespace are normalized",
+      "polarity": "accept",
+      "input": "  USE docker  ",
+      "expected": {"classification": "directive", "output": "use docker"}
+    },
+    {
+      "name": "validator-ascii-internal-whitespace",
+      "surface": "validator",
+      "rule": "ASCII internal whitespace accepted by canonical parsing is preserved as canonical spacing",
+      "polarity": "accept",
+      "input": "use\t docker",
+      "expected": {"classification": "directive", "output": "use docker"}
+    },
+    {
+      "name": "validator-sentinel-case-and-outer-whitespace",
+      "surface": "validator",
+      "rule": "sentinel casing and outer Unicode whitespace are normalized",
+      "polarity": "accept",
+      "input": "\u3000<no_directive>\u00a0",
+      "expected": {"classification": "no_directive", "output": null}
+    },
+    {
+      "name": "validator-sentinel-punctuation-rejected",
+      "surface": "validator",
+      "rule": "sentinel punctuation is not stripped",
+      "polarity": "reject",
+      "input": "<NO_DIRECTIVE>!",
+      "expected": {"classification": "unknown", "output": null}
+    },
+    {
+      "name": "validator-sentinel-lookalike-rejected",
+      "surface": "validator",
+      "rule": "sentinel Unicode lookalikes are not accepted",
+      "polarity": "reject",
+      "input": "<ＮＯ_DIRECTIVE>",
+      "expected": {"classification": "unknown", "output": null}
+    },
+    {
+      "name": "validator-unicode-internal-whitespace-rejected",
+      "surface": "validator",
+      "rule": "Unicode internal whitespace is not normalized by fallback validation",
+      "polarity": "reject",
+      "input": "use\u00a0docker",
+      "expected": {"classification": "unknown", "output": null}
+    },
+    {
+      "name": "validator-wrapper-rejected",
+      "surface": "validator",
+      "rule": "directive wrappers are not removed by fallback validation",
+      "polarity": "reject",
+      "input": "[use docker]",
+      "expected": {"classification": "unknown", "output": null}
+    },
+    {
+      "name": "parse-ascii-case-and-outer-whitespace",
+      "surface": "parse",
+      "rule": "parse helper shares validator casing and outer whitespace",
+      "polarity": "accept",
+      "input": "  USE docker  ",
+      "expected": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}
+    },
+    {
+      "name": "parse-sentinel-rejected",
+      "surface": "parse",
+      "rule": "parse helper does not turn sentinel into a directive",
+      "polarity": "reject",
+      "input": "<no_directive>",
+      "expected": null
+    }
+  ]
+}
