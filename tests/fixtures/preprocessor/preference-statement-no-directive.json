@@ -1,0 +1,9 @@
+{
+  "name": "preference-statement-no-directive",
+  "input": "I prefer concise replies",
+  "expected": {
+    "outcome": "no_directive",
+    "directive": null,
+    "reason": "reject.confident_non_directive"
+  }
+}

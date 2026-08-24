@@ -1,9 +1,9 @@
 """Host-layer heuristic directive drafter.
 
 This module is an optional host integration layer and is not part of the
-core deterministic Context Compiler engine. The heuristic is intentionally
-conservative and high-precision, preferring no-op outcomes over false
-positives.
+core deterministic Context Compiler engine. It drafts one canonical candidate
+from exact input, bounded deterministic rewrites, or clearly non-directive
+boundaries; ambiguous interpretation remains fallback-eligible.
 """
 
 import re
@@ -11,7 +11,6 @@ from typing import Literal, TypedDict
 
 from context_compiler.grammar import (
     CanonicalDirective,
-    DirectiveKind,
     decompose_directive,
     get_directive_metadata,
 )
@@ -61,21 +60,23 @@ _CHANGE_PREMISE_MISSING_TO_PATTERN = re.compile(
 _PLEASE_PREFIX_PATTERN = re.compile(r"^please (?P<directive>\S(?:.*\S)?)$")
 _ALLOW_ALIAS_PATTERN = re.compile(r"^allow (?P<item>\S(?:.*\S)?)$")
 _PROHIBIT_ALIAS_PATTERN = re.compile(r"^(?:do not|don't) use (?P<item>\S(?:.*\S)?)$")
+_STOP_USING_ALIAS_PATTERN = re.compile(r"^stop using (?P<item>\S(?:.*\S)?)$")
+_TRANSPOSED_PROHIBIT_PATTERN = re.compile(r"^set policy (?P<item>\S(?:.*\S)?) prohibit$")
+_DIRECTIVE_REWRITE_CUE_PATTERN = re.compile(
+    r"^\s*(?:please|allow|(?:do not|don't) use|stop using|set premise|change premise|use)\b"
+)
 _REPLACE_MISSING_OF_PATTERN = re.compile(
     r"^use (?P<new_item>\S(?:.*\S)?) instead (?!of(?:\s|$))(?P<old_item>\S(?:.*\S)?)$"
 )
 _REPLACE_SPLIT_OF_PATTERN = re.compile(
     r"^use (?P<new_item>\S(?:.*\S)?) in stead of (?P<old_item>\S(?:.*\S)?)$"
 )
-_UNSUPPORTED_ALIAS_PATTERNS = (
-    re.compile(r"^allow\s+\S(?:.*\S)?$"),
-    re.compile(r"^stop\s+using\s+\S(?:.*\S)?$"),
-    re.compile(r"^set\s+policy\s+\S(?:.*\S)?\s+prohibit$"),
+_AMBIGUOUS_ALIAS_PATTERNS = (
     re.compile(r"^use\s+instead\s+of\s+\S(?:.*\S)?$"),
     re.compile(r"^use\s+\S(?:.*\S)?\s+not\s+\S(?:.*\S)?$"),
     re.compile(r"^wipe\s+policies$"),
 )
-_UNSUPPORTED_ADMIN_ALIAS_PATTERNS = (
+_AMBIGUOUS_ADMIN_ALIAS_PATTERNS = (
     re.compile(r"^reset policy$"),
     re.compile(r"^remove policies\s+\S(?:.*\S)?$"),
 )
@@ -164,15 +165,6 @@ def _is_quoted_or_backtick_wrapped(message: str) -> bool:
     return (stripped[0], stripped[-1]) in {('"', '"'), ("'", "'"), ("`", "`")}
 
 
-def _looks_like_unsafe_replacement_acquisition_case(directive: CanonicalDirective) -> bool:
-    if directive.kind is not DirectiveKind.USE_ITEM:
-        return False
-
-    item = directive.operands["item"]
-    normalized_item = item.lower()
-    return " instead " in normalized_item or " in stead of " in normalized_item
-
-
 def _is_reported_quoted_directive(message: str) -> bool:
     return bool(_QUOTED_REPORTING_PATTERN.match(message))
 
@@ -201,6 +193,14 @@ def _rewrite_bounded_candidate(message: str) -> str:
     if match is not None:
         return f"prohibit {match.group('item')}"
 
+    match = _STOP_USING_ALIAS_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"prohibit {match.group('item')}"
+
+    match = _TRANSPOSED_PROHIBIT_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"prohibit {match.group('item')}"
+
     match = _REPLACE_MISSING_OF_PATTERN.fullmatch(current)
     if match is not None:
         return f"use {match.group('new_item')} instead of {match.group('old_item')}"
@@ -212,12 +212,12 @@ def _rewrite_bounded_candidate(message: str) -> str:
     return current
 
 
-def _is_unsupported_alias(message: str) -> bool:
-    return any(pattern.fullmatch(message) for pattern in _UNSUPPORTED_ALIAS_PATTERNS)
+def _is_ambiguous_alias(message: str) -> bool:
+    return any(pattern.fullmatch(message) for pattern in _AMBIGUOUS_ALIAS_PATTERNS)
 
 
-def _is_unsupported_admin_alias(message: str) -> bool:
-    return any(pattern.fullmatch(message) for pattern in _UNSUPPORTED_ADMIN_ALIAS_PATTERNS)
+def _is_ambiguous_admin_alias(message: str) -> bool:
+    return any(pattern.fullmatch(message) for pattern in _AMBIGUOUS_ADMIN_ALIAS_PATTERNS)
 
 
 def preprocess_heuristic(message: str) -> PreprocessResult:
@@ -233,10 +233,10 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         - outcome="unknown" when unresolved and the host should avoid guessing
 
     Notes:
-        This pass is precision-first and intentionally narrow. It may abstain
-        on ambiguous or mixed-intent inputs. The returned directive, when
-        present, is still a non-authoritative proposal for later compiler
-        review.
+        This pass accepts exact canonical input and bounded deterministic
+        rewrites. It defers ambiguous or mixed-intent inputs. The returned
+        directive, when present, is still a non-authoritative proposal; Core
+        owns validity, applicability, and execution.
     """
     if _LIST_MARKER_PATTERN.match(message):
         return {
@@ -247,7 +247,9 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized = _normalized_for_match(message)
 
-    if "?" in message and _contains_directive_cue(normalized):
+    if "?" in message and (
+        _contains_directive_cue(normalized) or _DIRECTIVE_REWRITE_CUE_PATTERN.match(normalized)
+    ):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
@@ -291,14 +293,21 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     normalized_candidate = _rewrite_bounded_candidate(_normalize_candidate(message))
 
-    if _is_unsupported_alias(normalized_candidate):
+    if _matches_multi_segment_pattern(normalized_candidate):
+        return {
+            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "directive": None,
+            "reason": "reject.multi_segment_or_mixed_prose",
+        }
+
+    if _is_ambiguous_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": "reject.near_miss_alias",
         }
 
-    if _is_unsupported_admin_alias(normalized_candidate):
+    if _is_ambiguous_admin_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
@@ -307,12 +316,6 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     decomposed = decompose_directive(normalized_candidate)
     if isinstance(decomposed, CanonicalDirective):
-        if _looks_like_unsafe_replacement_acquisition_case(decomposed):
-            return {
-                "outcome": DRAFT_OUTCOME_UNKNOWN,
-                "directive": None,
-                "reason": "reject.malformed_replacement_syntax",
-            }
         return {
             "outcome": DRAFT_OUTCOME_DIRECTIVE,
             "directive": decomposed,

@@ -1,0 +1,12 @@
+{
+  "name": "rewritten-transposed-prohibit",
+  "input": "set policy peanuts prohibit",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "prohibit peanuts",
+      "kind": "prohibit_item",
+      "operands": {"item": "peanuts"}
+    }
+  }
+}
