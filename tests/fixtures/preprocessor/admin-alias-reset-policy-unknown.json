@@ -4,6 +4,6 @@
   "expected": {
     "outcome": "unknown",
     "directive": null,
-    "reason": "reject.admin_near_miss_alias"
+    "reason": "reject.unsupported_alias"
   }
 }

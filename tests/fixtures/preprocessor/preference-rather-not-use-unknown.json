@@ -1,0 +1,9 @@
+{
+  "name": "preference-rather-not-use-unknown",
+  "input": "I'd rather not use Docker",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.cannot_confidently_reduce"
+  }
+}

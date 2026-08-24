@@ -41,9 +41,9 @@ def test_heuristic_rejects_structural_near_miss_alias_forms() -> None:
     cases = [
         ("use instead of pytest", "reject.ambiguous_candidate"),
         ("use uv not pip", "reject.ambiguous_candidate"),
-        ("wipe policies", "reject.ambiguous_candidate"),
-        ("reset policy", "reject.admin_near_miss_alias"),
-        ("remove policies shell", "reject.admin_near_miss_alias"),
+        ("wipe policies", "reject.unsupported_alias"),
+        ("reset policy", "reject.unsupported_alias"),
+        ("remove policies shell", "reject.unsupported_alias"),
     ]
     for message, reason in cases:
         assert preprocess_heuristic(message) == {
@@ -84,6 +84,10 @@ def test_heuristic_rejects_quoted_or_backticked_exact_directives() -> None:
             "directive": None,
             "reason": "reject.quoted_exact",
         }
+
+
+def test_heuristic_distinguishes_quoted_command_from_quoted_operand() -> None:
+    _assert_directive_result(preprocess_heuristic('use "docker"'), 'use "docker"')
 
 
 def test_heuristic_case_normalizes_exact_command_shapes() -> None:
@@ -256,7 +260,7 @@ def test_heuristic_rejects_admin_near_miss_aliases() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.admin_near_miss_alias",
+            "reason": "reject.unsupported_alias",
         }
 
 
@@ -418,7 +422,7 @@ def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
     assert result == {
         "outcome": "unknown",
         "directive": None,
-        "reason": "reject.ambiguous_candidate",
+        "reason": "reject.unsupported_alias",
     }
 
 
