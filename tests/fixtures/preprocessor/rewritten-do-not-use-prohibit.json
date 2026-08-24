@@ -1,5 +1,5 @@
 {
-  "name": "natural-language-do-not-use-unknown",
+  "name": "rewritten-do-not-use-prohibit",
   "input": "do not use peanuts",
   "expected": {
     "outcome": "directive",

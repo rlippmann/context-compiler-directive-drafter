@@ -1,5 +1,5 @@
 {
-  "name": "malformed-replacement-instead-docker-unknown",
+  "name": "rewritten-replacement-missing-of",
   "input": "use podman instead docker",
   "expected": {
     "outcome": "directive",

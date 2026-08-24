@@ -1,6 +1,6 @@
 {
-  "name": "modal-please-set-premise-to-concise-replies-unknown",
-  "input": "please set premise to concise replies",
+  "name": "rewritten-set-premise-to",
+  "input": "set premise to concise replies",
   "expected": {
     "outcome": "directive",
     "directive": {

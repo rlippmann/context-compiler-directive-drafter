@@ -318,7 +318,7 @@ def test_invalid_fallback_text_returns_unknown_from_drafter() -> None:
 def test_valid_fallback_directive_is_validated_before_returning() -> None:
     drafter = DirectiveDrafter(fallback=lambda _: "use docker", fallback_source="llm")
 
-    result = drafter.draft_directive("please use docker")
+    result = drafter.draft_directive("use docker?")
 
     assert result == DraftResult(source="llm", result=_canonical("use docker"))
 

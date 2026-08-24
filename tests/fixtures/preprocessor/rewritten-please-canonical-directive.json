@@ -1,5 +1,5 @@
 {
-  "name": "modal-please-clear-state-unknown",
+  "name": "rewritten-please-canonical-directive",
   "input": "please clear state",
   "expected": {
     "outcome": "directive",

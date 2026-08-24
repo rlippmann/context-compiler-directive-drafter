@@ -1,0 +1,9 @@
+{
+  "name": "rejected-ambiguous-not-replacement",
+  "input": "use uv not pip",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.near_miss_alias"
+  }
+}

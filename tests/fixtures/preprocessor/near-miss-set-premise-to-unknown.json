@@ -2,8 +2,11 @@
   "name": "near-miss-set-premise-to-unknown",
   "input": "set premise to concise replies",
   "expected": {
-    "outcome": "unknown",
-    "directive": null,
-    "reason": "reject.directive_adjacent_unsafe"
+    "outcome": "directive",
+    "directive": {
+      "text": "set premise concise replies",
+      "kind": "set_premise",
+      "operands": {"value": "concise replies"}
+    }
   }
 }

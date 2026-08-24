@@ -2,8 +2,11 @@
   "name": "near-miss-change-premise-missing-to-unknown",
   "input": "change premise concise replies",
   "expected": {
-    "outcome": "unknown",
-    "directive": null,
-    "reason": "reject.directive_adjacent_unsafe"
+    "outcome": "directive",
+    "directive": {
+      "text": "change premise to concise replies",
+      "kind": "change_premise",
+      "operands": {"value": "concise replies"}
+    }
   }
 }

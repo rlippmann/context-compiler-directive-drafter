@@ -1,0 +1,9 @@
+{
+  "name": "rejected-hedged-use",
+  "input": "could we maybe use uv later",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.directive_adjacent_unsafe"
+  }
+}

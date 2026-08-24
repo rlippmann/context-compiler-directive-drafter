@@ -2,8 +2,11 @@
   "name": "near-miss-set-premise-to-formal-tone-unknown",
   "input": "set premise to formal tone",
   "expected": {
-    "outcome": "unknown",
-    "directive": null,
-    "reason": "reject.directive_adjacent_unsafe"
+    "outcome": "directive",
+    "directive": {
+      "text": "set premise formal tone",
+      "kind": "set_premise",
+      "operands": {"value": "formal tone"}
+    }
   }
 }
