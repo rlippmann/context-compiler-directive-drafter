@@ -39,9 +39,9 @@ def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
 
 def test_heuristic_rejects_structural_near_miss_alias_forms() -> None:
     cases = [
-        ("use instead of pytest", "reject.near_miss_alias"),
-        ("use uv not pip", "reject.near_miss_alias"),
-        ("wipe policies", "reject.near_miss_alias"),
+        ("use instead of pytest", "reject.ambiguous_candidate"),
+        ("use uv not pip", "reject.ambiguous_candidate"),
+        ("wipe policies", "reject.ambiguous_candidate"),
         ("reset policy", "reject.admin_near_miss_alias"),
         ("remove policies shell", "reject.admin_near_miss_alias"),
     ]
@@ -104,7 +104,7 @@ def test_heuristic_question_mark_only_non_directive_is_confident() -> None:
     }
 
 
-def test_heuristic_rejects_directive_adjacent_question_mark_as_unknown() -> None:
+def test_heuristic_rejects_question_mark_after_directive_like_text() -> None:
     cases = [
         "use docker?",
         "clear state?",
@@ -217,7 +217,7 @@ def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
 
@@ -235,9 +235,9 @@ def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start
 
 def test_heuristic_rejects_incomplete_or_ambiguous_replacement_syntax() -> None:
     cases = [
-        ("use instead of docker", "reject.near_miss_alias"),
-        ("use podman instead of", "reject.directive_adjacent_unsafe"),
-        ("use podman not docker", "reject.near_miss_alias"),
+        ("use instead of docker", "reject.ambiguous_candidate"),
+        ("use podman instead of", "reject.cannot_confidently_reduce"),
+        ("use podman not docker", "reject.ambiguous_candidate"),
     ]
     for message, reason in cases:
         assert preprocess_heuristic(message) == {
@@ -302,7 +302,7 @@ def test_heuristic_does_not_canonicalize_set_premise_to_with_empty_payload() -> 
     assert preprocess_heuristic("set premise to   ") == {
         "outcome": "unknown",
         "directive": None,
-        "reason": "reject.directive_adjacent_unsafe",
+        "reason": "reject.cannot_confidently_reduce",
     }
 
 
@@ -326,7 +326,7 @@ def test_heuristic_does_not_canonicalize_change_premise_with_empty_payload() -> 
     assert preprocess_heuristic("change premise   ") == {
         "outcome": "unknown",
         "directive": None,
-        "reason": "reject.directive_adjacent_unsafe",
+        "reason": "reject.cannot_confidently_reduce",
     }
 
 
@@ -418,7 +418,7 @@ def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
     assert result == {
         "outcome": "unknown",
         "directive": None,
-        "reason": "reject.near_miss_alias",
+        "reason": "reject.ambiguous_candidate",
     }
 
 
@@ -429,7 +429,7 @@ def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
 

@@ -1,0 +1,12 @@
+{
+  "name": "canonical-replacement-linux-windows",
+  "input": "use linux instead of windows",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use linux instead of windows",
+      "kind": "replace_use",
+      "operands": {"new_item": "linux", "old_item": "windows"}
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "preference-docker-better-no-directive",
+  "input": "Docker would be better",
+  "expected": {
+    "outcome": "no_directive",
+    "directive": null,
+    "reason": "reject.confident_non_directive"
+  }
+}

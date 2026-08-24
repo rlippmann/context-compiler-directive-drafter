@@ -32,7 +32,7 @@ Use this package when you want to:
   directive attempts before compiler handoff.
 - Distinguish "no directive" from "unknown or failed interpretation" in a
   stable host-facing contract.
-- Avoid accidental or unsafe state changes from ambiguous input.
+- Avoid accidental candidate drafts from ambiguous input.
 - Add a conservative natural-language-to-directive step before applying changes.
 
 This package owns the human-facing acquisition boundary, including exact
@@ -147,7 +147,7 @@ The public helpers remain available unchanged for hosts that prefer to orchestra
 - Bypass drafting when clarification is pending.
 - Do not drive authoritative transitions from package-owned drafting code.
 - Do not read or mutate `engine.state` directly from package-owned drafting code.
-- Prefer abstaining over unsafe guesses.
+- Prefer abstaining when the input cannot be confidently reduced to one directive.
 - Output validation checks the canonical directive contract, not whether the
   directive is allowed in context.
 - A structurally valid drafted directive may still be the wrong interpretation of the user's meaning.

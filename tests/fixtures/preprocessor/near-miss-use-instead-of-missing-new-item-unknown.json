@@ -4,6 +4,6 @@
   "expected": {
     "outcome": "unknown",
     "directive": null,
-    "reason": "reject.near_miss_alias"
+    "reason": "reject.ambiguous_candidate"
   }
 }
