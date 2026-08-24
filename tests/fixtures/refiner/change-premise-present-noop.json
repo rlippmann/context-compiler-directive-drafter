@@ -1,6 +1,0 @@
-{
-  "name": "change-premise-present-noop",
-  "premise": "existing premise",
-  "input": "change premise to concise replies",
-  "expected": "change premise to concise replies"
-}

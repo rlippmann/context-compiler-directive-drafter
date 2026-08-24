@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from context_compiler.grammar import CanonicalDirective
 
 from context_compiler_directive_drafter import (
@@ -11,6 +12,8 @@ from context_compiler_directive_drafter import (
 
 _PREPROCESSOR_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
 _REQUIRED_FIXTURE_FAMILIES = {"heuristic", "validator", "parse"}
+
+pytestmark = pytest.mark.contract
 
 
 def _behavior_fixture_paths() -> list[Path]:
