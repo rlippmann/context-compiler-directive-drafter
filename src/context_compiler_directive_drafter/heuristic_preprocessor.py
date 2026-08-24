@@ -54,14 +54,31 @@ _QUOTED_REPORTING_PATTERN = re.compile(
     r'["\'`].+["\'`][.!]?\s*$',
     re.IGNORECASE,
 )
-_USE_ALIAS_PATTERN = re.compile(r"^\s*allow\s+\S(?:.*\S)?\s*$")
-_PROHIBIT_ALIAS_PATTERN = re.compile(r"^\s*stop\s+using\s+\S(?:.*\S)?\s*$")
-_RESET_POLICIES_ALIAS_PATTERN = re.compile(r"^\s*wipe\s+policies\s*$")
-_PROHIBIT_TRANSPOSED_PATTERN = re.compile(r"^\s*set\s+policy\s+\S(?:.*\S)?\s+prohibit\s*$")
-_REPLACE_MISSING_NEW_ITEM_PATTERN = re.compile(r"^\s*use\s+instead\s+of\s+\S(?:.*\S)?\s*$")
-_REPLACE_NOT_ALIAS_PATTERN = re.compile(r"^\s*use\s+\S(?:.*\S)?\s+not\s+\S(?:.*\S)?\s*$")
-_RESET_POLICY_SINGULAR_PATTERN = re.compile(r"^\s*reset\s+policy\s*$")
-_REMOVE_POLICY_PLURALIZED_PATTERN = re.compile(r"^\s*remove\s+policies\s+\S(?:.*\S)?\s*$")
+_SET_PREMISE_TO_PATTERN = re.compile(r"^set premise to (?P<payload>\S(?:.*\S)?)$")
+_CHANGE_PREMISE_MISSING_TO_PATTERN = re.compile(
+    r"^change premise (?!to(?:\s|$))(?P<payload>\S(?:.*\S)?)$"
+)
+_PLEASE_PREFIX_PATTERN = re.compile(r"^please (?P<directive>\S(?:.*\S)?)$")
+_ALLOW_ALIAS_PATTERN = re.compile(r"^allow (?P<item>\S(?:.*\S)?)$")
+_PROHIBIT_ALIAS_PATTERN = re.compile(r"^(?:do not|don't) use (?P<item>\S(?:.*\S)?)$")
+_REPLACE_MISSING_OF_PATTERN = re.compile(
+    r"^use (?P<new_item>\S(?:.*\S)?) instead (?!of(?:\s|$))(?P<old_item>\S(?:.*\S)?)$"
+)
+_REPLACE_SPLIT_OF_PATTERN = re.compile(
+    r"^use (?P<new_item>\S(?:.*\S)?) in stead of (?P<old_item>\S(?:.*\S)?)$"
+)
+_UNSUPPORTED_ALIAS_PATTERNS = (
+    re.compile(r"^allow\s+\S(?:.*\S)?$"),
+    re.compile(r"^stop\s+using\s+\S(?:.*\S)?$"),
+    re.compile(r"^set\s+policy\s+\S(?:.*\S)?\s+prohibit$"),
+    re.compile(r"^use\s+instead\s+of\s+\S(?:.*\S)?$"),
+    re.compile(r"^use\s+\S(?:.*\S)?\s+not\s+\S(?:.*\S)?$"),
+    re.compile(r"^wipe\s+policies$"),
+)
+_UNSUPPORTED_ADMIN_ALIAS_PATTERNS = (
+    re.compile(r"^reset policy$"),
+    re.compile(r"^remove policies\s+\S(?:.*\S)?$"),
+)
 _WRAPPER_PAIRS = {
     ('"', '"'),
     ("'", "'"),
@@ -160,28 +177,47 @@ def _is_reported_quoted_directive(message: str) -> bool:
     return bool(_QUOTED_REPORTING_PATTERN.match(message))
 
 
-def _is_near_miss_alias(message: str) -> bool:
-    return any(
-        pattern.match(message)
-        for pattern in (
-            _USE_ALIAS_PATTERN,
-            _PROHIBIT_ALIAS_PATTERN,
-            _RESET_POLICIES_ALIAS_PATTERN,
-            _PROHIBIT_TRANSPOSED_PATTERN,
-            _REPLACE_MISSING_NEW_ITEM_PATTERN,
-            _REPLACE_NOT_ALIAS_PATTERN,
-        )
-    )
+def _rewrite_bounded_candidate(message: str) -> str:
+    """Apply deterministic whole-message rewrites before grammar parsing."""
+    current = message
+
+    match = _PLEASE_PREFIX_PATTERN.fullmatch(current)
+    if match is not None:
+        current = match.group("directive")
+
+    match = _SET_PREMISE_TO_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"set premise {match.group('payload')}"
+
+    match = _CHANGE_PREMISE_MISSING_TO_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"change premise to {match.group('payload')}"
+
+    match = _ALLOW_ALIAS_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"use {match.group('item')}"
+
+    match = _PROHIBIT_ALIAS_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"prohibit {match.group('item')}"
+
+    match = _REPLACE_MISSING_OF_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"use {match.group('new_item')} instead of {match.group('old_item')}"
+
+    match = _REPLACE_SPLIT_OF_PATTERN.fullmatch(current)
+    if match is not None:
+        return f"use {match.group('new_item')} instead of {match.group('old_item')}"
+
+    return current
 
 
-def _is_admin_near_miss_alias(message: str) -> bool:
-    return any(
-        pattern.match(message)
-        for pattern in (
-            _RESET_POLICY_SINGULAR_PATTERN,
-            _REMOVE_POLICY_PLURALIZED_PATTERN,
-        )
-    )
+def _is_unsupported_alias(message: str) -> bool:
+    return any(pattern.fullmatch(message) for pattern in _UNSUPPORTED_ALIAS_PATTERNS)
+
+
+def _is_unsupported_admin_alias(message: str) -> bool:
+    return any(pattern.fullmatch(message) for pattern in _UNSUPPORTED_ADMIN_ALIAS_PATTERNS)
 
 
 def preprocess_heuristic(message: str) -> PreprocessResult:
@@ -253,16 +289,16 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "reason": "reject.quoted_reported",
         }
 
-    normalized_candidate = _normalize_candidate(message)
+    normalized_candidate = _rewrite_bounded_candidate(_normalize_candidate(message))
 
-    if _is_near_miss_alias(normalized):
+    if _is_unsupported_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": "reject.near_miss_alias",
         }
 
-    if _is_admin_near_miss_alias(normalized):
+    if _is_unsupported_admin_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,

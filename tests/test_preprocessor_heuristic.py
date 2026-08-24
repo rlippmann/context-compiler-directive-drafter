@@ -16,7 +16,6 @@ def _assert_directive_result(result: dict[str, object], expected: str) -> None:
 
 def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
     cases = [
-        "allow docker",
         "set policy peanuts prohibit",
         "stop using peanuts",
         "use instead of docker",
@@ -42,7 +41,6 @@ def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
 
 def test_heuristic_rejects_structural_near_miss_alias_forms() -> None:
     cases = [
-        ("allow podman", "reject.near_miss_alias"),
         ("stop using shell scripts", "reject.near_miss_alias"),
         ("set policy almonds prohibit", "reject.near_miss_alias"),
         ("use instead of pytest", "reject.near_miss_alias"),
@@ -241,14 +239,15 @@ def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start
 
 def test_heuristic_rejects_malformed_replacement_syntax() -> None:
     cases = [
-        "use podman instead docker",
-        "use podman in stead of docker",
+        ("use instead of docker", "reject.near_miss_alias"),
+        ("use podman instead of", "reject.directive_adjacent_unsafe"),
+        ("use podman not docker", "reject.near_miss_alias"),
     ]
-    for message in cases:
+    for message, reason in cases:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.malformed_replacement_syntax",
+            "reason": reason,
         }
 
 
@@ -283,30 +282,22 @@ def test_heuristic_accepts_bracket_wrapper_without_reporting_marker() -> None:
     _assert_directive_result(preprocess_heuristic("[clear state]"), "clear state")
 
 
-def test_heuristic_set_premise_to_forms_are_unknown_not_rewritten() -> None:
+def test_heuristic_rewrites_set_premise_to_forms() -> None:
     cases = [
-        "set premise to concise replies",
-        "set premise to formal tone",
+        ("set premise to concise replies", "set premise concise replies"),
+        ("set premise to formal tone", "set premise formal tone"),
     ]
-    for message in cases:
-        assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
-            "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
-        }
+    for message, expected in cases:
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
-def test_heuristic_dont_use_forms_are_unknown_not_rewritten() -> None:
+def test_heuristic_rewrites_prohibition_aliases() -> None:
     cases = [
-        "don't use peanuts",
-        "do not use peanuts",
+        ("don't use peanuts", "prohibit peanuts"),
+        ("do not use peanuts", "prohibit peanuts"),
     ]
-    for message in cases:
-        assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
-            "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
-        }
+    for message, expected in cases:
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_does_not_canonicalize_set_premise_to_with_empty_payload() -> None:
@@ -317,25 +308,20 @@ def test_heuristic_does_not_canonicalize_set_premise_to_with_empty_payload() -> 
     }
 
 
-def test_heuristic_does_not_canonicalize_set_premise_to_when_not_whole_message() -> None:
-    assert preprocess_heuristic("please set premise to concise replies") == {
-        "outcome": "unknown",
-        "directive": None,
-        "reason": "reject.directive_adjacent_unsafe",
-    }
+def test_heuristic_rewrites_polite_set_premise_to_form() -> None:
+    _assert_directive_result(
+        preprocess_heuristic("please set premise to concise replies"),
+        "set premise concise replies",
+    )
 
 
-def test_heuristic_change_premise_missing_to_forms_are_unknown_not_rewritten() -> None:
+def test_heuristic_rewrites_change_premise_missing_to_forms() -> None:
     cases = [
-        "change premise concise replies",
-        "change premise formal tone",
+        ("change premise concise replies", "change premise to concise replies"),
+        ("change premise formal tone", "change premise to formal tone"),
     ]
-    for message in cases:
-        assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
-            "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
-        }
+    for message, expected in cases:
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_does_not_canonicalize_change_premise_with_empty_payload() -> None:
@@ -346,12 +332,21 @@ def test_heuristic_does_not_canonicalize_change_premise_with_empty_payload() -> 
     }
 
 
-def test_heuristic_does_not_canonicalize_change_premise_when_not_whole_message() -> None:
-    assert preprocess_heuristic("please change premise concise replies") == {
-        "outcome": "unknown",
-        "directive": None,
-        "reason": "reject.directive_adjacent_unsafe",
-    }
+def test_heuristic_rewrites_polite_change_premise_form() -> None:
+    _assert_directive_result(
+        preprocess_heuristic("please change premise concise replies"),
+        "change premise to concise replies",
+    )
+
+
+def test_heuristic_rewrites_allow_alias_and_replacement_syntax() -> None:
+    cases = [
+        ("allow docker", "use docker"),
+        ("use podman instead docker", "use podman instead of docker"),
+        ("use podman in stead of docker", "use podman instead of docker"),
+    ]
+    for message, expected in cases:
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_accepts_strict_canonical_directives() -> None:
@@ -402,15 +397,13 @@ def test_heuristic_directive_output_is_grammar_validated_not_regex_only() -> Non
 
 def test_heuristic_directive_shaped_text_does_not_bypass_grammar_validation() -> None:
     cases = [
-        "please use docker",
-        "set premise to concise replies",
-        "change premise concise replies",
-        "do not use peanuts",
+        ("please use docker", "use docker"),
+        ("set premise to concise replies", "set premise concise replies"),
+        ("change premise concise replies", "change premise to concise replies"),
+        ("do not use peanuts", "prohibit peanuts"),
     ]
-    for message in cases:
-        result = preprocess_heuristic(message)
-        assert result["outcome"] != "directive"
-        assert result["directive"] is None
+    for message, expected in cases:
+        _assert_directive_result(preprocess_heuristic(message), expected)
 
 
 def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:

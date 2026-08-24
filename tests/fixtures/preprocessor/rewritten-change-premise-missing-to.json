@@ -1,5 +1,5 @@
 {
-  "name": "near-miss-change-premise-missing-to-keyword-unknown",
+  "name": "rewritten-change-premise-missing-to",
   "input": "change premise formal tone",
   "expected": {
     "outcome": "directive",

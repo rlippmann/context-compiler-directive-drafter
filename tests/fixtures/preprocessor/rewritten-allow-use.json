@@ -1,5 +1,5 @@
 {
-  "name": "unsupported-alias-unknown",
+  "name": "rewritten-allow-use",
   "input": "allow docker",
   "expected": {
     "outcome": "directive",

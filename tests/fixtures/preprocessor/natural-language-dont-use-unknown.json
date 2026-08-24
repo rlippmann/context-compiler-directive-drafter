@@ -2,8 +2,11 @@
   "name": "natural-language-dont-use-unknown",
   "input": "don't use peanuts",
   "expected": {
-    "outcome": "unknown",
-    "directive": null,
-    "reason": "reject.directive_adjacent_unsafe"
+    "outcome": "directive",
+    "directive": {
+      "text": "prohibit peanuts",
+      "kind": "prohibit_item",
+      "operands": {"item": "peanuts"}
+    }
   }
 }

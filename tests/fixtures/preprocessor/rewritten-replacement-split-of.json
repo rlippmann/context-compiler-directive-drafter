@@ -1,6 +1,6 @@
 {
-  "name": "malformed-replacement-instead-docker-unknown",
-  "input": "use podman instead docker",
+  "name": "rewritten-replacement-split-of",
+  "input": "use podman in stead of docker",
   "expected": {
     "outcome": "directive",
     "directive": {
