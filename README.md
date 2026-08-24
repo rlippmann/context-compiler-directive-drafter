@@ -35,7 +35,11 @@ Use this package when you want to:
 - Avoid accidental or unsafe state changes from ambiguous input.
 - Add a conservative natural-language-to-directive step before applying changes.
 
-This package owns the human-facing acquisition boundary, including when to propose a canonical directive, when to abstain, and when to ask for clarification or interpretation confirmation before compiler handoff.
+This package owns the human-facing acquisition boundary, including exact
+canonicalization, bounded deterministic rewrites, obvious non-directive
+rejection, and fallback deferral for ambiguous interpretation. It does not
+decide whether a drafted candidate is valid, applicable, allowed, contradictory,
+or executable; Core owns those decisions.
 
 The normative acquisition contract lives in [docs/DrafterAcquisitionSpec.md](docs/DrafterAcquisitionSpec.md).
 This package does not own:
@@ -200,8 +204,9 @@ Boundary rules:
 - Do not mine surrounding prose for commands.
 - Do not split one message into multiple drafted directives.
 - Do not invent new directive semantics.
-- Avoid broad semantic rewrites that effectively create new policy meaning.
-- Prefer false negatives over false positives.
+- Apply only bounded deterministic rewrites that preserve one apparent
+  directive operation.
+- Defer ambiguous semantic interpretation to the host fallback when available.
 
 `context-compiler-directive-drafter` only proposes at most one candidate
 directive. `context-compiler` remains responsible for independently enforcing

@@ -117,7 +117,11 @@ def test_heuristic_directive_output_is_always_validator_safe(message: str) -> No
         return
     directive = result["directive"]
     assert directive.text
-    assert decompose_directive(directive.text) is directive
+    reparsed = decompose_directive(directive.text)
+    assert reparsed is not None
+    assert reparsed.text == directive.text
+    assert reparsed.kind is directive.kind
+    assert reparsed.operands == directive.operands
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES), NON_EMPTY_TEXT, NON_EMPTY_TEXT)

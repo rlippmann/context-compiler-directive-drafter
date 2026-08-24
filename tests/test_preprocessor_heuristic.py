@@ -16,8 +16,6 @@ def _assert_directive_result(result: dict[str, object], expected: str) -> None:
 
 def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
     cases = [
-        "set policy peanuts prohibit",
-        "stop using peanuts",
         "use instead of docker",
         "use podman instead of",
         "use podman not docker",
@@ -41,8 +39,6 @@ def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
 
 def test_heuristic_rejects_structural_near_miss_alias_forms() -> None:
     cases = [
-        ("stop using shell scripts", "reject.near_miss_alias"),
-        ("set policy almonds prohibit", "reject.near_miss_alias"),
         ("use instead of pytest", "reject.near_miss_alias"),
         ("use uv not pip", "reject.near_miss_alias"),
         ("wipe policies", "reject.near_miss_alias"),
@@ -237,7 +233,7 @@ def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start
     }
 
 
-def test_heuristic_rejects_malformed_replacement_syntax() -> None:
+def test_heuristic_rejects_incomplete_or_ambiguous_replacement_syntax() -> None:
     cases = [
         ("use instead of docker", "reject.near_miss_alias"),
         ("use podman instead of", "reject.directive_adjacent_unsafe"),
@@ -295,6 +291,8 @@ def test_heuristic_rewrites_prohibition_aliases() -> None:
     cases = [
         ("don't use peanuts", "prohibit peanuts"),
         ("do not use peanuts", "prohibit peanuts"),
+        ("stop using peanuts", "prohibit peanuts"),
+        ("set policy peanuts prohibit", "prohibit peanuts"),
     ]
     for message, expected in cases:
         _assert_directive_result(preprocess_heuristic(message), expected)
@@ -337,6 +335,15 @@ def test_heuristic_rewrites_polite_change_premise_form() -> None:
         preprocess_heuristic("please change premise concise replies"),
         "change premise to concise replies",
     )
+
+
+def test_heuristic_does_not_strip_please_from_mixed_prose() -> None:
+    result = preprocess_heuristic("please use docker because containers are nice")
+    assert result == {
+        "outcome": "unknown",
+        "directive": None,
+        "reason": "reject.multi_segment_or_mixed_prose",
+    }
 
 
 def test_heuristic_rewrites_allow_alias_and_replacement_syntax() -> None:
@@ -407,7 +414,7 @@ def test_heuristic_directive_shaped_text_does_not_bypass_grammar_validation() ->
 
 
 def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
-    result = preprocess_heuristic("set policy peanuts prohibit")
+    result = preprocess_heuristic("wipe policies")
     assert result == {
         "outcome": "unknown",
         "directive": None,

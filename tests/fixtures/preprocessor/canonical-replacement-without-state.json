@@ -1,0 +1,12 @@
+{
+  "name": "canonical-replacement-without-state",
+  "input": "use podman instead of docker",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use podman instead of docker",
+      "kind": "replace_use",
+      "operands": {"new_item": "podman", "old_item": "docker"}
+    }
+  }
+}
