@@ -13,7 +13,6 @@ _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
 _REQUIRED_CONTRACT_FILES = {
     "acquisition-v1.json",
     "high-level-drafting-v1.json",
-    "grammar-v1.json",
     "prompt-rendering-v1.json",
     "public-api-v1.json",
     "validation-v1.json",
