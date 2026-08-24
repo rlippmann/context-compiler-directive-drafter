@@ -1,6 +1,0 @@
-{
-  "name": "set-premise-existing-rewrites-to-change-premise",
-  "premise": "existing premise",
-  "input": "set premise concise replies",
-  "expected": "change premise to concise replies"
-}

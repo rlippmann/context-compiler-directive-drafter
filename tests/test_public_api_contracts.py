@@ -19,6 +19,8 @@ _REQUIRED_CONTRACT_FILES = {
     "validation-v1.json",
 }
 
+pytestmark = pytest.mark.contract
+
 
 def _contract_paths() -> list[Path]:
     return sorted(_CONTRACTS_DIR.glob("*.json"))
