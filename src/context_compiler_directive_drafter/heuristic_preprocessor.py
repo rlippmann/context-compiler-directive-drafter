@@ -221,7 +221,7 @@ def _is_ambiguous_admin_alias(message: str) -> bool:
 
 
 def preprocess_heuristic(message: str) -> PreprocessResult:
-    """Run the conservative structural heuristic preprocessing pass.
+    """Run the bounded structural heuristic preprocessing pass.
 
     Args:
         message: Raw user text to evaluate as a possible directive.
@@ -304,7 +304,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "reason": "reject.near_miss_alias",
+            "reason": "reject.ambiguous_candidate",
         }
 
     if _is_ambiguous_admin_alias(normalized_candidate):
@@ -325,14 +325,14 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
     if _contains_directive_cue(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
     return {

@@ -1,0 +1,12 @@
+{
+  "name": "rewritten-please-use-docker",
+  "input": "please use docker",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use docker",
+      "kind": "use_item",
+      "operands": {"item": "docker"}
+    }
+  }
+}

@@ -71,7 +71,7 @@
       "rule": "mismatched wrappers are not removed",
       "polarity": "reject",
       "input": "[use docker)",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.directive_adjacent_unsafe"}
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
     },
     {
       "name": "heuristic-fullwidth-lookalike-rejected",

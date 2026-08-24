@@ -29,7 +29,7 @@ def test_no_directive_result_is_explicitly_fallback_eligible() -> None:
 
 def test_unknown_result_is_explicitly_fallback_eligible() -> None:
     drafted = DraftResult(
-        source="heuristic", result=UnknownDirective(reason="reject.directive_adjacent_unsafe")
+        source="heuristic", result=UnknownDirective(reason="reject.cannot_confidently_reduce")
     )
 
     assert drafter_module._is_fallback_eligible(drafted) is True
@@ -192,7 +192,7 @@ def test_fallback_is_used_when_heuristic_abstains_with_unknown(
         return {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
     def fallback(user_input: str) -> str | None:
@@ -333,7 +333,7 @@ def test_heuristic_attempt_happens_before_fallback_callback(
         return {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
     def fallback(user_input: str) -> str | None:
@@ -410,7 +410,7 @@ def test_async_unknown_directive_invokes_async_fallback(
         return {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.directive_adjacent_unsafe",
+            "reason": "reject.cannot_confidently_reduce",
         }
 
     async def async_fallback(user_input: str) -> str | None:

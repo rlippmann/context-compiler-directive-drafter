@@ -4,6 +4,6 @@
   "expected": {
     "outcome": "unknown",
     "directive": null,
-    "reason": "reject.directive_adjacent_unsafe"
+    "reason": "reject.cannot_confidently_reduce"
   }
 }

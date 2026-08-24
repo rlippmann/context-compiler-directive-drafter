@@ -1,0 +1,9 @@
+{
+  "name": "rejected-please-use-docker-because",
+  "input": "please use docker because containers are nice",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.multi_segment_or_mixed_prose"
+  }
+}

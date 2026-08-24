@@ -1,6 +1,6 @@
 {
-  "name": "nested-wrapper-clear-state-unknown",
-  "input": "([clear state])",
+  "name": "hedged-maybe-use-linux-unknown",
+  "input": "maybe use linux",
   "expected": {
     "outcome": "unknown",
     "directive": null,
