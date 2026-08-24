@@ -25,6 +25,8 @@ CANONICAL_DIRECTIVES = [
 ]
 
 NON_EMPTY_TEXT = st.text(min_size=1, max_size=40).filter(lambda s: s.strip() != "")
+ITEM = st.from_regex(r"[a-z]{1,12}", fullmatch=True)
+PREMISE = st.from_regex(r"[a-z]{1,8}(?: [a-z]{1,8}){0,3}", fullmatch=True)
 WRAPPERS = st.sampled_from(
     [
         ("(", ")"),
@@ -86,6 +88,95 @@ def test_heuristic_quoted_exact_wrappers_never_directive(
     result = preprocess_heuristic(f"{left}{directive}{right}")
     assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
     assert result["directive"] is None
+
+
+@given(PREMISE)
+def test_heuristic_rewrites_set_premise_to_for_any_non_empty_premise(
+    premise: str,
+) -> None:
+    result = preprocess_heuristic(f"set premise to {premise}")
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert result["directive"].text == f"set premise {premise}"
+
+
+@given(PREMISE)
+def test_heuristic_rewrites_change_premise_for_any_non_empty_premise(premise: str) -> None:
+    result = preprocess_heuristic(f"change premise {premise}")
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert result["directive"].text == f"change premise to {premise}"
+
+
+@given(st.sampled_from(CANONICAL_DIRECTIVES))
+def test_heuristic_rewrites_please_prefix_for_one_canonical_directive(
+    directive: str,
+) -> None:
+    result = preprocess_heuristic(f"please {directive}")
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert result["directive"].text == directive
+
+
+@given(ITEM)
+def test_heuristic_rewrites_adopted_aliases_to_one_candidate(item: str) -> None:
+    cases = [
+        (f"allow {item}", f"use {item}"),
+        (f"do not use {item}", f"prohibit {item}"),
+        (f"don't use {item}", f"prohibit {item}"),
+        (f"stop using {item}", f"prohibit {item}"),
+        (f"set policy {item} prohibit", f"prohibit {item}"),
+    ]
+    for message, expected in cases:
+        result = preprocess_heuristic(message)
+        assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+        assert result["directive"].text == expected
+
+
+@given(ITEM, ITEM)
+def test_heuristic_repairs_deterministic_replacement_syntax(new_item: str, old_item: str) -> None:
+    assume(new_item != old_item)
+    cases = [
+        (f"use {new_item} instead {old_item}", f"use {new_item} instead of {old_item}"),
+        (
+            f"use {new_item} in stead of {old_item}",
+            f"use {new_item} instead of {old_item}",
+        ),
+    ]
+    for message, expected in cases:
+        result = preprocess_heuristic(message)
+        assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+        assert result["directive"].text == expected
+
+
+@given(ITEM, ITEM)
+def test_heuristic_ambiguous_not_replacement_never_becomes_candidate(
+    new_item: str, old_item: str
+) -> None:
+    assume(new_item != old_item)
+    result = preprocess_heuristic(f"use {new_item} not {old_item}")
+    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["directive"] is None
+
+
+@given(
+    st.sampled_from(["use docker", "clear state", "set premise concise replies"]),
+    NON_EMPTY_TEXT,
+)
+def test_heuristic_please_mixed_prose_never_becomes_candidate(directive: str, detail: str) -> None:
+    result = preprocess_heuristic(f"please {directive} because {detail}")
+    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["directive"] is None
+
+
+@given(ITEM)
+def test_heuristic_quoted_operand_is_literal_but_quoted_command_is_deferred(
+    item: str,
+) -> None:
+    operand_result = preprocess_heuristic(f'use "{item}"')
+    assert operand_result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert operand_result["directive"].text == f'use "{item}"'
+
+    command_result = preprocess_heuristic(f'"use {item}"')
+    assert command_result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert command_result["directive"] is None
 
 
 @given(

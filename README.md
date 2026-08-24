@@ -208,6 +208,12 @@ Boundary rules:
   directive operation.
 - Defer ambiguous semantic interpretation to the host fallback when available.
 
+Questions are directive-adjacent but not explicit directive requests. Forms such
+as `allow docker?`, `do not use peanuts?`, and `please use docker?` return an
+`unknown` result so a host fallback can interpret them; they never become
+heuristic candidates. Ordinary questions with no directive intent continue to
+return `no_directive`.
+
 Quoting is intentionally distinct from quoting an operand: a full-message
 command such as `"use docker"` is treated as quoted or reported text and is
 deferred, while `use "docker"` is a canonical `use` candidate whose operand is

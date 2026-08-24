@@ -1,0 +1,9 @@
+{
+  "name": "question-please-use-docker-unknown",
+  "input": "please use docker?",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.question_form"
+  }
+}

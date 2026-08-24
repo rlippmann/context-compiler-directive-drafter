@@ -1,0 +1,9 @@
+{
+  "name": "question-allow-docker-unknown",
+  "input": "allow docker?",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.question_form"
+  }
+}
