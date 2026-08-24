@@ -208,6 +208,11 @@ Boundary rules:
   directive operation.
 - Defer ambiguous semantic interpretation to the host fallback when available.
 
+Quoting is intentionally distinct from quoting an operand: a full-message
+command such as `"use docker"` is treated as quoted or reported text and is
+deferred, while `use "docker"` is a canonical `use` candidate whose operand is
+the literal quoted text. The heuristic does not strip operand quotes.
+
 `context-compiler-directive-drafter` only proposes at most one candidate
 directive. `context-compiler` remains responsible for independently enforcing
 the single-directive invariant before any authoritative application.

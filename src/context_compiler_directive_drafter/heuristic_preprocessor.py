@@ -74,9 +74,9 @@ _REPLACE_SPLIT_OF_PATTERN = re.compile(
 _AMBIGUOUS_ALIAS_PATTERNS = (
     re.compile(r"^use\s+instead\s+of\s+\S(?:.*\S)?$"),
     re.compile(r"^use\s+\S(?:.*\S)?\s+not\s+\S(?:.*\S)?$"),
-    re.compile(r"^wipe\s+policies$"),
 )
-_AMBIGUOUS_ADMIN_ALIAS_PATTERNS = (
+_UNSUPPORTED_ALIAS_PATTERNS = (
+    re.compile(r"^wipe\s+policies$"),
     re.compile(r"^reset policy$"),
     re.compile(r"^remove policies\s+\S(?:.*\S)?$"),
 )
@@ -216,8 +216,8 @@ def _is_ambiguous_alias(message: str) -> bool:
     return any(pattern.fullmatch(message) for pattern in _AMBIGUOUS_ALIAS_PATTERNS)
 
 
-def _is_ambiguous_admin_alias(message: str) -> bool:
-    return any(pattern.fullmatch(message) for pattern in _AMBIGUOUS_ADMIN_ALIAS_PATTERNS)
+def _is_unsupported_alias(message: str) -> bool:
+    return any(pattern.fullmatch(message) for pattern in _UNSUPPORTED_ALIAS_PATTERNS)
 
 
 def preprocess_heuristic(message: str) -> PreprocessResult:
@@ -307,11 +307,11 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "reason": "reject.ambiguous_candidate",
         }
 
-    if _is_ambiguous_admin_alias(normalized_candidate):
+    if _is_unsupported_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "reason": "reject.admin_near_miss_alias",
+            "reason": "reject.unsupported_alias",
         }
 
     decomposed = decompose_directive(normalized_candidate)
