@@ -1,9 +1,0 @@
-{
-  "name": "sentence-adjacent-directive-unknown",
-  "input": "ok. prohibit peanuts",
-  "expected": {
-    "outcome": "unknown",
-    "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
-  }
-}

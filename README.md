@@ -199,6 +199,8 @@ when input is:
 Boundary rules:
 
 - Process the full message, not fragments.
+- Treat one sentence or one directive request as the acquisition unit. The
+  drafter does not perform conversational sentence segmentation.
 - Emit at most one canonical directive.
 - Abstain when one message contains multiple directive-shaped instructions.
 - Do not mine surrounding prose for commands.
@@ -207,6 +209,15 @@ Boundary rules:
 - Apply only bounded deterministic rewrites that preserve one apparent
   directive operation.
 - Defer ambiguous semantic interpretation to the host fallback when available.
+
+Obvious multi-sentence conversational input is outside the acquisition unit.
+The heuristic returns `no_directive` for that input rather than sending it to
+fallback. The host is responsible for sentence segmentation and may resubmit
+the resulting units individually. `unknown` is reserved for an eligible
+single acquisition unit that is directive-adjacent but cannot be confidently
+reduced to one canonical candidate and may require fallback. Core remains
+responsible for canonical directive validity, applicability, authorization,
+and execution; it does not own host sentence segmentation.
 
 Questions are directive-adjacent but not explicit directive requests. Forms such
 as `allow docker?`, `do not use peanuts?`, and `please use docker?` return an

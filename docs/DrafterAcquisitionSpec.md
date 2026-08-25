@@ -30,6 +30,8 @@ The drafter owns:
 
 The drafter does not own:
 
+- conversational sentence segmentation or splitting one host message into
+  multiple acquisition units
 - authoritative state mutation
 - canonical directive validation
 - authoritative state validation
@@ -50,8 +52,22 @@ The drafter may return one of these outcomes to the host:
 
 A drafted directive is a proposal only.
 
+The drafter accepts one sentence or one directive request as its acquisition
+unit. It does not split conversational input into multiple sentences and does
+not emit multiple candidates. Obvious multi-sentence input is outside that
+unit and returns `no_directive`, with responsibility for segmentation left to
+the host. A host may segment the message and submit the resulting units to the
+drafter individually.
+
+`unknown` is reserved for an eligible single acquisition unit that is
+directive-adjacent but cannot be confidently reduced to one canonical
+candidate. That outcome may be sent to fallback. Multi-sentence input must not
+reach fallback through this boundary.
+
 The host application is responsible for:
 
+- segmenting obvious multi-sentence conversational input before resubmitting
+  individual units, when that workflow is desired;
 - deciding whether confirmation is required;
 - deciding whether to submit the candidate to core;
 - managing user-facing interaction.

@@ -63,6 +63,18 @@ def test_heuristic_accepts_canonical_directive_with_trailing_period_or_bang(
     assert result["directive"].text == directive
 
 
+@given(st.sampled_from(["use oat milk", "use docker", "please use docker"]))
+def test_heuristic_obvious_multi_sentence_input_is_not_fallback_eligible(
+    first_sentence: str,
+) -> None:
+    result = preprocess_heuristic(f"{first_sentence}. explain more.")
+    assert result == {
+        "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+        "directive": None,
+        "reason": "reject.multi_sentence_host_segmentation",
+    }
+
+
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
 def test_heuristic_question_suffix_never_produces_directive(directive: str) -> None:
     result = preprocess_heuristic(f"{directive}?")
