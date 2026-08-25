@@ -47,6 +47,7 @@ _META_PREFIX_PATTERN = re.compile(
     r"^\s*(?:example:|for example\b|the command is\b|(?:i|he|she|they) said\b)"
 )
 _PUNCTUATION_TRIM_PATTERN = re.compile(r"[.!]+\s*$")
+_SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<!\d)[.!?](?!\d)(?:[\"')\]]+)?\s+(?=[A-Za-z])")
 _QUOTED_REPORTING_PATTERN = re.compile(
     r"^\s*(?:the\s+(?:doc|docs?|documentation)|\w+)\s+"
     r"(?:literally\s+)?(?:say|says?|said|wrote|quoted)\s*:\s*"
@@ -120,6 +121,21 @@ def _matches_multi_segment_pattern(message: str) -> bool:
             message,
         )
     )
+
+
+def _has_obvious_multi_sentence_boundary(message: str) -> bool:
+    """Detect clear sentence boundaries without attempting sentence tokenization."""
+    for match in _SENTENCE_BOUNDARY_PATTERN.finditer(message):
+        preceding = message[: match.start()].rstrip().lower()
+        if preceding.endswith(("e.g", "i.e", "mr", "ms", "dr", "etc")):
+            continue
+
+        following = message[match.end() :].strip()
+        words = re.findall(r"[A-Za-z]+(?:['-][A-Za-z]+)?", following)
+        if len(words) >= 2 or re.match(r"^(?:thanks|thank you)(?:[.!?]|$)", following, re.I):
+            return True
+
+    return False
 
 
 def _contains_directive_cue(message: str) -> bool:
@@ -289,6 +305,13 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": "reject.quoted_reported",
+        }
+
+    if _has_obvious_multi_sentence_boundary(message):
+        return {
+            "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+            "directive": None,
+            "reason": "reject.multi_sentence_host_segmentation",
         }
 
     normalized_candidate = _rewrite_bounded_candidate(_normalize_candidate(message))

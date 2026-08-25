@@ -177,6 +177,26 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
         }
 
 
+def test_heuristic_rejects_obvious_multi_sentence_input_for_host_segmentation() -> None:
+    for message in [
+        "use oat milk. explain how it is made.",
+        "use docker. then tell me why.",
+        "please use docker. thanks.",
+    ]:
+        assert preprocess_heuristic(message) == {
+            "outcome": "no_directive",
+            "directive": None,
+            "reason": "reject.multi_sentence_host_segmentation",
+        }
+
+
+def test_heuristic_keeps_decimal_and_abbreviation_punctuation_in_single_input() -> None:
+    for message in ["use version 3.2", "use e.g. docker"]:
+        result = preprocess_heuristic(message)
+        assert result["outcome"] == "directive"
+        assert result["directive"] is not None
+
+
 def test_heuristic_directive_cues_follow_grammar_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         heuristic_module,
