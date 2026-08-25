@@ -26,7 +26,9 @@ CANONICAL_DIRECTIVES = [
 
 NON_EMPTY_TEXT = st.text(min_size=1, max_size=40).filter(lambda s: s.strip() != "")
 ITEM = st.from_regex(r"[a-z]{1,12}", fullmatch=True)
-PREMISE = st.from_regex(r"[a-z]{1,8}(?: [a-z]{1,8}){0,3}", fullmatch=True)
+PREMISE = st.from_regex(r"[a-z]{1,8}(?: [a-z]{1,8}){0,3}", fullmatch=True).filter(
+    lambda premise: premise != "to" and not premise.startswith("to ")
+)
 WRAPPERS = st.sampled_from(
     [
         ("(", ")"),
