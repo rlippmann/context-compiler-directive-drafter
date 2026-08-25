@@ -1,0 +1,9 @@
+{
+  "name": "greeting-prefix-hedged-prohibit-unknown",
+  "input": "Hello, maybe avoid peanuts",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.cannot_confidently_reduce"
+  }
+}

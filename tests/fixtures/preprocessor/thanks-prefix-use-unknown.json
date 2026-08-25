@@ -1,0 +1,9 @@
+{
+  "name": "thanks-prefix-use-unknown",
+  "input": "Thanks, use Docker",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.cannot_confidently_reduce"
+  }
+}

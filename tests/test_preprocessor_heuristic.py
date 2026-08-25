@@ -460,12 +460,29 @@ def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
 def test_heuristic_returns_no_directive_for_ordinary_non_directive_content() -> None:
     cases = [
         "thanks for the help",
+        "Hi",
+        "Hello!",
+        "Thank you",
+        "Good morning",
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
             "outcome": "no_directive",
             "directive": None,
             "reason": "reject.confident_non_directive",
+        }
+
+
+def test_heuristic_does_not_ignore_directive_adjacent_text_after_greeting() -> None:
+    for message in (
+        "Hi, please use Docker",
+        "Thanks, use Docker",
+        "Hello, maybe avoid peanuts",
+    ):
+        assert preprocess_heuristic(message) == {
+            "outcome": "unknown",
+            "directive": None,
+            "reason": "reject.cannot_confidently_reduce",
         }
 
 

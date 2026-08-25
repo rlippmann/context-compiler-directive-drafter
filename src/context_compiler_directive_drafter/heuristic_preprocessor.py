@@ -67,9 +67,8 @@ _DIRECTIVE_REWRITE_CUE_PATTERN = re.compile(
     r"^\s*(?:please|allow|(?:do not|don't) use|stop using|set premise|change premise|use)\b"
 )
 _CONFIDENT_NON_DIRECTIVE_PATTERN = re.compile(
-    r"^\s*(?:thanks|thank you|hello|hi|hey|good morning|good afternoon|good evening)"
-    r"(?:\b|[.!?,])"
-    r"(?:.*)?$",
+    r"^\s*(?:hi|hello|hey|good (?:morning|afternoon|evening)|thank you|"
+    r"thanks(?: for (?:the|your) help(?: today)?| a lot)?)\s*[.!]?\s*$",
     re.IGNORECASE,
 )
 _REPLACE_MISSING_OF_PATTERN = re.compile(
