@@ -118,6 +118,19 @@ Every drafting path should end in one of three host-visible result variants:
 - `NoDirective(reason=...)`: the input is not asking for a directive
 - `UnknownDirective(reason=...)`: the input appears directive-related or interpretation failed, but the drafter should not guess
 
+The heuristic uses these outcomes deliberately:
+
+- `NoDirective` means the heuristic has positive evidence that the input is
+  confidently non-directive, such as ordinary conversation, a clearly
+  non-directive question, or an obvious multi-sentence message reserved for
+  host segmentation.
+- `UnknownDirective` means the heuristic could not confidently produce one
+  candidate and also could not confidently classify the input as non-directive.
+  This result is eligible for host fallback interpretation.
+
+Failure to recognize canonical syntax or a bounded rewrite is not, by itself,
+evidence for `NoDirective`.
+
 The `source` field records only the final producer of the returned drafting
 result, such as `heuristic` or the source metadata configured for a
 host-provided fallback acquisition callback.
@@ -222,8 +235,8 @@ and execution; it does not own host sentence segmentation.
 Questions are directive-adjacent but not explicit directive requests. Forms such
 as `allow docker?`, `do not use peanuts?`, and `please use docker?` return an
 `unknown` result so a host fallback can interpret them; they never become
-heuristic candidates. Ordinary questions with no directive intent continue to
-return `no_directive`.
+heuristic candidates. Clearly non-directive questions such as `can you help
+with lunch?` return `no_directive`.
 
 Quoting is intentionally distinct from quoting an operand: a full-message
 command such as `"use docker"` is treated as quoted or reported text and is

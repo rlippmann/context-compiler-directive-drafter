@@ -64,6 +64,20 @@ directive-adjacent but cannot be confidently reduced to one canonical
 candidate. That outcome may be sent to fallback. Multi-sentence input must not
 reach fallback through this boundary.
 
+The outcome distinction is evidence-based:
+
+- `no_directive` requires positive evidence that the acquisition unit is
+  confidently non-directive;
+- `unknown` means that the drafter cannot confidently produce one candidate and
+  cannot confidently classify the input as non-directive, so fallback may
+  interpret it.
+
+Failure to recognize canonical syntax or a bounded rewrite is not sufficient by
+itself to return `no_directive`. Preference, evaluative, factual, or otherwise
+directive-adjacent language remains `unknown` unless a separate deterministic
+boundary establishes that it is confidently non-directive. The heuristic does
+not interpret such language into directives as part of this distinction.
+
 The host application is responsible for:
 
 - segmenting obvious multi-sentence conversational input before resubmitting

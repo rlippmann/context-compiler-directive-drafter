@@ -251,9 +251,9 @@ def test_heuristic_does_not_reject_single_directive_payload_with_ordinary_and() 
 
 def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start() -> None:
     assert preprocess_heuristic("misuse docker and prohibitively expensive peanuts") == {
-        "outcome": "no_directive",
+        "outcome": "unknown",
         "directive": None,
-        "reason": "reject.confident_non_directive",
+        "reason": "reject.cannot_confidently_reduce",
     }
 
 
@@ -447,7 +447,7 @@ def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
 
 
 def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
-    unresolved = ["Could we maybe use uv later"]
+    unresolved = ["Could we maybe use uv later", "not sure this is right"]
 
     for message in unresolved:
         assert preprocess_heuristic(message) == {
@@ -459,7 +459,6 @@ def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
 
 def test_heuristic_returns_no_directive_for_ordinary_non_directive_content() -> None:
     cases = [
-        "not sure this is right",
         "thanks for the help",
     ]
     for message in cases:

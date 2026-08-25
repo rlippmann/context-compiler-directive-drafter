@@ -79,7 +79,7 @@
       "rule": "Unicode fullwidth lookalikes are not ASCII casing",
       "polarity": "reject",
       "input": "ＵＳＥ docker",
-      "expected": {"outcome": "no_directive", "directive": null, "reason": "reject.confident_non_directive"}
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
     },
     {
       "name": "heuristic-cyrillic-lookalike-rejected",
@@ -87,7 +87,7 @@
       "rule": "Unicode Cyrillic lookalikes are not ASCII casing",
       "polarity": "reject",
       "input": "uѕe docker",
-      "expected": {"outcome": "no_directive", "directive": null, "reason": "reject.confident_non_directive"}
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
     },
     {
       "name": "heuristic-dotted-i-rejected",
@@ -95,7 +95,7 @@
       "rule": "locale-sensitive dotted-I casing is not folded to ASCII",
       "polarity": "reject",
       "input": "İSE docker",
-      "expected": {"outcome": "no_directive", "directive": null, "reason": "reject.confident_non_directive"}
+      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
     },
     {
       "name": "validator-ascii-case-and-outer-whitespace",

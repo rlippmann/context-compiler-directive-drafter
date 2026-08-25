@@ -66,6 +66,12 @@ _TRANSPOSED_PROHIBIT_PATTERN = re.compile(r"^set policy (?P<item>\S(?:.*\S)?) pr
 _DIRECTIVE_REWRITE_CUE_PATTERN = re.compile(
     r"^\s*(?:please|allow|(?:do not|don't) use|stop using|set premise|change premise|use)\b"
 )
+_CONFIDENT_NON_DIRECTIVE_PATTERN = re.compile(
+    r"^\s*(?:thanks|thank you|hello|hi|hey|good morning|good afternoon|good evening)"
+    r"(?:\b|[.!?,])"
+    r"(?:.*)?$",
+    re.IGNORECASE,
+)
 _REPLACE_MISSING_OF_PATTERN = re.compile(
     r"^use (?P<new_item>\S(?:.*\S)?) instead (?!of(?:\s|$))(?P<old_item>\S(?:.*\S)?)$"
 )
@@ -245,8 +251,9 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
     Returns:
         A PreprocessResult with:
         - outcome="directive" and a canonical directive object when matched
-        - outcome="no_directive" when the heuristic abstains/rejects
-        - outcome="unknown" when unresolved and the host should avoid guessing
+        - outcome="no_directive" when positive evidence identifies confident
+          non-directive content
+        - outcome="unknown" when unresolved and fallback may interpret it
 
     Notes:
         This pass accepts exact canonical input and bounded deterministic
@@ -270,6 +277,20 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": "reject.question_form",
+        }
+
+    if "?" in message:
+        return {
+            "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+            "directive": None,
+            "reason": "reject.confident_non_directive",
+        }
+
+    if _CONFIDENT_NON_DIRECTIVE_PATTERN.fullmatch(message):
+        return {
+            "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+            "directive": None,
+            "reason": "reject.confident_non_directive",
         }
 
     if _META_PREFIX_PATTERN.match(normalized):
@@ -359,7 +380,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         }
 
     return {
-        "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+        "outcome": DRAFT_OUTCOME_UNKNOWN,
         "directive": None,
-        "reason": "reject.confident_non_directive",
+        "reason": "reject.cannot_confidently_reduce",
     }
