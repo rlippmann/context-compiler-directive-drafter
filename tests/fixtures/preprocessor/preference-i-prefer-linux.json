@@ -1,0 +1,12 @@
+{
+  "name": "preference-i-prefer-linux",
+  "input": "I prefer linux",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use linux",
+      "kind": "use_item",
+      "operands": {"item": "linux"}
+    }
+  }
+}

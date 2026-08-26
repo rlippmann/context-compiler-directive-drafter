@@ -134,6 +134,27 @@ Constraints:
 - if the drafter cannot preserve the user's apparent intent, it should ask
   for clarification or return no directive
 
+### 4.1 Explicit preference alias
+
+The heuristic treats a clear whole-message `I prefer X` form as a bounded
+deterministic alias for `use X`. For example:
+
+```text
+I prefer concise replies
+```
+
+produces the proposed canonical directive:
+
+```text
+use concise replies
+```
+
+This rewrite applies only when the complete acquisition unit can be reduced to
+one canonical `use` directive. Questions, mixed explanations, empty payloads,
+and multiple preference statements remain unresolved. An evaluative statement
+such as `Docker would be better` is not this explicit preference form and also
+remains unresolved unless another acquisition rule supports it.
+
 ## 5. Replacement Interpretation
 
 Replacement interpretation belongs to acquisition when the submitted input

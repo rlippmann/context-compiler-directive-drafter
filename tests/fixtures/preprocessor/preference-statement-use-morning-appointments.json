@@ -1,0 +1,12 @@
+{
+  "name": "preference-statement-use-morning-appointments",
+  "input": "I prefer morning appointments",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use morning appointments",
+      "kind": "use_item",
+      "operands": {"item": "morning appointments"}
+    }
+  }
+}
