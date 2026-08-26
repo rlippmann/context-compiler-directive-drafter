@@ -20,7 +20,7 @@ from context_compiler_directive_drafter.openai_fallback import (
     create_async_openai_fallback,
     create_openai_fallback,
 )
-from context_compiler_directive_drafter.output_validation import validate_preprocessor_output
+from context_compiler_directive_drafter.output_validation import classify_drafter_output
 from context_compiler_directive_drafter.prompt_utils import get_converter_prompt
 
 __all__ = [
@@ -37,5 +37,5 @@ __all__ = [
     "get_converter_prompt",
     "create_openai_fallback",
     "create_async_openai_fallback",
-    "validate_preprocessor_output",
+    "classify_drafter_output",
 ]

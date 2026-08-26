@@ -4,8 +4,8 @@ from pathlib import Path
 from context_compiler.grammar import CanonicalDirective
 
 from context_compiler_directive_drafter import (
+    classify_drafter_output,
     preprocess_heuristic,
-    validate_preprocessor_output,
 )
 
 _FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "normalization-v1.json"
@@ -54,7 +54,7 @@ def test_normalization_fixture_schema_and_python_behavior() -> None:
         if case["surface"] == "heuristic":
             actual = _serialize_heuristic_result(case["input"])
         elif case["surface"] == "validator":
-            actual = validate_preprocessor_output(case["input"])
+            actual = classify_drafter_output(case["input"])
         assert actual == case["expected"], case["name"]
 
     assert all(polarities == {"accept", "reject"} for polarities in seen_surfaces.values())

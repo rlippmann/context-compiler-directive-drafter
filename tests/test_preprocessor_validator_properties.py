@@ -2,7 +2,7 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from context_compiler_directive_drafter.output_validation import (
-    validate_preprocessor_output,
+    classify_drafter_output,
 )
 
 CANONICAL_DIRECTIVES = [
@@ -33,7 +33,7 @@ def test_validate_malformed_abstain_negative_boundaries_are_unknown() -> None:
         "<NO_DIRECTIVE>": "no_directive",
     }
     for raw, expected_cls in cases.items():
-        validated = validate_preprocessor_output(raw)
+        validated = classify_drafter_output(raw)
         assert validated["classification"] == expected_cls
         assert validated["output"] is None
 
@@ -44,7 +44,7 @@ def test_validate_malformed_abstain_negative_boundaries_are_unknown() -> None:
     )
 )
 def test_validate_output_always_has_null_for_non_directive(raw_output: object) -> None:
-    validated = validate_preprocessor_output(raw_output)
+    validated = classify_drafter_output(raw_output)
     if validated["classification"] == "directive":
         assert isinstance(validated["output"], str)
     else:
@@ -60,7 +60,7 @@ def test_validate_compound_candidate_output_is_always_unknown(
     first: str, separator: str, second: str
 ) -> None:
     assume(first != second)
-    validated = validate_preprocessor_output(f"{first}{separator}{second}")
+    validated = classify_drafter_output(f"{first}{separator}{second}")
     assert validated == {"classification": "unknown", "output": None}
 
 
@@ -73,7 +73,7 @@ def test_validate_compound_candidate_output_is_always_unknown(
 def test_validate_structured_non_directive_contract_requires_null_output(
     classification: str, output: object
 ) -> None:
-    validated = validate_preprocessor_output({"classification": classification, "output": output})
+    validated = classify_drafter_output({"classification": classification, "output": output})
     if output is None:
         assert validated == {"classification": classification, "output": None}
     else:

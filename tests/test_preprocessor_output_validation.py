@@ -1,6 +1,6 @@
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter.output_validation import validate_preprocessor_output
+from context_compiler_directive_drafter.output_validation import classify_drafter_output
 
 
 def test_core_canonical_validation_accepts_canonical_shapes() -> None:
@@ -11,7 +11,7 @@ def test_core_canonical_validation_accepts_canonical_shapes() -> None:
 
 
 def test_validate_text_accepts_canonical_directive() -> None:
-    result = validate_preprocessor_output("prohibit peanuts")
+    result = classify_drafter_output("prohibit peanuts")
     assert result == {
         "classification": "directive",
         "output": "prohibit peanuts",
@@ -19,7 +19,7 @@ def test_validate_text_accepts_canonical_directive() -> None:
 
 
 def test_validate_text_accepts_exact_no_directive_sentinel() -> None:
-    result = validate_preprocessor_output("<NO_DIRECTIVE>")
+    result = classify_drafter_output("<NO_DIRECTIVE>")
     assert result == {
         "classification": "no_directive",
         "output": None,
@@ -27,30 +27,30 @@ def test_validate_text_accepts_exact_no_directive_sentinel() -> None:
 
 
 def test_validate_text_rejects_malformed_or_mixed_output_as_unknown() -> None:
-    assert validate_preprocessor_output("<NO_DIRECTIPLE>") == {
+    assert classify_drafter_output("<NO_DIRECTIPLE>") == {
         "classification": "unknown",
         "output": None,
     }
-    assert validate_preprocessor_output("set premise to concise replies") == {
+    assert classify_drafter_output("set premise to concise replies") == {
         "classification": "unknown",
         "output": None,
     }
-    assert validate_preprocessor_output("prohibit peanuts and use almonds") == {
+    assert classify_drafter_output("prohibit peanuts and use almonds") == {
         "classification": "unknown",
         "output": None,
     }
-    assert validate_preprocessor_output("clear premise and reset policies") == {
+    assert classify_drafter_output("clear premise and reset policies") == {
         "classification": "unknown",
         "output": None,
     }
-    assert validate_preprocessor_output("remove policy docker\nuse podman") == {
+    assert classify_drafter_output("remove policy docker\nuse podman") == {
         "classification": "unknown",
         "output": None,
     }
 
 
 def test_validate_structured_output_accepts_strict_contract_shape() -> None:
-    assert validate_preprocessor_output(
+    assert classify_drafter_output(
         {
             "classification": "directive",
             "output": "clear state",
@@ -60,7 +60,7 @@ def test_validate_structured_output_accepts_strict_contract_shape() -> None:
         "output": "clear state",
     }
 
-    assert validate_preprocessor_output(
+    assert classify_drafter_output(
         {
             "classification": "no_directive",
             "output": None,
@@ -70,7 +70,7 @@ def test_validate_structured_output_accepts_strict_contract_shape() -> None:
         "output": None,
     }
 
-    assert validate_preprocessor_output(
+    assert classify_drafter_output(
         {
             "classification": "unknown",
             "output": None,
@@ -106,7 +106,7 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
         {"action": "prohibit", "item": "peanuts"},
     ]
     for raw in cases:
-        assert validate_preprocessor_output(raw) == {
+        assert classify_drafter_output(raw) == {
             "classification": "unknown",
             "output": None,
         }
@@ -114,14 +114,14 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
 
 def test_validate_text_parses_and_validates_json_contract() -> None:
     raw = '{"classification":"directive","output":"use docker"}'
-    assert validate_preprocessor_output(raw) == {
+    assert classify_drafter_output(raw) == {
         "classification": "directive",
         "output": "use docker",
     }
 
 
 def test_custom_host_can_validate_then_parse_with_core() -> None:
-    validated = validate_preprocessor_output("  USE docker  ")
+    validated = classify_drafter_output("  USE docker  ")
     assert validated == {"classification": "directive", "output": "use docker"}
 
     parsed = decompose_directive(validated["output"])
