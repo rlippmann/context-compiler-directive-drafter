@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from importlib import import_module
 from typing import Any, cast
 
+from context_compiler_directive_drafter.constants import PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 from context_compiler_directive_drafter.drafter import AsyncDraftFallback, DraftFallback
 from context_compiler_directive_drafter.prompt_utils import get_converter_prompt
 
@@ -44,6 +45,13 @@ def _response_text(response: Any) -> str | None:
     return cast(str | None, response.choices[0].message.content)
 
 
+def _normalize_response_text(response: Any) -> str | None:
+    text = _response_text(response)
+    if text is not None and text.strip() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+        return None
+    return text
+
+
 def create_openai_fallback(
     model: str,
     *,
@@ -59,7 +67,7 @@ def create_openai_fallback(
         response = client.chat.completions.create(
             **_request_kwargs(model, user_input, request_kwargs)
         )
-        return _response_text(response)
+        return _normalize_response_text(response)
 
     return fallback
 
@@ -79,6 +87,6 @@ def create_async_openai_fallback(
         response = await client.chat.completions.create(
             **_request_kwargs(model, user_input, request_kwargs)
         )
-        return _response_text(response)
+        return _normalize_response_text(response)
 
     return fallback

@@ -8,6 +8,8 @@ import pytest
 
 from context_compiler_directive_drafter import (
     DirectiveDrafter,
+    DraftResult,
+    NoDirective,
     create_async_openai_fallback,
     create_openai_fallback,
 )
@@ -107,6 +109,30 @@ def test_sync_fallback_omits_unset_client_configuration(
     assert _FakeOpenAI.instances[0].init_kwargs == {}
 
 
+def test_sync_fallback_normalizes_no_directive_sentinel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model")
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse("  <NO_DIRECTIVE> \n")
+
+    assert fallback("input") is None
+
+
+def test_sync_fallback_preserves_canonical_and_invalid_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model")
+    completions = _FakeOpenAI.instances[0].chat.completions
+
+    completions.response = _FakeResponse("use docker")
+    assert fallback("input") == "use docker"
+
+    completions.response = _FakeResponse("not a directive")
+    assert fallback("input") == "not a directive"
+
+
 def test_async_fallback_forwards_configuration_and_returns_raw_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -132,6 +158,16 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
         {"role": "system", "content": "async prompt"},
         {"role": "user", "content": "original input"},
     ]
+
+
+def test_async_fallback_normalizes_no_directive_sentinel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_async_openai_fallback(model="compatible-model")
+    _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse("\n<NO_DIRECTIVE>\n")
+
+    assert asyncio.run(fallback("input")) is None
 
 
 def test_missing_optional_dependency_has_actionable_error(
@@ -188,3 +224,22 @@ def test_callback_works_with_existing_drafter_fallback_pipeline(
 
     assert result.source == "openai-compatible"
     assert result.result.text == "use docker"
+
+
+def test_no_directive_sentinel_produces_drafter_no_directive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model")
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse("<NO_DIRECTIVE>")
+    drafter = DirectiveDrafter(
+        fallback=fallback,
+        fallback_source="openai-compatible",
+    )
+
+    result = drafter.draft_directive("use docker?")
+
+    assert result == DraftResult(
+        source="openai-compatible",
+        result=NoDirective(reason="fallback_no_candidate"),
+    )
