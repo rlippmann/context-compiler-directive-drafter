@@ -65,7 +65,7 @@ Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}"""
 
 _PROMPT_SUFFIX = f"""Your task:
 - Read one user message.
-- If the user clearly requests one behavior change that can be represented
+- If the message clearly establishes one state change that can be represented
   by a canonical directive, produce exactly one candidate directive in
   canonical form.
 - Otherwise output exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
@@ -216,7 +216,7 @@ def _build_converter_prompt() -> str:
         "Context Compiler directives from user requests.",
         "",
         "Context Compiler directives are compact canonical instructions that propose",
-        "persistent compiler behavior changes. Your output is a draft candidate only.",
+        "persistent compiler state changes. Your output is a draft candidate only.",
         "It is not an approval, not an execution result, and not an authoritative",
         "state change.",
         "",
