@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from context_compiler_directive_drafter import (
+    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DirectiveDrafter,
     DraftResult,
     NoDirective,
@@ -114,7 +115,9 @@ def test_sync_fallback_normalizes_no_directive_sentinel(
 ) -> None:
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
-    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse("  <NO_DIRECTIVE> \n")
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(
+        f"  {PREPROCESSOR_NO_DIRECTIVE_SENTINEL} \n"
+    )
 
     assert fallback("input") is None
 
@@ -165,7 +168,9 @@ def test_async_fallback_normalizes_no_directive_sentinel(
 ) -> None:
     _patch_clients(monkeypatch)
     fallback = create_async_openai_fallback(model="compatible-model")
-    _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse("\n<NO_DIRECTIVE>\n")
+    _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse(
+        f"\n{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
+    )
 
     assert asyncio.run(fallback("input")) is None
 
@@ -231,7 +236,9 @@ def test_no_directive_sentinel_produces_drafter_no_directive(
 ) -> None:
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
-    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse("<NO_DIRECTIVE>")
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(
+        PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+    )
     drafter = DirectiveDrafter(
         fallback=fallback,
         fallback_source="openai-compatible",

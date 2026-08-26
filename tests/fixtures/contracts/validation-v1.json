@@ -77,65 +77,6 @@
           }
         }
       ]
-    },
-    "parse_preprocessor_output": {
-      "kind": "callable",
-      "signature": {
-        "is_async": false,
-        "params": [
-          {
-            "name": "raw_output",
-            "kind": "POSITIONAL_OR_KEYWORD",
-            "has_default": false
-          }
-        ]
-      },
-      "return_shape": {
-        "any_of": [
-          {
-            "type": "object",
-            "required_keys": [
-              "text",
-              "kind",
-              "operands"
-            ],
-            "properties": {
-              "text": {
-                "type": "string"
-              },
-              "kind": {
-                "type": "string"
-              },
-              "operands": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "type": "null"
-          }
-        ]
-      },
-      "shape_probes": [
-        {
-          "kwargs": {
-            "raw_output": "use docker"
-          }
-        },
-        {
-          "kwargs": {
-            "raw_output": "<NO_DIRECTIVE>"
-          }
-        },
-        {
-          "kwargs": {
-            "raw_output": {
-              "classification": "directive",
-              "output": "set premise concise replies"
-            }
-          }
-        }
-      ]
     }
   }
 }

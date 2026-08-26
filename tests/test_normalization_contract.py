@@ -4,7 +4,6 @@ from pathlib import Path
 from context_compiler.grammar import CanonicalDirective
 
 from context_compiler_directive_drafter import (
-    parse_preprocessor_output,
     preprocess_heuristic,
     validate_preprocessor_output,
 )
@@ -38,11 +37,6 @@ def _serialize_heuristic_result(input_text: str) -> dict[str, object]:
     }
 
 
-def _serialize_parse_result(input_text: str) -> dict[str, object] | None:
-    result = parse_preprocessor_output(input_text)
-    return None if result is None else _serialize_directive(result)
-
-
 def test_normalization_fixture_schema_and_python_behavior() -> None:
     fixture = _load_fixture()
     assert fixture["id"] == "drafter-normalization-v1"
@@ -52,7 +46,7 @@ def test_normalization_fixture_schema_and_python_behavior() -> None:
     seen_surfaces: dict[str, set[str]] = {}
     for case in cases:
         assert set(case) == {"name", "surface", "rule", "polarity", "input", "expected"}
-        assert case["surface"] in {"heuristic", "validator", "parse"}
+        assert case["surface"] in {"heuristic", "validator"}
         assert case["polarity"] in {"accept", "reject"}
         assert isinstance(case["input"], str)
         seen_surfaces.setdefault(case["surface"], set()).add(case["polarity"])
@@ -61,8 +55,6 @@ def test_normalization_fixture_schema_and_python_behavior() -> None:
             actual = _serialize_heuristic_result(case["input"])
         elif case["surface"] == "validator":
             actual = validate_preprocessor_output(case["input"])
-        else:
-            actual = _serialize_parse_result(case["input"])
         assert actual == case["expected"], case["name"]
 
     assert all(polarities == {"accept", "reject"} for polarities in seen_surfaces.values())

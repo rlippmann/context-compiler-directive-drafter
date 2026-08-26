@@ -20,10 +20,7 @@ from context_compiler_directive_drafter.openai_fallback import (
     create_async_openai_fallback,
     create_openai_fallback,
 )
-from context_compiler_directive_drafter.output_validation import (
-    parse_preprocessor_output,
-    validate_preprocessor_output,
-)
+from context_compiler_directive_drafter.output_validation import validate_preprocessor_output
 from context_compiler_directive_drafter.prompt_utils import get_converter_prompt
 
 __all__ = [
@@ -36,7 +33,6 @@ __all__ = [
     "DirectiveDrafter",
     "NoDirective",
     "UnknownDirective",
-    "parse_preprocessor_output",
     "preprocess_heuristic",
     "get_converter_prompt",
     "create_openai_fallback",

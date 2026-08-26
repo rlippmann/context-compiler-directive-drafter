@@ -1,8 +1,10 @@
-"""Minimal package-owned example for heuristic drafting and fallback parsing."""
+"""Minimal package-owned example for heuristic drafting and fallback validation."""
+
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter import (
-    parse_preprocessor_output,
     preprocess_heuristic,
+    validate_preprocessor_output,
 )
 
 
@@ -33,7 +35,12 @@ def main() -> None:
         ambiguous_candidate.text if ambiguous_candidate is not None else None,
     )
 
-    fallback_candidate = parse_preprocessor_output("use podman")
+    validated = validate_preprocessor_output("use podman")
+    assert validated["classification"] == "directive"
+    validated_output = validated["output"]
+    assert isinstance(validated_output, str)
+    fallback_candidate = decompose_directive(validated_output)
+    assert isinstance(fallback_candidate, CanonicalDirective)
     print(
         "fallback candidate:",
         fallback_candidate.text if fallback_candidate is not None else None,

@@ -1,9 +1,6 @@
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter.output_validation import (
-    parse_preprocessor_output,
-    validate_preprocessor_output,
-)
+from context_compiler_directive_drafter.output_validation import validate_preprocessor_output
 
 
 def test_core_canonical_validation_accepts_canonical_shapes() -> None:
@@ -123,16 +120,10 @@ def test_validate_text_parses_and_validates_json_contract() -> None:
     }
 
 
-def test_parse_returns_validated_directive_only() -> None:
-    parsed = parse_preprocessor_output("prohibit peanuts")
+def test_custom_host_can_validate_then_parse_with_core() -> None:
+    validated = validate_preprocessor_output("  USE docker  ")
+    assert validated == {"classification": "directive", "output": "use docker"}
+
+    parsed = decompose_directive(validated["output"])
     assert parsed is not None
-    assert parsed.text == "prohibit peanuts"
-    assert parse_preprocessor_output("<NO_DIRECTIVE>") is None
-    assert parse_preprocessor_output("set premise to concise replies") is None
-
-
-def test_parse_accepts_canonical_directive_objects_directly() -> None:
-    parsed = decompose_directive("use docker")
-    assert parsed is not None
-
-    assert parse_preprocessor_output(parsed) is parsed
+    assert parsed.text == "use docker"

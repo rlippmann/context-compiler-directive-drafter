@@ -1,7 +1,6 @@
 """Shared fallback-candidate normalization and validation helpers.
 
 Public API:
-- parse_preprocessor_output
 - validate_preprocessor_output
 
 Internal helpers are implementation details and may change.
@@ -20,10 +19,7 @@ from .constants import (
     DraftOutcome,
 )
 
-__all__ = [
-    "parse_preprocessor_output",
-    "validate_preprocessor_output",
-]
+__all__ = ["validate_preprocessor_output"]
 
 
 class PreprocessorValidationResult(TypedDict):
@@ -31,13 +27,7 @@ class PreprocessorValidationResult(TypedDict):
     output: str | None
 
 
-def _parse_canonical_directive(raw_output: object) -> CanonicalDirective | None:
-    if isinstance(raw_output, CanonicalDirective):
-        return raw_output
-
-    if not isinstance(raw_output, str):
-        return None
-
+def _parse_canonical_directive(raw_output: str) -> CanonicalDirective | None:
     decomposed = decompose_directive(raw_output.strip())
     if isinstance(decomposed, CanonicalDirective):
         return decomposed
@@ -129,26 +119,3 @@ def validate_preprocessor_output(raw_output: object) -> PreprocessorValidationRe
         validated = _validate_structured_output(raw_output)
 
     return validated
-
-
-def parse_preprocessor_output(raw_output: object) -> CanonicalDirective | None:
-    """Return only the parsed canonical directive from raw fallback candidate output.
-
-    This helper is intended for fallback candidate parsing and other
-    host-managed raw drafting-output flows. It narrows
-    `validate_preprocessor_output(...)` to a canonical directive proposal or
-    `None`, never an applied compiler result.
-    """
-    parsed = _parse_canonical_directive(raw_output)
-    if parsed is not None:
-        return parsed
-
-    normalized = validate_preprocessor_output(raw_output)
-    if normalized["classification"] != DRAFT_OUTCOME_DIRECTIVE:
-        return None
-
-    output = normalized["output"]
-    assert isinstance(output, str)
-    parsed = _parse_canonical_directive(output)
-    assert isinstance(parsed, CanonicalDirective)
-    return parsed
