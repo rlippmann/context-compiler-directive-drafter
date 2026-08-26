@@ -235,6 +235,102 @@
               }
             }
           }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "set premise concise replies",
+          "heuristic_result": "canonical",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["kind"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "can you help with lunch?",
+          "heuristic_result": "no_directive",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["reason"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "use docker?",
+          "heuristic_result": "unknown",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {"type": "object", "required_keys": ["kind"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "set premise concise replies",
+          "heuristic_result": "canonical",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["kind"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "can you help with lunch?",
+          "heuristic_result": "no_directive",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["reason"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "use docker?",
+          "heuristic_result": "unknown",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {"type": "object", "required_keys": ["kind"]}
+            }
+          }
         }
       ]
     }
