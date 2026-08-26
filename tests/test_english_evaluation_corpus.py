@@ -6,7 +6,11 @@ import pytest
 from context_compiler.grammar import decompose_directive
 
 _CORPUS_PATH = (
-    Path(__file__).resolve().parents[1] / "corpus" / "english" / "directive-drafter-en.jsonl"
+    Path(__file__).resolve().parents[1]
+    / "evals"
+    / "corpus"
+    / "english"
+    / "directive-drafter-en.jsonl"
 )
 _FIXTURES_PATH = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
 _CLASSIFICATIONS = {"CONTRACT", "EVALUATION", "BOTH"}
