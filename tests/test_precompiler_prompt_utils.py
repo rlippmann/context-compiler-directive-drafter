@@ -98,12 +98,11 @@ def test_get_converter_prompt_includes_positive_acquisition_examples() -> None:
 
     assert "User: please use docker" in positive_examples
     assert "User: switch from docker to podman" in positive_examples
-    assert "User: make replies concise from now on" in positive_examples
-    assert "User: change the standing premise to formal tone" in positive_examples
-    assert "User: set premise to concise replies" in positive_examples
-    assert "User: allow docker" in positive_examples
-    assert "User: stop using peanuts" in positive_examples
     assert "User: I prefer concise replies." in positive_examples
+    assert "User: I prefer morning appointments." in positive_examples
+    assert "User: I can't have peanuts." in positive_examples
+    assert "User: The project deadline is Friday." in positive_examples
+    assert "User: change premise to formal tone" in positive_examples
 
 
 def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() -> None:
@@ -113,11 +112,29 @@ def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() ->
     for expected_output in (
         "Output: use docker",
         "Output: use podman instead of docker",
-        "Output: set premise concise replies",
-        "Output: change premise to formal tone",
+        "Output: use concise replies",
+        "Output: use morning appointments",
         "Output: prohibit peanuts",
+        "Output: set premise project deadline is Friday",
+        "Output: change premise to formal tone",
     ):
         assert expected_output in positive_examples
+
+
+def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
+    prompt = get_converter_prompt()
+
+    assert "Prefer policy when the user's state can be faithfully represented" in prompt
+    assert "persistent, behavioral, stylistic, or user-specific" in prompt
+    assert "contextual or factual background" in prompt
+    assert "Declarative requirements, preferences, and constraints may establish policy" in prompt
+    assert "preserve the operation\n  explicitly selected by the user" in prompt
+    assert "`I prefer\n  concise replies` becomes `use concise replies`" in prompt
+    assert "`I can't have peanuts`\n  becomes `prohibit peanuts`" in prompt
+    assert "the project deadline is Friday`" in prompt
+    assert "make replies concise from now on" not in prompt
+    assert "change the standing premise to formal tone" not in prompt
+    assert "Output: set premise concise replies" not in prompt
 
 
 def test_get_converter_prompt_positive_outputs_use_core_canonical_serialization() -> None:
@@ -143,9 +160,7 @@ def test_get_converter_prompt_preserves_behavioral_examples() -> None:
     assert "User: use docker?" in behavior_examples
     assert 'User: He said "use docker".' in behavior_examples
     assert "User: set premise to concise replies" not in behavior_examples
-    assert "User: allow docker" not in behavior_examples
-    assert "User: stop using peanuts" not in behavior_examples
-    assert "Output: set premise concise replies" in positive_examples
+    assert "Output: use concise replies" in positive_examples
 
 
 def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> None:

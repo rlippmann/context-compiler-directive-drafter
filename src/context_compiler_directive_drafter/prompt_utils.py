@@ -14,17 +14,26 @@ from context_compiler.grammar import (
 from .constants import PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 
 _DIRECTIVE_CATEGORY_LINES = """Directive categories:
-- Premise directives change a standing instruction for how the assistant
-  should generally behave.
+- Premise directives record contextual or background state that is not naturally
+  represented as a policy choice.
 - Policy directives manage named policy items.
 - Administrative directives change compiler-managed state."""
 
 _PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
-- A premise is a broad standing behavior instruction such as tone, style, or
-  ongoing reply guidance.
-- A policy is a named item that should be used, prohibited, removed, or replaced.
-- Do not infer premise or policy meaning from payload words alone. Only
-  encode what the user explicitly requests."""
+- Prefer policy when the user's state can be faithfully represented as `use`,
+  `prohibit`, removal, replacement, or another policy operation.
+- User-facing preferences and constraints are policies even when they are
+  persistent, behavioral, stylistic, or user-specific. For example, `I prefer
+  concise replies` becomes `use concise replies`, and `I can't have peanuts`
+  becomes `prohibit peanuts`.
+- Use premise for contextual or factual background that is not naturally a
+  policy choice, such as `the project deadline is Friday`.
+- Do not infer `set premise` or `change premise` casually from natural-language
+  preferences. `change premise` should be uncommon.
+- Declarative requirements, preferences, and constraints may establish policy;
+  imperative wording or explicit persistence language is not required.
+- If the input is already a valid canonical directive, preserve the operation
+  explicitly selected by the user. Do not remap it to another operation."""
 
 
 @dataclass(frozen=True)
@@ -73,10 +82,18 @@ Output rules:
 
 Conversion rules:
 - Only encode information explicitly present in the user request.
+- Prefer a policy operation when it faithfully represents a user preference,
+  requirement, constraint, or requested replacement.
 - Create the smallest valid directive payload necessary to represent the request.
 - Preserve the user's wording for payload text when possible.
 - Do not guess missing intent, omitted items, hidden context, or unstated replacements.
 - Do not infer semantic intent from directive payload contents.
+- Do not require imperative wording or explicit persistence language when a
+  declarative preference, requirement, or constraint clearly establishes policy.
+- Use premise only for contextual or factual background that is not naturally
+  expressible as policy; do not use it merely for persistent or stylistic behavior.
+- Preserve the operation in an already valid canonical directive, even if another
+  operation might seem semantically preferable.
 - Do not invent directives from ordinary conversation.
 - If the input is ordinary conversation, quoted or reported directive text,
   directive discussion, or a mixed request you cannot safely reduce to one
@@ -114,34 +131,29 @@ _POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
         operand_values=("podman", "docker"),
     ),
     _AcquisitionExample(
-        kind=DirectiveKind.SET_PREMISE,
-        user_input="make replies concise from now on",
-        operand_values=("concise replies",),
-    ),
-    _AcquisitionExample(
-        kind=DirectiveKind.CHANGE_PREMISE,
-        user_input="change the standing premise to formal tone",
-        operand_values=("formal tone",),
-    ),
-    _AcquisitionExample(
-        kind=DirectiveKind.SET_PREMISE,
-        user_input="set premise to concise replies",
+        kind=DirectiveKind.USE_ITEM,
+        user_input="I prefer concise replies.",
         operand_values=("concise replies",),
     ),
     _AcquisitionExample(
         kind=DirectiveKind.USE_ITEM,
-        user_input="allow docker",
-        operand_values=("docker",),
+        user_input="I prefer morning appointments.",
+        operand_values=("morning appointments",),
     ),
     _AcquisitionExample(
         kind=DirectiveKind.PROHIBIT_ITEM,
-        user_input="stop using peanuts",
+        user_input="I can't have peanuts.",
         operand_values=("peanuts",),
     ),
     _AcquisitionExample(
         kind=DirectiveKind.SET_PREMISE,
-        user_input="I prefer concise replies.",
-        operand_values=("concise replies",),
+        user_input="The project deadline is Friday.",
+        operand_values=("project deadline is Friday",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.CHANGE_PREMISE,
+        user_input="change premise to formal tone",
+        operand_values=("formal tone",),
     ),
 )
 
