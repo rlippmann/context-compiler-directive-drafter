@@ -33,6 +33,9 @@ _DOMAINS = {
     "project_workflow",
     "travel_planning",
     "everyday_preferences_policies",
+    "health",
+    "finance",
+    "legal",
 }
 _REQUIRED_KEYS = {
     "id",
@@ -70,7 +73,7 @@ def test_english_corpus_schema_and_contract_links() -> None:
     fixtures = _load_contract_fixtures()
     ids: set[str] = set()
 
-    assert 100 <= len(cases) <= 120
+    assert 100 <= len(cases) <= 180
     for case in cases:
         assert set(case) >= _REQUIRED_KEYS, case
         assert isinstance(case["id"], str) and case["id"].strip(), case
