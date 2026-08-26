@@ -95,7 +95,7 @@ and [examples/prompt_rendering.py](examples/prompt_rendering.py).
 ## English Evaluation Corpus
 
 The reusable English-language acquisition and fallback evaluation corpus lives
-in [`corpus/english/directive-drafter-en.jsonl`](corpus/english/directive-drafter-en.jsonl).
+in [`evals/corpus/english/directive-drafter-en.jsonl`](evals/corpus/english/directive-drafter-en.jsonl).
 It contains heuristic contracts, fallback evaluation cases, and selected
 fixture-backed anchors. The corpus is evaluation data only; existing
 conformance fixtures remain the executable compatibility authority. See

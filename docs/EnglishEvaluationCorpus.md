@@ -11,7 +11,7 @@ validity, applicability, authorization, contradictions, and state transitions.
 ## Location and format
 
 The data lives in
-[`corpus/english/directive-drafter-en.jsonl`](../corpus/english/directive-drafter-en.jsonl).
+[`evals/corpus/english/directive-drafter-en.jsonl`](../evals/corpus/english/directive-drafter-en.jsonl).
 Each line is one JSON object. JSONL keeps the data easy to filter by language,
 domain, category, or classification without making it executable code.
 
