@@ -678,6 +678,8 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "parse_preprocessor_output",
         "preprocess_heuristic",
         "get_converter_prompt",
+        "create_openai_fallback",
+        "create_async_openai_fallback",
         "validate_preprocessor_output",
     }
 

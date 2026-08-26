@@ -102,6 +102,47 @@ conformance fixtures remain the executable compatibility authority. See
 [docs/EnglishEvaluationCorpus.md](docs/EnglishEvaluationCorpus.md) for the
 schema, classifications, domain scope, and promotion workflow.
 
+## OpenAI-Compatible Fallback
+
+Install the optional integration extra:
+
+```bash
+pip install "context-compiler-directive-drafter[openai]"
+```
+
+Use it with OpenAI by creating a fallback callback and passing it to the
+Drafter:
+
+```python
+import os
+
+from context_compiler_directive_drafter import (
+    DirectiveDrafter,
+    create_openai_fallback,
+)
+
+fallback = create_openai_fallback(
+    model="gpt-4o-mini",
+    api_key=os.environ["OPENAI_API_KEY"],
+)
+drafter = DirectiveDrafter(fallback=fallback, fallback_source="openai")
+```
+
+OpenAI-compatible providers use the same helper with a custom endpoint, for
+example an Ollama server:
+
+```python
+fallback = create_openai_fallback(
+    model="qwen2.5:7b",
+    api_key="ollama",
+    base_url="http://localhost:11434/v1",
+)
+```
+
+The helper sends the package-owned converter prompt and the original user
+input, then returns raw model text to the existing Drafter fallback pipeline.
+The Drafter remains responsible for parsing, validation, and result shaping.
+
 ## Public API
 
 Public interface:
@@ -113,6 +154,8 @@ Public interface:
 - `parse_preprocessor_output(raw_output)`: Parse fallback candidate output into a `CanonicalDirective` when valid.
 - `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
 - `get_converter_prompt()`: Load the shared static converter system prompt.
+- `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
+- `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
 - Constants and sentinels exported from the package.
 
 ### Output Contract

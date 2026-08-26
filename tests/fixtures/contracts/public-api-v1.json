@@ -21,6 +21,8 @@
       "parse_preprocessor_output",
       "preprocess_heuristic",
       "get_converter_prompt",
+      "create_openai_fallback",
+      "create_async_openai_fallback",
       "validate_preprocessor_output"
     ],
     "members": {
@@ -264,6 +266,30 @@
         "signature": {
           "is_async": false,
           "params": []
+        }
+      },
+      "create_openai_fallback": {
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {"name": "model", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
+            {"name": "api_key", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
+            {"name": "base_url", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
+            {"name": "request_kwargs", "kind": "KEYWORD_ONLY", "has_default": true, "default": null}
+          ]
+        }
+      },
+      "create_async_openai_fallback": {
+        "kind": "callable",
+        "signature": {
+          "is_async": false,
+          "params": [
+            {"name": "model", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
+            {"name": "api_key", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
+            {"name": "base_url", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
+            {"name": "request_kwargs", "kind": "KEYWORD_ONLY", "has_default": true, "default": null}
+          ]
         }
       }
     }
