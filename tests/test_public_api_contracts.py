@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import json
 from importlib import import_module
@@ -250,6 +251,33 @@ def _assert_directive_drafter_behavior_probe_schema(probe: dict[str, object], la
     _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
 
 
+def _assert_directive_drafter_fallback_routing_probe_schema(
+    probe: dict[str, object], label: str
+) -> None:
+    _assert_exact_keys(
+        probe,
+        {
+            "kind",
+            "mode",
+            "user_input",
+            "heuristic_result",
+            "expect_fallback_calls",
+            "expect_source",
+            "expect_result",
+        },
+        label,
+    )
+    assert probe["kind"] == "directive_drafter_fallback_routing", label
+    assert probe["mode"] in {"sync", "async"}, label
+    assert isinstance(probe["user_input"], str), label
+    assert probe["heuristic_result"] in {"canonical", "no_directive", "unknown"}, label
+    assert isinstance(probe["expect_fallback_calls"], int), label
+    assert probe["expect_fallback_calls"] >= 0, label
+    assert isinstance(probe["expect_source"], str), label
+    assert isinstance(probe["expect_result"], dict), label
+    _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
+
+
 def _assert_export_kind(name: str, exported: object, expected_kind: str) -> None:
     if expected_kind == "callable":
         assert inspect.isroutine(exported), name
@@ -346,6 +374,11 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
                     probe, f"{label}.behavior_probes[{index}]"
                 )
                 continue
+            if probe.get("kind") == "directive_drafter_fallback_routing":
+                _assert_directive_drafter_fallback_routing_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
             raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
 
 
@@ -360,6 +393,45 @@ def _assert_converter_prompt_behavior_probe(exported: object, probe: dict[str, o
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
     drafter = exported()
     result = drafter.draft_directive(probe["user_input"])
+    _assert_shape(_serialize_contract_value(result), probe["expect_result"])
+
+
+def _assert_directive_drafter_fallback_routing_probe(
+    exported: object, probe: dict[str, object]
+) -> None:
+    calls: list[str] = []
+
+    if probe["mode"] == "sync":
+
+        def fallback(user_input: str) -> str:
+            calls.append(user_input)
+            return "use docker"
+
+        drafter = exported(fallback=fallback, fallback_source="contract-fallback")
+        result = drafter.draft_directive(probe["user_input"])
+    else:
+
+        async def fallback(user_input: str) -> str:
+            calls.append(user_input)
+            return "use docker"
+
+        drafter = exported(
+            async_fallback=fallback,
+            async_fallback_source="contract-fallback",
+        )
+        result = asyncio.run(drafter.async_draft_directive(probe["user_input"]))
+
+    assert len(calls) == probe["expect_fallback_calls"]
+    assert result.source == probe["expect_source"]
+    if probe["heuristic_result"] == "canonical":
+        assert result.source == "heuristic"
+        assert isinstance(result.result, CanonicalDirective)
+    elif probe["heuristic_result"] == "no_directive":
+        assert result.source == "heuristic"
+        assert isinstance(result.result, NoDirective)
+    else:
+        assert probe["heuristic_result"] == "unknown"
+        assert len(calls) == 1
     _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
@@ -442,8 +514,13 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
 
     for probe in spec.get("behavior_probes", []):
         if name == "DirectiveDrafter":
-            _assert_directive_drafter_behavior_probe(exported, probe)
-            continue
+            if probe["kind"] == "directive_drafter_draft":
+                _assert_directive_drafter_behavior_probe(exported, probe)
+                continue
+            if probe["kind"] == "directive_drafter_fallback_routing":
+                _assert_directive_drafter_fallback_routing_probe(exported, probe)
+                continue
+            raise AssertionError(f"Unsupported behavior probe for {name}: {probe!r}")
         raise AssertionError(f"Unsupported class behavior probe for {name}: {probe!r}")
 
 

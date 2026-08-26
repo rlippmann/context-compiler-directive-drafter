@@ -19,28 +19,6 @@ def _canonical(text: str):
     return parsed
 
 
-def test_no_directive_result_is_not_fallback_eligible() -> None:
-    drafted = DraftResult(
-        source="heuristic", result=NoDirective(reason="reject.confident_non_directive")
-    )
-
-    assert drafter_module._is_fallback_eligible(drafted) is False
-
-
-def test_unknown_result_is_explicitly_fallback_eligible() -> None:
-    drafted = DraftResult(
-        source="heuristic", result=UnknownDirective(reason="reject.cannot_confidently_reduce")
-    )
-
-    assert drafter_module._is_fallback_eligible(drafted) is True
-
-
-def test_canonical_directive_result_is_not_fallback_eligible() -> None:
-    drafted = DraftResult(source="heuristic", result=_canonical("use docker"))
-
-    assert drafter_module._is_fallback_eligible(drafted) is False
-
-
 def test_returned_draft_result_is_immutable() -> None:
     value = DirectiveDrafter().draft_directive("use docker")
 
