@@ -37,10 +37,12 @@ Optional metadata supports later review and human-in-the-loop workflows:
 
 The current English corpus spans software development, food preferences,
 writing style, project workflow, travel planning, everyday preferences and
-policies, health, finance, and legal drafting. The domain labels provide
-semantic diversity only; they do not give the Drafter authority to diagnose,
-recommend treatment or investments, determine legal validity, or infer policy
-from domain facts.
+policies, health, finance, legal drafting, household and home life, education
+and learning, accessibility, communication etiquette, shopping and product
+preferences, scheduling and time management, media and content preferences,
+and family and social planning. The domain labels provide semantic diversity
+only; they do not give the Drafter authority to diagnose, recommend treatment
+or investments, determine legal validity, or infer policy from domain facts.
 
 ## Classifications and paths
 
