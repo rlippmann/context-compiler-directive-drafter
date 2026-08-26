@@ -143,6 +143,38 @@ The helper sends the package-owned converter prompt and the original user
 input, then returns raw model text to the existing Drafter fallback pipeline.
 The Drafter remains responsible for parsing, validation, and result shaping.
 
+### Live English Corpus Runner
+
+The live runner executes selected corpus cases through the real
+`DirectiveDrafter` path. Install the optional OpenAI dependency first, then
+run a small subset before a larger evaluation:
+
+```bash
+# OpenAI, using OPENAI_API_KEY from the environment
+uv run python -m evals.runners.directive_drafter_en \
+  --model gpt-4o-mini \
+  --case-id en-software-preference-001
+
+# Any OpenAI-compatible endpoint
+uv run python -m evals.runners.directive_drafter_en \
+  --model qwen2.5:7b \
+  --api-key ollama \
+  --base-url http://localhost:11434/v1 \
+  --domain software_development \
+  --category preference_statement \
+  --limit 3
+
+# Write detailed JSONL records to the ignored eval-results directory
+uv run python -m evals.runners.directive_drafter_en \
+  --model gpt-4o-mini \
+  --limit 10 \
+  --output eval-results/sample.jsonl
+```
+
+The runner reports totals, heuristic versus fallback routing, domain and
+category breakdowns, and failure categories. It does not change the corpus
+expectations or act as a conformance authority.
+
 ## Public API
 
 Public interface:
