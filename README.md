@@ -140,8 +140,10 @@ fallback = create_openai_fallback(
 ```
 
 The helper sends the package-owned converter prompt and the original user
-input, then returns raw model text to the existing Drafter fallback pipeline.
-The Drafter remains responsible for parsing, validation, and result shaping.
+input, translating the provider-level `<NO_DIRECTIVE>` abstention sentinel to
+the generic fallback callback contract's Python `None` value. Other model text
+is returned unchanged. The Drafter remains responsible for parsing, validation,
+and result shaping.
 
 ### Live English Corpus Runner
 
