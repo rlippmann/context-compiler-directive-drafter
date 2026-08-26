@@ -1,7 +1,7 @@
 """Shared fallback-candidate normalization and validation helpers.
 
 Public API:
-- validate_preprocessor_output
+- classify_drafter_output
 
 Internal helpers are implementation details and may change.
 """
@@ -19,7 +19,7 @@ from .constants import (
     DraftOutcome,
 )
 
-__all__ = ["validate_preprocessor_output"]
+__all__ = ["classify_drafter_output"]
 
 
 class PreprocessorValidationResult(TypedDict):
@@ -101,7 +101,7 @@ def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
     return _unknown()
 
 
-def validate_preprocessor_output(raw_output: object) -> PreprocessorValidationResult:
+def classify_drafter_output(raw_output: object) -> PreprocessorValidationResult:
     """Validate raw preprocessor output into a strict classification/output result.
 
     Contract:

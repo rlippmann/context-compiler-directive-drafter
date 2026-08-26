@@ -187,7 +187,7 @@ Public interface:
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `NoDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive and, on success, return the `CanonicalDirective` directly.
-- `validate_preprocessor_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
+- `classify_drafter_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
 - `get_converter_prompt()`: Load the shared static converter system prompt.
 - `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
@@ -285,7 +285,7 @@ parsing, validation, normalization, and `DraftResult` construction itself.
 
 Heuristic results already carry the parsed `CanonicalDirective` object on success.
 Any custom fallback or model-produced candidate output should be classified with
-`validate_preprocessor_output(...)`, then canonical directive text should be
+`classify_drafter_output(...)`, then canonical directive text should be
 parsed with `context_compiler.grammar.decompose_directive(...)` before it is
 shown or used.
 
@@ -295,7 +295,7 @@ recommended boundary is:
 ```text
 preprocess_heuristic(...) [optional]
 → call a provider using get_converter_prompt()
-→ validate_preprocessor_output(raw_output)
+→ classify_drafter_output(raw_output)
 → if classification is directive, parse its canonical text with
   context_compiler.grammar.decompose_directive(...)
 → otherwise abstain, reject, or request clarification

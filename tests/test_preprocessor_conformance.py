@@ -5,8 +5,8 @@ import pytest
 from context_compiler.grammar import CanonicalDirective
 
 from context_compiler_directive_drafter import (
+    classify_drafter_output,
     preprocess_heuristic,
-    validate_preprocessor_output,
 )
 
 _PREPROCESSOR_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
@@ -119,7 +119,7 @@ def _serialize_heuristic_result(message: str) -> dict[str, object]:
         }
 
     # Enforce the validation boundary: only validated directive output may pass.
-    validated = validate_preprocessor_output(output)
+    validated = classify_drafter_output(output)
     if serialized["outcome"] == "directive":
         assert validated["classification"] == "directive"
         assert validated["output"] == output
@@ -174,8 +174,8 @@ def test_preprocessor_conformance_fixtures() -> None:
             expected = fixture.get("expected")
             _assert_validation_expected_contract(expected, fixture_name)
             # Deterministic replay check.
-            first = validate_preprocessor_output(raw_output)
-            second = validate_preprocessor_output(raw_output)
+            first = classify_drafter_output(raw_output)
+            second = classify_drafter_output(raw_output)
             assert first == second, fixture_name
             assert first == expected, fixture_name
             continue

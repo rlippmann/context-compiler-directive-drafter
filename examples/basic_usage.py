@@ -3,8 +3,8 @@
 from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter import (
+    classify_drafter_output,
     preprocess_heuristic,
-    validate_preprocessor_output,
 )
 
 
@@ -35,7 +35,7 @@ def main() -> None:
         ambiguous_candidate.text if ambiguous_candidate is not None else None,
     )
 
-    validated = validate_preprocessor_output("use podman")
+    validated = classify_drafter_output("use podman")
     assert validated["classification"] == "directive"
     validated_output = validated["output"]
     assert isinstance(validated_output, str)

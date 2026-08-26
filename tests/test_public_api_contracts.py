@@ -679,7 +679,7 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "get_converter_prompt",
         "create_openai_fallback",
         "create_async_openai_fallback",
-        "validate_preprocessor_output",
+        "classify_drafter_output",
     }
 
 
@@ -692,6 +692,11 @@ def test_typing_only_names_are_not_importable_from_package_root() -> None:
 def test_removed_parser_is_not_exported() -> None:
     assert not hasattr(package, "parse_preprocessor_output")
     assert "parse_preprocessor_output" not in package.__all__
+
+
+def test_removed_preprocessor_validator_is_not_exported() -> None:
+    assert not hasattr(package, "validate_preprocessor_output")
+    assert "validate_preprocessor_output" not in package.__all__
 
 
 def test_forbidden_class_members_are_rejected_by_the_harness() -> None:

@@ -4,7 +4,7 @@
   "module": "context_compiler_directive_drafter",
   "capability": "validation-parsing",
   "members": {
-    "validate_preprocessor_output": {
+    "classify_drafter_output": {
       "kind": "callable",
       "signature": {
         "is_async": false,
