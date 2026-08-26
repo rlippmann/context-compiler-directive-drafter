@@ -63,6 +63,8 @@ def test_get_converter_prompt_teaches_output_contract_and_scope() -> None:
     assert "You are a directive converter that drafts candidate" in prompt
     assert f"output exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`" in prompt
     assert "Your output is a draft candidate only." in prompt
+    assert "If the message clearly establishes one state change" in prompt
+    assert "persistent compiler state changes" in prompt
     assert "Questions or discussion about directives" in prompt
     assert "DirectiveDrafter" not in prompt
 
