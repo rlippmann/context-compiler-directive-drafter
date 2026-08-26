@@ -19,12 +19,12 @@ def _canonical(text: str):
     return parsed
 
 
-def test_no_directive_result_is_explicitly_fallback_eligible() -> None:
+def test_no_directive_result_is_not_fallback_eligible() -> None:
     drafted = DraftResult(
         source="heuristic", result=NoDirective(reason="reject.confident_non_directive")
     )
 
-    assert drafter_module._is_fallback_eligible(drafted) is True
+    assert drafter_module._is_fallback_eligible(drafted) is False
 
 
 def test_unknown_result_is_explicitly_fallback_eligible() -> None:
@@ -167,7 +167,7 @@ def test_async_fallback_callback_can_be_cleared_after_construction() -> None:
     )
 
 
-def test_fallback_is_used_when_heuristic_returns_no_directive() -> None:
+def test_fallback_is_not_used_when_heuristic_returns_no_directive() -> None:
     calls: list[str] = []
 
     def fallback(user_input: str) -> str | None:
@@ -178,8 +178,11 @@ def test_fallback_is_used_when_heuristic_returns_no_directive() -> None:
 
     result = drafter.draft_directive("can you help with lunch?")
 
-    assert result == DraftResult(source="llm", result=_canonical("use docker"))
-    assert calls == ["can you help with lunch?"]
+    assert result == DraftResult(
+        source="heuristic",
+        result=NoDirective(reason="reject.confident_non_directive"),
+    )
+    assert calls == []
 
 
 def test_fallback_is_used_when_heuristic_abstains_with_unknown(
@@ -385,7 +388,7 @@ def test_async_heuristic_canonical_directive_skips_fallback() -> None:
     )
 
 
-def test_async_no_directive_invokes_async_fallback() -> None:
+def test_async_no_directive_does_not_invoke_async_fallback() -> None:
     calls: list[str] = []
 
     async def async_fallback(user_input: str) -> str | None:
@@ -396,8 +399,11 @@ def test_async_no_directive_invokes_async_fallback() -> None:
 
     result = asyncio.run(drafter.async_draft_directive("can you help with lunch?"))
 
-    assert calls == ["can you help with lunch?"]
-    assert result == DraftResult(source="llm", result=_canonical("use docker"))
+    assert calls == []
+    assert result == DraftResult(
+        source="heuristic",
+        result=NoDirective(reason="reject.confident_non_directive"),
+    )
 
 
 def test_async_unknown_directive_invokes_async_fallback(
