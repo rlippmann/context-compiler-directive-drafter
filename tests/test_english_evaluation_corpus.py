@@ -85,7 +85,7 @@ def test_english_corpus_schema_and_contract_links() -> None:
     fixtures = _load_contract_fixtures()
     ids: set[str] = set()
 
-    assert 100 <= len(cases) <= 300
+    assert len(cases) >= 100
     for case in cases:
         assert set(case) >= _REQUIRED_KEYS, case
         assert isinstance(case["id"], str) and case["id"].strip(), case

@@ -151,7 +151,7 @@ not "this directive is permitted" and not "this directive has been applied."
 
 ## Recommended Host Flow
 
-1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API. It always tries heuristic drafting first and may optionally call a non-authoritative fallback acquisition callback when the heuristic result is not directly returnable.
+1. Run `DirectiveDrafter().draft_directive(message)` as the high-level drafting API. It always tries heuristic drafting first and may optionally call a non-authoritative fallback acquisition callback when the heuristic returns `UnknownDirective`.
 2. If you configure a fallback, have it return canonical directive text or `None`, and register the source metadata you want preserved on any fallback-produced `DraftResult`.
 3. If the result yields a `CanonicalDirective`, pass that canonical directive to
    `context-compiler` for authoritative review and application.
