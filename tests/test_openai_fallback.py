@@ -1,5 +1,4 @@
 import asyncio
-import builtins
 import subprocess
 import sys
 from types import SimpleNamespace
@@ -178,14 +177,12 @@ def test_async_fallback_normalizes_no_directive_sentinel(
 def test_missing_optional_dependency_has_actionable_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    real_import = builtins.__import__
-
-    def import_without_openai(name: str, *args: object, **kwargs: object) -> object:
+    def import_without_openai(name: str) -> object:
         if name == "openai":
             raise ImportError("openai is unavailable")
-        return real_import(name, *args, **kwargs)
+        raise AssertionError(f"unexpected optional import: {name}")
 
-    monkeypatch.setattr(builtins, "__import__", import_without_openai)
+    monkeypatch.setattr(adapter, "import_module", import_without_openai)
 
     with pytest.raises(RuntimeError, match=r"pip install .*\[openai\]"):
         create_openai_fallback(model="compatible-model")
