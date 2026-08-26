@@ -173,7 +173,9 @@ uv run python -m evals.runners.directive_drafter_en \
 
 The runner reports totals, heuristic versus fallback routing, domain and
 category breakdowns, and failure categories. It does not change the corpus
-expectations or act as a conformance authority.
+expectations or act as a conformance authority. JSONL records include the
+actual path, path agreement, fallback invocation count, and raw fallback
+response; semantic scoring and routing mismatches are reported separately.
 
 ## Public API
 
