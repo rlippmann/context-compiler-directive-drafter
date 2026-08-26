@@ -35,6 +35,13 @@ Optional metadata supports later review and human-in-the-loop workflows:
 `notes`, `contract_ref`, `tags`, `source`, `requires_context`,
 `review_status`, `fallback_expectation`, `provenance`, and `hitl_accepted`.
 
+The current English corpus spans software development, food preferences,
+writing style, project workflow, travel planning, everyday preferences and
+policies, health, finance, and legal drafting. The domain labels provide
+semantic diversity only; they do not give the Drafter authority to diagnose,
+recommend treatment or investments, determine legal validity, or infer policy
+from domain facts.
+
 ## Classifications and paths
 
 `CONTRACT` identifies stable heuristic behavior that another implementation

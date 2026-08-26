@@ -100,7 +100,7 @@ It contains heuristic contracts, fallback evaluation cases, and selected
 fixture-backed anchors. The corpus is evaluation data only; existing
 conformance fixtures remain the executable compatibility authority. See
 [docs/EnglishEvaluationCorpus.md](docs/EnglishEvaluationCorpus.md) for the
-schema, classifications, and promotion workflow.
+schema, classifications, domain scope, and promotion workflow.
 
 ## Public API
 
