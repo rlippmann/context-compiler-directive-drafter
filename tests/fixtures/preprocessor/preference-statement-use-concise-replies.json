@@ -1,0 +1,12 @@
+{
+  "name": "preference-statement-use-concise-replies",
+  "input": "I prefer concise replies",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use concise replies",
+      "kind": "use_item",
+      "operands": {"item": "concise replies"}
+    }
+  }
+}

@@ -113,6 +113,7 @@ def test_heuristic_rejects_question_mark_after_directive_like_text() -> None:
         "use docker?",
         "clear state?",
         "can you use pytest instead of unittest?",
+        "I prefer concise replies?",
     ]
     for message in cases:
         result = preprocess_heuristic(message)
@@ -335,6 +336,30 @@ def test_heuristic_rewrites_polite_set_premise_to_form() -> None:
         preprocess_heuristic("please set premise to concise replies"),
         "set premise concise replies",
     )
+
+
+def test_heuristic_rewrites_clear_preference_forms() -> None:
+    cases = [
+        ("I prefer concise replies", "use concise replies"),
+        ("I prefer oat milk in coffee", "use oat milk in coffee"),
+        ("I prefer scenic routes", "use scenic routes"),
+        ("I prefer morning appointments", "use morning appointments"),
+        ("I prefer index funds", "use index funds"),
+    ]
+    for message, expected in cases:
+        _assert_directive_result(preprocess_heuristic(message), expected)
+
+
+def test_heuristic_does_not_reduce_ambiguous_preference_forms() -> None:
+    cases = [
+        "I prefer",
+        "I prefer concise replies because they are easier to scan",
+        "I prefer concise replies and I prefer detailed examples",
+    ]
+    for message in cases:
+        result = preprocess_heuristic(message)
+        assert result["outcome"] == "unknown"
+        assert result["directive"] is None
 
 
 def test_heuristic_rewrites_change_premise_missing_to_forms() -> None:

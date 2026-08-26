@@ -1,0 +1,12 @@
+{
+  "name": "preference-statement-use-scenic-routes",
+  "input": "I prefer scenic routes",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "use scenic routes",
+      "kind": "use_item",
+      "operands": {"item": "scenic routes"}
+    }
+  }
+}

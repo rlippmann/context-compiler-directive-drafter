@@ -1,6 +1,6 @@
 {
-  "name": "preference-i-prefer-linux-no-directive",
-  "input": "I prefer linux",
+  "name": "preference-statement-empty-unknown",
+  "input": "I prefer",
   "expected": {
     "outcome": "unknown",
     "directive": null,

@@ -1,0 +1,9 @@
+{
+  "name": "preference-statement-mixed-prose-unknown",
+  "input": "I prefer concise replies because they are easier to scan",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.multi_segment_or_mixed_prose"
+  }
+}

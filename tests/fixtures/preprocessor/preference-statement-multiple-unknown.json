@@ -1,6 +1,6 @@
 {
-  "name": "preference-statement-no-directive",
-  "input": "I prefer concise replies",
+  "name": "preference-statement-multiple-unknown",
+  "input": "I prefer concise replies and I prefer detailed examples",
   "expected": {
     "outcome": "unknown",
     "directive": null,

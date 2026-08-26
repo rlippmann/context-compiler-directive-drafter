@@ -1,0 +1,9 @@
+{
+  "name": "preference-statement-question-unknown",
+  "input": "I prefer concise replies?",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "reject.question_form"
+  }
+}

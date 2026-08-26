@@ -219,6 +219,12 @@ The heuristic uses these outcomes deliberately:
 Failure to recognize canonical syntax or a bounded rewrite is not, by itself,
 evidence for `NoDirective`.
 
+As a bounded deterministic rewrite, a clear whole-message `I prefer X` form is
+treated like `please use X` and produces the proposed candidate `use X` when
+the payload reduces to one canonical directive. Questions, mixed explanations,
+and multiple preference statements remain unresolved. This does not apply to
+general evaluative language such as `Docker would be better`.
+
 The `source` field records only the final producer of the returned drafting
 result, such as `heuristic` or the source metadata configured for a
 host-provided fallback acquisition callback.

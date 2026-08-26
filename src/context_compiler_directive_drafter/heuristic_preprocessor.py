@@ -59,12 +59,14 @@ _CHANGE_PREMISE_MISSING_TO_PATTERN = re.compile(
     r"^change premise (?!to(?:\s|$))(?P<payload>\S(?:.*\S)?)$"
 )
 _PLEASE_PREFIX_PATTERN = re.compile(r"^please (?P<directive>\S(?:.*\S)?)$")
+_PREFERENCE_PREFIX_PATTERN = re.compile(r"^i prefer (?P<payload>\S(?:.*\S)?)$")
 _ALLOW_ALIAS_PATTERN = re.compile(r"^allow (?P<item>\S(?:.*\S)?)$")
 _PROHIBIT_ALIAS_PATTERN = re.compile(r"^(?:do not|don't) use (?P<item>\S(?:.*\S)?)$")
 _STOP_USING_ALIAS_PATTERN = re.compile(r"^stop using (?P<item>\S(?:.*\S)?)$")
 _TRANSPOSED_PROHIBIT_PATTERN = re.compile(r"^set policy (?P<item>\S(?:.*\S)?) prohibit$")
 _DIRECTIVE_REWRITE_CUE_PATTERN = re.compile(
-    r"^\s*(?:please|allow|(?:do not|don't) use|stop using|set premise|change premise|use)\b"
+    r"^\s*(?:please|i prefer|allow|(?:do not|don't) use|stop using|set premise|"
+    r"change premise|use)\b"
 )
 _CONFIDENT_NON_DIRECTIVE_PATTERN = re.compile(
     r"^\s*(?:hi|hello|hey|good (?:morning|afternoon|evening)|thank you|"
@@ -197,6 +199,13 @@ def _rewrite_bounded_candidate(message: str) -> str:
     match = _PLEASE_PREFIX_PATTERN.fullmatch(current)
     if match is not None:
         current = match.group("directive")
+
+    match = _PREFERENCE_PREFIX_PATTERN.fullmatch(current)
+    if match is not None:
+        payload = match.group("payload")
+        if re.search(r"\bi prefer\b", payload):
+            return current
+        current = f"use {payload}"
 
     match = _SET_PREMISE_TO_PATTERN.fullmatch(current)
     if match is not None:
