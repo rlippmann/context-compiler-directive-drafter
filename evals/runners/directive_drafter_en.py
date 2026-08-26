@@ -11,6 +11,7 @@ import os
 import sys
 from collections import Counter
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TextIO, cast
 
@@ -22,7 +23,7 @@ from context_compiler_directive_drafter import (
     UnknownDirective,
     create_openai_fallback,
 )
-from context_compiler_directive_drafter.drafter import DraftResult
+from context_compiler_directive_drafter.drafter import DraftFallback, DraftResult
 
 DEFAULT_CORPUS_PATH = (
     Path(__file__).resolve().parents[1] / "corpus" / "english" / "directive-drafter-en.jsonl"
@@ -31,6 +32,32 @@ DEFAULT_RESULTS_PATH = Path("eval-results/directive-drafter-en.jsonl")
 
 CorpusCase = dict[str, object]
 ResultRecord = dict[str, object]
+
+
+@dataclass
+class FallbackObserver:
+    """Capture callback invocation facts without inspecting fallback output."""
+
+    invocation_count: int = 0
+    raw_responses: list[str | None] = field(default_factory=list)
+
+    def wrap(self, fallback: DraftFallback) -> DraftFallback:
+        def observed(user_input: str) -> str | None:
+            self.invocation_count += 1
+            response = fallback(user_input)
+            self.raw_responses.append(response)
+            return response
+
+        return observed
+
+    def case_observation(self, start_count: int, start_response_count: int) -> dict[str, object]:
+        responses = self.raw_responses[start_response_count:]
+        return {
+            "fallback_invoked": self.invocation_count > start_count,
+            "fallback_invocation_count": self.invocation_count - start_count,
+            "raw_fallback_response": responses[-1] if responses else None,
+            "raw_fallback_responses": responses,
+        }
 
 
 def load_corpus(path: Path = DEFAULT_CORPUS_PATH) -> list[CorpusCase]:
@@ -80,10 +107,14 @@ def _failure(category: str, reason: str) -> tuple[str, str]:
 
 
 def _score_content(
-    case: CorpusCase, actual_outcome: str, actual_directive: str | None
+    case: CorpusCase,
+    actual_outcome: str,
+    actual_directive: str | None,
+    *,
+    fallback_invoked: bool,
 ) -> tuple[str, str] | None:
     fallback_expectation = case.get("fallback_expectation")
-    if isinstance(fallback_expectation, dict):
+    if fallback_invoked and isinstance(fallback_expectation, dict):
         acceptable_outcomes = cast(list[str], fallback_expectation["acceptable_outcomes"])
         if actual_outcome not in acceptable_outcomes:
             preferred_outcome = fallback_expectation["preferred_outcome"]
@@ -130,32 +161,42 @@ def _score_content(
     return None
 
 
-def score_case(case: CorpusCase, result: DraftResult) -> ResultRecord:
-    """Score one public ``DraftResult`` against one corpus case."""
+def score_case(
+    case: CorpusCase,
+    result: DraftResult,
+    *,
+    fallback_invoked: bool = False,
+    fallback_invocation_count: int = 0,
+    raw_fallback_response: str | None = None,
+    raw_fallback_responses: Sequence[str | None] = (),
+) -> ResultRecord:
+    """Score one public ``DraftResult`` and explicit routing observations."""
 
     actual_outcome, actual_directive = _actual_variant(result)
-    actual_path = "heuristic" if result.source == "heuristic" else "fallback"
-    failure: tuple[str, str] | None = None
+    actual_path = "fallback" if fallback_invoked else "heuristic"
 
     expected_path = cast(str, case["expected_path"])
-    if expected_path != "either" and actual_path != expected_path:
-        failure = _failure(
-            "unexpected_source",
-            f"expected {expected_path} path; got {result.source!r}",
-        )
+    path_match = expected_path == "either" or actual_path == expected_path
+    routing_contractual = (
+        cast(str, case["classification"]) in {"CONTRACT", "BOTH"} and expected_path != "either"
+    )
+    routing_failure_category = "unexpected_source" if not path_match else None
 
     if (
-        failure is None
-        and result.source != "heuristic"
+        fallback_invoked
         and isinstance(result.result, UnknownDirective)
         and result.result.reason == "invalid_canonical_directive"
     ):
-        failure = _failure(
+        failure: tuple[str, str] | None = _failure(
             "invalid_fallback_output", "fallback output was not a canonical directive"
         )
-
-    if failure is None:
-        failure = _score_content(case, actual_outcome, actual_directive)
+    else:
+        failure = _score_content(
+            case,
+            actual_outcome,
+            actual_directive,
+            fallback_invoked=fallback_invoked,
+        )
 
     record: ResultRecord = {
         "id": case["id"],
@@ -165,24 +206,48 @@ def score_case(case: CorpusCase, result: DraftResult) -> ResultRecord:
         "expected_outcome": case["expected_outcome"],
         "expected_directive": case["expected_directive"],
         "expected_path": case["expected_path"],
+        "actual_path": actual_path,
+        "path_match": path_match,
+        "routing_contractual": routing_contractual,
+        "routing_mismatch": not path_match,
         "actual_outcome": actual_outcome,
         "actual_directive": actual_directive,
         "actual_source": result.source,
+        "fallback_invoked": fallback_invoked,
+        "fallback_invocation_count": fallback_invocation_count,
+        "raw_fallback_response": raw_fallback_response,
+        "raw_fallback_responses": list(raw_fallback_responses),
+        "semantic_passed": failure is None,
         "passed": failure is None,
         "failure_category": failure[0] if failure else None,
         "failure_reason": failure[1] if failure else None,
+        "routing_failure_category": routing_failure_category,
     }
     return record
 
 
-def run_cases(cases: Iterable[CorpusCase], drafter: DirectiveDrafter) -> list[ResultRecord]:
-    """Run selected cases through ``DirectiveDrafter`` and score each result."""
+def run_cases(
+    cases: Iterable[CorpusCase],
+    fallback: DraftFallback,
+    *,
+    fallback_source: str = "openai-compatible",
+) -> list[ResultRecord]:
+    """Wrap fallback, then run selected cases through public ``DirectiveDrafter``."""
 
+    observer = FallbackObserver()
+    drafter = DirectiveDrafter(
+        fallback=observer.wrap(fallback),
+        fallback_source=fallback_source,
+    )
     records: list[ResultRecord] = []
     for case in cases:
+        start_count = observer.invocation_count
+        start_response_count = len(observer.raw_responses)
         try:
             result = drafter.draft_directive(cast(str, case["input"]))
         except Exception as error:  # noqa: BLE001 - live evals should continue after one case fails.
+            observation = observer.case_observation(start_count, start_response_count)
+            actual_path = "fallback" if observation["fallback_invoked"] else "heuristic"
             records.append(
                 {
                     "id": case["id"],
@@ -192,16 +257,32 @@ def run_cases(cases: Iterable[CorpusCase], drafter: DirectiveDrafter) -> list[Re
                     "expected_outcome": case["expected_outcome"],
                     "expected_directive": case["expected_directive"],
                     "expected_path": case["expected_path"],
+                    "actual_path": actual_path,
+                    "path_match": case["expected_path"] in {"either", actual_path},
+                    "routing_contractual": (
+                        cast(str, case["classification"]) in {"CONTRACT", "BOTH"}
+                        and case["expected_path"] != "either"
+                    ),
+                    "routing_mismatch": case["expected_path"] not in {"either", actual_path},
                     "actual_outcome": "error",
                     "actual_directive": None,
                     "actual_source": "error",
+                    **observation,
+                    "semantic_passed": False,
                     "passed": False,
                     "failure_category": "fallback_error",
                     "failure_reason": f"{type(error).__name__}: {error}",
+                    "routing_failure_category": None,
                 }
             )
             continue
-        records.append(score_case(case, result))
+        records.append(
+            score_case(
+                case,
+                result,
+                **observer.case_observation(start_count, start_response_count),
+            )
+        )
     return records
 
 
@@ -224,17 +305,29 @@ def summarize_results(records: Iterable[ResultRecord]) -> dict[str, object]:
         for record in records
         if record["failure_category"] is not None
     )
+    routing_failure_categories = Counter(
+        cast(str, record["routing_failure_category"])
+        for record in records
+        if record["routing_failure_category"] is not None
+    )
     return {
         "total": len(records),
         "passed": sum(bool(record["passed"]) for record in records),
         "failed": sum(not bool(record["passed"]) for record in records),
         "heuristic_handled": sum(record["actual_source"] == "heuristic" for record in records),
-        "fallback_invoked": sum(
-            record["actual_source"] not in {"heuristic", "error"} for record in records
+        "fallback_invoked": sum(bool(record["fallback_invoked"]) for record in records),
+        "fallback_invocation_count": sum(
+            int(record["fallback_invocation_count"]) for record in records
+        ),
+        "path_mismatches": sum(bool(record["routing_mismatch"]) for record in records),
+        "contractual_path_mismatches": sum(
+            bool(record["routing_mismatch"]) and bool(record["routing_contractual"])
+            for record in records
         ),
         "results_by_domain": _group_results(records, "domain"),
         "results_by_category": _group_results(records, "category"),
         "failure_categories": dict(sorted(failure_categories.items())),
+        "routing_failure_categories": dict(sorted(routing_failure_categories.items())),
     }
 
 
@@ -254,14 +347,17 @@ def print_report(records: Iterable[ResultRecord], output: TextIO = sys.stdout) -
     summary = summarize_results(records)
     print(
         "total={total} passed={passed} failed={failed} "
-        "heuristic_handled={heuristic_handled} fallback_invoked={fallback_invoked}".format(
-            **summary
-        ),
+        "heuristic_handled={heuristic_handled} fallback_invoked={fallback_invoked} "
+        "fallback_invocation_count={fallback_invocation_count} "
+        "path_mismatches={path_mismatches}".format(**summary),
         file=output,
     )
-    for label, field in (("domain", "results_by_domain"), ("category", "results_by_category")):
+    for label, summary_field in (
+        ("domain", "results_by_domain"),
+        ("category", "results_by_category"),
+    ):
         print(f"results by {label}:", file=output)
-        for name, counts in cast(dict[str, dict[str, int]], summary[field]).items():
+        for name, counts in cast(dict[str, dict[str, int]], summary[summary_field]).items():
             print(
                 f"  {name}: {counts['passed']}/{counts['total']} passed",
                 file=output,
@@ -273,6 +369,12 @@ def print_report(records: Iterable[ResultRecord], output: TextIO = sys.stdout) -
             print(f"  {category}: {count}", file=output)
     else:
         print("  none", file=output)
+    print(
+        "routing mismatches: "
+        f"{summary['path_mismatches']} "
+        f"({summary['contractual_path_mismatches']} contractual)",
+        file=output,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -338,7 +440,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     records = run_cases(
         cases,
-        DirectiveDrafter(fallback=fallback, fallback_source="openai-compatible"),
+        fallback,
+        fallback_source="openai-compatible",
     )
     print_report(records)
     write_results(args.output, records)

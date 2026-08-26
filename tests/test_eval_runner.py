@@ -4,7 +4,7 @@ from pathlib import Path
 
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter import DraftResult, NoDirective, UnknownDirective
+from context_compiler_directive_drafter import DraftResult, NoDirective
 from evals.runners.directive_drafter_en import (
     build_parser,
     load_corpus,
@@ -61,11 +61,10 @@ def test_load_and_select_cases_support_filters_and_limit(tmp_path: Path) -> None
     ] == ["three"]
 
 
-def test_score_case_accepts_fallback_expectation_and_preferred_directive() -> None:
+def test_heuristic_handled_case_uses_normal_expectations() -> None:
     case = _case(
-        expected_outcome="unknown",
+        expected_outcome="no_directive",
         expected_directive=None,
-        expected_path="fallback",
         fallback_expectation={
             "preferred_outcome": "directive",
             "preferred_directive": "use podman",
@@ -75,15 +74,61 @@ def test_score_case_accepts_fallback_expectation_and_preferred_directive() -> No
 
     record = score_case(
         case,
-        DraftResult(source="openai-compatible", result=_canonical("use podman")),
+        DraftResult(source="heuristic", result=NoDirective(reason="confident_non_directive")),
+        fallback_invoked=False,
     )
 
+    assert record["semantic_passed"] is True
     assert record["passed"] is True
-    assert record["failure_category"] is None
+    assert record["fallback_invoked"] is False
 
 
-def test_score_case_reports_invalid_fallback_output() -> None:
+def test_fallback_invocation_and_raw_response_are_recorded() -> None:
     case = _case(
+        id="unknown",
+        input="use docker?",
+        expected_outcome="unknown",
+        expected_directive=None,
+        expected_path="fallback",
+        fallback_expectation={
+            "preferred_outcome": "directive",
+            "preferred_directive": "use podman",
+            "acceptable_outcomes": ["directive", "unknown"],
+        },
+    )
+    calls: list[str] = []
+
+    def fallback(user_input: str) -> str:
+        calls.append(user_input)
+        return "use podman"
+
+    records = run_cases([case], fallback)
+
+    assert calls == ["use docker?"]
+    assert records[0]["fallback_invoked"] is True
+    assert records[0]["fallback_invocation_count"] == 1
+    assert records[0]["raw_fallback_response"] == "use podman"
+    assert records[0]["raw_fallback_responses"] == ["use podman"]
+
+
+def test_heuristic_handled_case_does_not_invoke_fallback() -> None:
+    calls: list[str] = []
+
+    def fallback(user_input: str) -> str:
+        calls.append(user_input)
+        return "use podman"
+
+    records = run_cases([_case(input="use docker")], fallback)
+
+    assert calls == []
+    assert records[0]["fallback_invoked"] is False
+    assert records[0]["fallback_invocation_count"] == 0
+    assert records[0]["raw_fallback_response"] is None
+
+
+def test_invalid_fallback_output_preserves_raw_model_text() -> None:
+    case = _case(
+        input="use docker?",
         expected_outcome="unknown",
         expected_directive=None,
         expected_path="fallback",
@@ -93,53 +138,90 @@ def test_score_case_reports_invalid_fallback_output() -> None:
         },
     )
 
+    records = run_cases([case], lambda _: "not a canonical directive")
+
+    assert records[0]["failure_category"] == "invalid_fallback_output"
+    assert records[0]["raw_fallback_response"] == "not a canonical directive"
+    assert records[0]["actual_outcome"] == "unknown"
+
+
+def test_semantic_pass_with_path_mismatch_is_reported_separately() -> None:
+    case = _case(
+        classification="EVALUATION",
+        expected_path="fallback",
+    )
+
     record = score_case(
         case,
-        DraftResult(
-            source="openai-compatible",
-            result=UnknownDirective(reason="invalid_canonical_directive"),
+        DraftResult(source="heuristic", result=_canonical("use docker")),
+        fallback_invoked=False,
+    )
+
+    assert record["semantic_passed"] is True
+    assert record["passed"] is True
+    assert record["actual_path"] == "heuristic"
+    assert record["path_match"] is False
+    assert record["routing_mismatch"] is True
+    assert record["failure_category"] is None
+    assert record["routing_failure_category"] == "unexpected_source"
+
+
+def test_contractual_path_mismatch_is_explicit_and_distinct() -> None:
+    case = _case(classification="BOTH", expected_path="fallback")
+
+    record = score_case(
+        case,
+        DraftResult(source="heuristic", result=_canonical("use docker")),
+        fallback_invoked=False,
+    )
+
+    assert record["routing_contractual"] is True
+    assert record["routing_mismatch"] is True
+    assert record["failure_category"] is None
+
+
+def test_acceptable_fallback_abstention_passes_and_records_none_response() -> None:
+    case = _case(
+        input="use docker?",
+        expected_outcome="unknown",
+        expected_directive=None,
+        expected_path="fallback",
+        fallback_expectation={
+            "preferred_outcome": "directive",
+            "preferred_directive": "use podman",
+            "acceptable_outcomes": ["directive", "unknown", "no_directive"],
+        },
+    )
+
+    records = run_cases([case], lambda _: None)
+
+    assert records[0]["semantic_passed"] is True
+    assert records[0]["fallback_invoked"] is True
+    assert records[0]["raw_fallback_response"] is None
+
+
+def test_summary_fallback_count_uses_callback_observation() -> None:
+    cases = [
+        _case(id="heuristic", input="use docker"),
+        _case(
+            id="fallback",
+            input="use docker?",
+            expected_outcome="unknown",
+            expected_directive=None,
+            expected_path="fallback",
+            fallback_expectation={
+                "preferred_outcome": "unknown",
+                "acceptable_outcomes": ["unknown", "no_directive"],
+            },
         ),
-    )
+    ]
 
-    assert record["passed"] is False
-    assert record["failure_category"] == "invalid_fallback_output"
+    records = run_cases(cases, lambda _: None)
+    summary = summarize_results(records)
 
-
-def test_run_cases_uses_public_drafter_method_and_continues_after_error() -> None:
-    class FakeDrafter:
-        def __init__(self) -> None:
-            self.inputs: list[str] = []
-
-        def draft_directive(self, user_input: str) -> DraftResult:
-            self.inputs.append(user_input)
-            if user_input == "boom":
-                raise RuntimeError("provider unavailable")
-            return DraftResult(source="heuristic", result=NoDirective(reason="test"))
-
-    drafter = FakeDrafter()
-    records = run_cases(
-        [
-            _case(
-                id="ordinary",
-                input="ordinary",
-                expected_outcome="no_directive",
-                expected_directive=None,
-                expected_path="heuristic",
-            ),
-            _case(
-                id="error",
-                input="boom",
-                expected_outcome="unknown",
-                expected_directive=None,
-                expected_path="fallback",
-            ),
-        ],
-        drafter,  # type: ignore[arg-type]
-    )
-
-    assert drafter.inputs == ["ordinary", "boom"]
-    assert records[0]["passed"] is True
-    assert records[1]["failure_category"] == "fallback_error"
+    assert summary["heuristic_handled"] == 1
+    assert summary["fallback_invoked"] == 1
+    assert summary["fallback_invocation_count"] == 1
 
 
 def test_summary_report_and_jsonl_output(tmp_path: Path) -> None:
