@@ -675,7 +675,6 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "DirectiveDrafter",
         "NoDirective",
         "UnknownDirective",
-        "parse_preprocessor_output",
         "preprocess_heuristic",
         "get_converter_prompt",
         "create_openai_fallback",
@@ -688,6 +687,11 @@ def test_typing_only_names_are_not_importable_from_package_root() -> None:
     imported = import_module("context_compiler_directive_drafter")
     for name in ["DraftOutcome", "PreprocessResult"]:
         assert name not in imported.__dict__, name
+
+
+def test_removed_parser_is_not_exported() -> None:
+    assert not hasattr(package, "parse_preprocessor_output")
+    assert "parse_preprocessor_output" not in package.__all__
 
 
 def test_forbidden_class_members_are_rejected_by_the_harness() -> None:

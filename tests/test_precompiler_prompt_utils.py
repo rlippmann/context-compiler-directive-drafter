@@ -2,7 +2,10 @@ from types import MappingProxyType
 
 from context_compiler.grammar import CanonicalDirective, DirectiveKind, get_directive_metadata
 
-from context_compiler_directive_drafter import get_converter_prompt
+from context_compiler_directive_drafter import (
+    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
+    get_converter_prompt,
+)
 from context_compiler_directive_drafter import prompt_utils as prompt_module
 
 
@@ -58,7 +61,7 @@ def test_get_converter_prompt_teaches_output_contract_and_scope() -> None:
     prompt = get_converter_prompt()
 
     assert "You are a directive converter that drafts candidate" in prompt
-    assert "output exactly `<NO_DIRECTIVE>`" in prompt
+    assert f"output exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`" in prompt
     assert "Your output is a draft candidate only." in prompt
     assert "Questions or discussion about directives" in prompt
     assert "DirectiveDrafter" not in prompt

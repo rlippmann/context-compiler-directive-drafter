@@ -152,22 +152,6 @@
       "polarity": "reject",
       "input": "[use docker]",
       "expected": {"classification": "unknown", "output": null}
-    },
-    {
-      "name": "parse-ascii-case-and-outer-whitespace",
-      "surface": "parse",
-      "rule": "parse helper shares validator casing and outer whitespace",
-      "polarity": "accept",
-      "input": "  USE docker  ",
-      "expected": {"text": "use docker", "kind": "use_item", "operands": {"item": "docker"}}
-    },
-    {
-      "name": "parse-sentinel-rejected",
-      "surface": "parse",
-      "rule": "parse helper does not turn sentinel into a directive",
-      "polarity": "reject",
-      "input": "<no_directive>",
-      "expected": null
     }
   ]
 }

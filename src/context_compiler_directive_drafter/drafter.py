@@ -3,13 +3,13 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
-from context_compiler.grammar import CanonicalDirective
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter.heuristic_preprocessor import (
     PreprocessResult,
     preprocess_heuristic,
 )
-from context_compiler_directive_drafter.output_validation import parse_preprocessor_output
+from context_compiler_directive_drafter.output_validation import validate_preprocessor_output
 
 
 @dataclass(frozen=True)
@@ -184,11 +184,16 @@ def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str
     if fallback_text is None:
         return DraftResult(source=source, result=NoDirective(reason="fallback_no_candidate"))
 
-    parsed = parse_preprocessor_output(fallback_text)
-    if parsed is None:
+    validated = validate_preprocessor_output(fallback_text)
+    if validated["classification"] != "directive":
         return DraftResult(
             source=source,
             result=UnknownDirective(reason="invalid_canonical_directive"),
         )
+
+    output = validated["output"]
+    assert isinstance(output, str)
+    parsed = decompose_directive(output)
+    assert isinstance(parsed, CanonicalDirective)
 
     return DraftResult(source=source, result=parsed)

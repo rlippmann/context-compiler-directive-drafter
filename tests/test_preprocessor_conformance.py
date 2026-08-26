@@ -5,13 +5,12 @@ import pytest
 from context_compiler.grammar import CanonicalDirective
 
 from context_compiler_directive_drafter import (
-    parse_preprocessor_output,
     preprocess_heuristic,
     validate_preprocessor_output,
 )
 
 _PREPROCESSOR_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
-_REQUIRED_FIXTURE_FAMILIES = {"heuristic", "validator", "parse"}
+_REQUIRED_FIXTURE_FAMILIES = {"heuristic", "validator"}
 
 pytestmark = pytest.mark.contract
 
@@ -74,7 +73,7 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
     assert name == path.stem, label
 
     kind = fixture.get("kind", "heuristic")
-    assert kind in {"heuristic", "validator", "parse"}, label
+    assert kind in {"heuristic", "validator"}, label
 
     if kind == "heuristic":
         _assert_exact_keys(
@@ -88,10 +87,6 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
         _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected"}, label)
         _assert_validation_expected_contract(fixture["expected"], label)
         return
-
-    _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected_parsed"}, label)
-    expected_parsed = fixture["expected_parsed"]
-    assert isinstance(expected_parsed, dict) or expected_parsed is None, label
 
 
 def _serialize_heuristic_result(message: str) -> dict[str, object]:
@@ -133,17 +128,6 @@ def _serialize_heuristic_result(message: str) -> dict[str, object]:
         assert validated["output"] is None
 
     return serialized
-
-
-def _serialize_parse_result(raw_output: object) -> dict[str, object] | None:
-    parsed = parse_preprocessor_output(raw_output)
-    if parsed is None:
-        return None
-    return {
-        "text": parsed.text,
-        "kind": parsed.kind.value,
-        "operands": dict(parsed.operands),
-    }
 
 
 def _fixture_families(paths: list[Path]) -> set[str]:
@@ -196,13 +180,4 @@ def test_preprocessor_conformance_fixtures() -> None:
             assert first == expected, fixture_name
             continue
 
-        assert kind == "parse", fixture_name
-        assert "expected_parsed" in fixture, fixture_name
-        expected_parsed = fixture["expected_parsed"]
-        assert isinstance(expected_parsed, dict) or expected_parsed is None, fixture_name
-
-        # Deterministic replay check.
-        first_parsed = _serialize_parse_result(raw_output)
-        second_parsed = _serialize_parse_result(raw_output)
-        assert first_parsed == second_parsed, fixture_name
-        assert first_parsed == expected_parsed, fixture_name
+        raise AssertionError(f"Unsupported preprocessor fixture kind: {kind}")

@@ -11,6 +11,8 @@ from context_compiler.grammar import (
     get_directive_metadata,
 )
 
+from .constants import PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+
 _DIRECTIVE_CATEGORY_LINES = """Directive categories:
 - Premise directives change a standing instruction for how the assistant
   should generally behave.
@@ -32,36 +34,36 @@ class _AcquisitionExample:
     operand_values: tuple[str, ...]
 
 
-_BEHAVIOR_EXAMPLES = """Examples of ordinary conversation that must not become directives:
+_BEHAVIOR_EXAMPLES = f"""Examples of ordinary conversation that must not become directives:
 User: can you help with lunch?
-Output: <NO_DIRECTIVE>
+Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: Docker seems popular in this repo.
-Output: <NO_DIRECTIVE>
+Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: What does clear state do?
-Output: <NO_DIRECTIVE>
+Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 Examples of directive discussion or unresolved multi-directive input where you must not guess:
 User: use docker?
-Output: <NO_DIRECTIVE>
+Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: He said "use docker".
-Output: <NO_DIRECTIVE>
+Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: prohibit peanuts and use almonds
-Output: <NO_DIRECTIVE>"""
+Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}"""
 
-_PROMPT_SUFFIX = """Your task:
+_PROMPT_SUFFIX = f"""Your task:
 - Read one user message.
 - If the user clearly requests one behavior change that can be represented
   by a canonical directive, produce exactly one candidate directive in
   canonical form.
-- Otherwise output exactly `<NO_DIRECTIVE>`.
+- Otherwise output exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
 
 Output contract:
 - A single candidate directive line in canonical form, or
-- exactly `<NO_DIRECTIVE>`
+- exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`
 
 Output rules:
 - Output exactly one line.
@@ -78,9 +80,9 @@ Conversion rules:
 - Do not invent directives from ordinary conversation.
 - If the input is ordinary conversation, quoted or reported directive text,
   directive discussion, or a mixed request you cannot safely reduce to one
-  directive, output `<NO_DIRECTIVE>`.
+  directive, output `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
 
-When to output `<NO_DIRECTIVE>`:
+When to output `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
 - Ordinary conversation, questions, explanations, or comments.
 - Requests that do not ask to change compiler-managed behavior.
 - Questions or discussion about directives rather than a request to change behavior.
