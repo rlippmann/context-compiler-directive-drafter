@@ -16,6 +16,10 @@ from context_compiler_directive_drafter.drafter import (
 from context_compiler_directive_drafter.heuristic_preprocessor import (
     preprocess_heuristic,
 )
+from context_compiler_directive_drafter.openai_fallback import (
+    create_async_openai_fallback,
+    create_openai_fallback,
+)
 from context_compiler_directive_drafter.output_validation import (
     parse_preprocessor_output,
     validate_preprocessor_output,
@@ -35,5 +39,7 @@ __all__ = [
     "parse_preprocessor_output",
     "preprocess_heuristic",
     "get_converter_prompt",
+    "create_openai_fallback",
+    "create_async_openai_fallback",
     "validate_preprocessor_output",
 ]
