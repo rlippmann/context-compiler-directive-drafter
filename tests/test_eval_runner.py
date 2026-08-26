@@ -177,7 +177,29 @@ def test_contractual_path_mismatch_is_explicit_and_distinct() -> None:
 
     assert record["routing_contractual"] is True
     assert record["routing_mismatch"] is True
+    assert record["semantic_passed"] is True
+    assert record["passed"] is False
     assert record["failure_category"] is None
+
+
+def test_summary_counts_contractual_routing_mismatch_as_failed() -> None:
+    evaluation_record = score_case(
+        _case(classification="EVALUATION", expected_path="fallback"),
+        DraftResult(source="heuristic", result=_canonical("use docker")),
+        fallback_invoked=False,
+    )
+    contractual_record = score_case(
+        _case(id="contractual", classification="BOTH", expected_path="fallback"),
+        DraftResult(source="heuristic", result=_canonical("use docker")),
+        fallback_invoked=False,
+    )
+
+    summary = summarize_results([evaluation_record, contractual_record])
+
+    assert summary["passed"] == 1
+    assert summary["failed"] == 1
+    assert summary["path_mismatches"] == 2
+    assert summary["contractual_path_mismatches"] == 1
 
 
 def test_acceptable_fallback_abstention_passes_and_records_none_response() -> None:

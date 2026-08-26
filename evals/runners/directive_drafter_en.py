@@ -197,6 +197,8 @@ def score_case(
             actual_directive,
             fallback_invoked=fallback_invoked,
         )
+    semantic_passed = failure is None
+    passed = semantic_passed and not (routing_contractual and not path_match)
 
     record: ResultRecord = {
         "id": case["id"],
@@ -217,8 +219,8 @@ def score_case(
         "fallback_invocation_count": fallback_invocation_count,
         "raw_fallback_response": raw_fallback_response,
         "raw_fallback_responses": list(raw_fallback_responses),
-        "semantic_passed": failure is None,
-        "passed": failure is None,
+        "semantic_passed": semantic_passed,
+        "passed": passed,
         "failure_category": failure[0] if failure else None,
         "failure_reason": failure[1] if failure else None,
         "routing_failure_category": routing_failure_category,
