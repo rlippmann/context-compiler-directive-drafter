@@ -73,6 +73,11 @@ The outcome distinction is evidence-based:
   cannot confidently classify the input as non-directive, so fallback may
   interpret it.
 
+The public `RejectedDirective` result uses only these host-actionable reasons:
+`non_directive`, `incomplete`, `multiple_directives`, and `invalid_candidate`.
+Heuristic implementation details do not form part of the public result
+contract.
+
 Failure to recognize canonical syntax or a bounded rewrite is not sufficient by
 itself to return `rejected`. Preference, evaluative, factual, or otherwise
 directive-adjacent language remains `unknown` unless a separate deterministic

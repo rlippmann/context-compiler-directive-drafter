@@ -5,6 +5,7 @@ import pytest
 from context_compiler.grammar import decompose_directive
 
 from context_compiler_directive_drafter import (
+    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DirectiveDrafter,
     DraftResult,
     RejectedDirective,
@@ -61,6 +62,64 @@ def test_fallback_callback_defaults_to_none() -> None:
     assert drafter.async_fallback is False
 
 
+@pytest.mark.parametrize(
+    ("user_input", "reason"),
+    [
+        ("thanks for the help today", "non_directive"),
+        ("use docker?", "non_directive"),
+        ('he said "use docker".', "non_directive"),
+        ("use podman instead of", "incomplete"),
+        ("change premise to", "incomplete"),
+        ("remove policy", "incomplete"),
+        ("use docker and prohibit peanuts", "multiple_directives"),
+    ],
+)
+def test_terminal_heuristic_results_use_public_rejection_taxonomy(
+    user_input: str, reason: str
+) -> None:
+    result = DirectiveDrafter().draft_directive(user_input)
+
+    assert result.source == "heuristic"
+    assert isinstance(result.result, RejectedDirective)
+    assert result.result.reason == reason
+
+
+def test_semantic_uncertainty_is_the_only_fallback_eligible_result() -> None:
+    calls: list[str] = []
+
+    def fallback(user_input: str) -> str:
+        calls.append(user_input)
+        return "use docker"
+
+    result = DirectiveDrafter(fallback=fallback).draft_directive("Could we maybe use uv later")
+
+    assert isinstance(result.result, type(_canonical("use docker")))
+    assert calls == ["Could we maybe use uv later"]
+
+
+def test_provider_no_directive_sentinel_maps_to_public_terminal_reason() -> None:
+    result = DirectiveDrafter(
+        fallback=lambda _: f"  {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}  "
+    ).draft_directive("Could we maybe use uv later")
+
+    assert result == DraftResult(
+        source="fallback", result=RejectedDirective(reason="non_directive")
+    )
+
+
+def test_unrecognized_internal_terminal_reason_is_not_silently_published(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        drafter_module,
+        "preprocess_heuristic",
+        lambda _: {"outcome": "rejected", "directive": None, "reason": "unexpected"},
+    )
+
+    with pytest.raises(ValueError, match="Unsupported terminal heuristic reason"):
+        DirectiveDrafter().draft_directive("input")
+
+
 def test_fallback_callback_can_be_configured_at_construction() -> None:
     def fallback(_: str) -> str | None:
         return "use docker"
@@ -99,7 +158,7 @@ def test_fallback_callback_can_be_cleared_after_construction() -> None:
     assert drafter.fallback is False
     assert drafter.draft_directive("can you help with lunch?") == DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason="ordinary_non_directive"),
+        result=RejectedDirective(reason="non_directive"),
     )
 
 
@@ -141,7 +200,7 @@ def test_async_fallback_callback_can_be_cleared_after_construction() -> None:
     assert drafter.async_fallback is False
     assert asyncio.run(drafter.async_draft_directive("can you help with lunch?")) == DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason="ordinary_non_directive"),
+        result=RejectedDirective(reason="non_directive"),
     )
 
 
@@ -158,7 +217,7 @@ def test_fallback_is_not_used_when_heuristic_returns_no_directive() -> None:
 
     assert result == DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason="ordinary_non_directive"),
+        result=RejectedDirective(reason="non_directive"),
     )
     assert calls == []
 
@@ -261,7 +320,7 @@ def test_no_fallback_preserves_existing_non_directive_behavior() -> None:
 
     assert result == DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason="ordinary_non_directive"),
+        result=RejectedDirective(reason="non_directive"),
     )
 
 
@@ -281,9 +340,7 @@ def test_none_fallback_output_returns_no_directive_from_drafter() -> None:
 
     result = drafter.draft_directive("ordinary text")
 
-    assert result == DraftResult(
-        source="llm", result=RejectedDirective(reason="fallback_no_candidate")
-    )
+    assert result == DraftResult(source="llm", result=RejectedDirective(reason="non_directive"))
 
 
 def test_invalid_fallback_text_returns_unknown_from_drafter() -> None:
@@ -293,7 +350,7 @@ def test_invalid_fallback_text_returns_unknown_from_drafter() -> None:
 
     assert result == DraftResult(
         source="llm",
-        result=RejectedDirective(reason="invalid_fallback_output"),
+        result=RejectedDirective(reason="invalid_candidate"),
     )
 
 
@@ -331,9 +388,7 @@ def test_heuristic_attempt_happens_before_fallback_callback(
         "heuristic:can you help with lunch?",
         "fallback:can you help with lunch?",
     ]
-    assert result == DraftResult(
-        source="llm", result=RejectedDirective(reason="fallback_no_candidate")
-    )
+    assert result == DraftResult(source="llm", result=RejectedDirective(reason="non_directive"))
 
 
 def test_fallback_callback_is_skipped_when_heuristic_returns_valid_result() -> None:
@@ -383,7 +438,7 @@ def test_async_no_directive_does_not_invoke_async_fallback() -> None:
     assert calls == []
     assert result == DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason="ordinary_non_directive"),
+        result=RejectedDirective(reason="non_directive"),
     )
 
 
@@ -423,7 +478,7 @@ def test_missing_async_fallback_preserves_heuristic_only_behavior() -> None:
 
     assert result == DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason="ordinary_non_directive"),
+        result=RejectedDirective(reason="non_directive"),
     )
 
 
@@ -447,9 +502,7 @@ def test_async_none_fallback_output_returns_no_directive_from_drafter() -> None:
 
     result = asyncio.run(drafter.async_draft_directive("ordinary text"))
 
-    assert result == DraftResult(
-        source="llm", result=RejectedDirective(reason="fallback_no_candidate")
-    )
+    assert result == DraftResult(source="llm", result=RejectedDirective(reason="non_directive"))
 
 
 def test_async_invalid_fallback_text_returns_unknown_from_drafter() -> None:
@@ -462,5 +515,5 @@ def test_async_invalid_fallback_text_returns_unknown_from_drafter() -> None:
 
     assert result == DraftResult(
         source="llm",
-        result=RejectedDirective(reason="invalid_fallback_output"),
+        result=RejectedDirective(reason="invalid_candidate"),
     )

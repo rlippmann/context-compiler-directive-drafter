@@ -16,18 +16,18 @@ from context_compiler.grammar import (
 )
 
 from .constants import (
+    _REASON_COMPOUND_DIRECTIVE,
+    _REASON_INCOMPLETE_DIRECTIVE,
+    _REASON_MALFORMED_DIRECTIVE,
+    _REASON_MULTI_SENTENCE,
+    _REASON_ORDINARY_NON_DIRECTIVE,
+    _REASON_QUESTION_FORM,
+    _REASON_QUOTED_REPORTED,
+    _REASON_SEMANTIC_UNCERTAINTY,
+    _REASON_UNSUPPORTED_INPUT,
     DRAFT_OUTCOME_DIRECTIVE,
     DRAFT_OUTCOME_REJECTED,
     DRAFT_OUTCOME_UNKNOWN,
-    REASON_COMPOUND_DIRECTIVE,
-    REASON_INCOMPLETE_DIRECTIVE,
-    REASON_MALFORMED_DIRECTIVE,
-    REASON_MULTI_SENTENCE,
-    REASON_ORDINARY_NON_DIRECTIVE,
-    REASON_QUESTION_FORM,
-    REASON_QUOTED_REPORTED,
-    REASON_SEMANTIC_UNCERTAINTY,
-    REASON_UNSUPPORTED_INPUT,
 )
 
 
@@ -304,7 +304,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_UNSUPPORTED_INPUT,
+            "reason": _REASON_UNSUPPORTED_INPUT,
         }
 
     normalized = _normalized_for_match(message)
@@ -317,70 +317,70 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_QUESTION_FORM,
+            "reason": _REASON_QUESTION_FORM,
         }
 
     if "?" in message:
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_ORDINARY_NON_DIRECTIVE,
+            "reason": _REASON_ORDINARY_NON_DIRECTIVE,
         }
 
     if _CONFIDENT_NON_DIRECTIVE_PATTERN.fullmatch(message):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_ORDINARY_NON_DIRECTIVE,
+            "reason": _REASON_ORDINARY_NON_DIRECTIVE,
         }
 
     if _META_PREFIX_PATTERN.match(normalized):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_QUOTED_REPORTED,
+            "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _matches_multi_segment_pattern(normalized):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_COMPOUND_DIRECTIVE,
+            "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     if _contains_reporting_bracket_mention(message):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_QUOTED_REPORTED,
+            "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _is_quoted_or_backtick_wrapped(message):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_QUOTED_REPORTED,
+            "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _is_reported_quoted_directive(message):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_QUOTED_REPORTED,
+            "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _MALFORMED_DIRECTIVE_LOOKALIKE_PATTERN.fullmatch(message):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_MALFORMED_DIRECTIVE,
+            "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     if _has_obvious_multi_sentence_boundary(message):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_MULTI_SENTENCE,
+            "reason": _REASON_MULTI_SENTENCE,
         }
 
     normalized_candidate = _normalize_candidate(message)
@@ -390,7 +390,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "reason": REASON_SEMANTIC_UNCERTAINTY,
+            "reason": _REASON_SEMANTIC_UNCERTAINTY,
         }
     normalized_candidate = _rewrite_bounded_candidate(normalized_candidate)
 
@@ -403,42 +403,42 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_MALFORMED_DIRECTIVE,
+            "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     if _matches_multi_segment_pattern(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_COMPOUND_DIRECTIVE,
+            "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     if _is_ambiguous_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_COMPOUND_DIRECTIVE,
+            "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     if _is_incomplete_directive(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_INCOMPLETE_DIRECTIVE,
+            "reason": _REASON_INCOMPLETE_DIRECTIVE,
         }
 
     if _is_unsupported_alias(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_MALFORMED_DIRECTIVE,
+            "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     if _has_multiple_directive_starts(normalized_candidate):
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_COMPOUND_DIRECTIVE,
+            "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     decomposed = decompose_directive(normalized_candidate)
@@ -453,9 +453,9 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": (
-                REASON_INCOMPLETE_DIRECTIVE
+                _REASON_INCOMPLETE_DIRECTIVE
                 if _is_incomplete_directive(normalized_candidate)
-                else REASON_MALFORMED_DIRECTIVE
+                else _REASON_MALFORMED_DIRECTIVE
             ),
         }
 
@@ -463,11 +463,11 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         return {
             "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": REASON_MALFORMED_DIRECTIVE,
+            "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     return {
         "outcome": DRAFT_OUTCOME_UNKNOWN,
         "directive": None,
-        "reason": REASON_SEMANTIC_UNCERTAINTY,
+        "reason": _REASON_SEMANTIC_UNCERTAINTY,
     }
