@@ -73,6 +73,8 @@ def test_fallback_callback_defaults_to_none() -> None:
         ("remove policy", "incomplete"),
         ("use docker and prohibit peanuts", "multiple_directives"),
         ("Reset policies and summarize the changes", "multiple_directives"),
+        ("please use docker. thanks.", "non_directive"),
+        ("use docker. then tell me why.", "non_directive"),
     ],
 )
 def test_terminal_heuristic_results_use_public_rejection_taxonomy(
