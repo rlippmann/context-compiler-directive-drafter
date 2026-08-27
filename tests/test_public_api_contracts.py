@@ -3,6 +3,7 @@ import inspect
 import json
 from importlib import import_module
 from pathlib import Path
+from typing import get_args
 
 import pytest
 from context_compiler.grammar import CanonicalDirective
@@ -625,6 +626,34 @@ def test_public_api_surface_contract_excludes_typing_only_names() -> None:
         assert name not in package.__all__, name
 
 
+def test_public_api_excludes_detailed_rejection_reason_constants() -> None:
+    detailed_names = {
+        "REASON_ORDINARY_NON_DIRECTIVE",
+        "REASON_QUESTION_FORM",
+        "REASON_QUOTED_REPORTED",
+        "REASON_INCOMPLETE_DIRECTIVE",
+        "REASON_COMPOUND_DIRECTIVE",
+        "REASON_MULTI_SENTENCE",
+        "REASON_MALFORMED_DIRECTIVE",
+        "REASON_UNSUPPORTED_INPUT",
+        "REASON_INVALID_FALLBACK_OUTPUT",
+        "REASON_FALLBACK_NO_CANDIDATE",
+        "REASON_SEMANTIC_UNCERTAINTY",
+    }
+
+    assert not detailed_names & set(package.__all__)
+    assert all(not hasattr(package, name) for name in detailed_names)
+
+
+def test_public_rejected_reason_type_has_only_host_actionable_values() -> None:
+    assert set(get_args(package.RejectedReason)) == {
+        "non_directive",
+        "incomplete",
+        "multiple_directives",
+        "invalid_candidate",
+    }
+
+
 def test_public_api_capability_contracts_reference_exported_members_only() -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
@@ -678,23 +707,17 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
         "DraftResultType",
         "DirectiveDrafter",
         "RejectedDirective",
+        "RejectedReason",
         "UnknownDirective",
         "preprocess_heuristic",
         "get_converter_prompt",
         "create_openai_fallback",
         "create_async_openai_fallback",
         "classify_drafter_output",
-        "REASON_ORDINARY_NON_DIRECTIVE",
-        "REASON_QUESTION_FORM",
-        "REASON_QUOTED_REPORTED",
-        "REASON_INCOMPLETE_DIRECTIVE",
-        "REASON_COMPOUND_DIRECTIVE",
-        "REASON_MULTI_SENTENCE",
-        "REASON_MALFORMED_DIRECTIVE",
-        "REASON_UNSUPPORTED_INPUT",
-        "REASON_INVALID_FALLBACK_OUTPUT",
-        "REASON_FALLBACK_NO_CANDIDATE",
-        "REASON_SEMANTIC_UNCERTAINTY",
+        "REASON_NON_DIRECTIVE",
+        "REASON_INCOMPLETE",
+        "REASON_MULTIPLE_DIRECTIVES",
+        "REASON_INVALID_CANDIDATE",
     }
 
 

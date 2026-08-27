@@ -245,5 +245,5 @@ def test_no_directive_sentinel_produces_drafter_no_directive(
 
     assert result == DraftResult(
         source="openai-compatible",
-        result=RejectedDirective(reason="fallback_no_candidate"),
+        result=RejectedDirective(reason="non_directive"),
     )

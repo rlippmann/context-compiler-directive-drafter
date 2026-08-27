@@ -7,9 +7,19 @@ from typing import cast
 from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter.constants import (
+    _REASON_COMPOUND_DIRECTIVE,
+    _REASON_INCOMPLETE_DIRECTIVE,
+    _REASON_MALFORMED_DIRECTIVE,
+    _REASON_MULTI_SENTENCE,
+    _REASON_ORDINARY_NON_DIRECTIVE,
+    _REASON_QUESTION_FORM,
+    _REASON_QUOTED_REPORTED,
+    _REASON_UNSUPPORTED_INPUT,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
-    REASON_FALLBACK_NO_CANDIDATE,
-    REASON_INVALID_FALLBACK_OUTPUT,
+    REASON_INCOMPLETE,
+    REASON_INVALID_CANDIDATE,
+    REASON_MULTIPLE_DIRECTIVES,
+    REASON_NON_DIRECTIVE,
     RejectedReason,
     UnknownReason,
 )
@@ -185,8 +195,23 @@ def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> Dra
 
     return DraftResult(
         source="heuristic",
-        result=RejectedDirective(reason=cast(RejectedReason, reason)),
+        result=RejectedDirective(reason=_public_rejection_reason(reason)),
     )
+
+
+def _public_rejection_reason(reason: str) -> RejectedReason:
+    if reason in {
+        _REASON_ORDINARY_NON_DIRECTIVE,
+        _REASON_QUESTION_FORM,
+        _REASON_QUOTED_REPORTED,
+        _REASON_MALFORMED_DIRECTIVE,
+    }:
+        return REASON_NON_DIRECTIVE
+    if reason == _REASON_INCOMPLETE_DIRECTIVE:
+        return REASON_INCOMPLETE
+    if reason in {_REASON_COMPOUND_DIRECTIVE, _REASON_MULTI_SENTENCE, _REASON_UNSUPPORTED_INPUT}:
+        return REASON_MULTIPLE_DIRECTIVES
+    raise ValueError(f"Unsupported terminal heuristic reason: {reason!r}")
 
 
 def _is_fallback_eligible(drafted: DraftResult) -> bool:
@@ -197,13 +222,13 @@ def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str
     if fallback_text is None:
         return DraftResult(
             source=source,
-            result=RejectedDirective(reason=REASON_FALLBACK_NO_CANDIDATE),
+            result=RejectedDirective(reason=REASON_NON_DIRECTIVE),
         )
 
     if fallback_text.strip().upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
         return DraftResult(
             source=source,
-            result=RejectedDirective(reason=REASON_FALLBACK_NO_CANDIDATE),
+            result=RejectedDirective(reason=REASON_NON_DIRECTIVE),
         )
 
     parsed = decompose_directive(fallback_text.strip())
@@ -212,5 +237,5 @@ def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str
 
     return DraftResult(
         source=source,
-        result=RejectedDirective(reason=REASON_INVALID_FALLBACK_OUTPUT),
+        result=RejectedDirective(reason=REASON_INVALID_CANDIDATE),
     )

@@ -297,7 +297,7 @@
                 "properties": {
                   "reason": {
                     "type": "string",
-                    "const": "ordinary_non_directive"
+                    "const": "non_directive"
                   }
                 }
               }

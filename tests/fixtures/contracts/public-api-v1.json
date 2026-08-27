@@ -19,23 +19,17 @@
       "DraftResultType",
       "DirectiveDrafter",
       "RejectedDirective",
+      "RejectedReason",
       "UnknownDirective",
       "preprocess_heuristic",
       "get_converter_prompt",
       "create_openai_fallback",
       "create_async_openai_fallback",
       "classify_drafter_output",
-      "REASON_ORDINARY_NON_DIRECTIVE",
-      "REASON_QUESTION_FORM",
-      "REASON_QUOTED_REPORTED",
-      "REASON_INCOMPLETE_DIRECTIVE",
-      "REASON_COMPOUND_DIRECTIVE",
-      "REASON_MULTI_SENTENCE",
-      "REASON_MALFORMED_DIRECTIVE",
-      "REASON_UNSUPPORTED_INPUT",
-      "REASON_INVALID_FALLBACK_OUTPUT",
-      "REASON_FALLBACK_NO_CANDIDATE",
-      "REASON_SEMANTIC_UNCERTAINTY"
+      "REASON_NON_DIRECTIVE",
+      "REASON_INCOMPLETE",
+      "REASON_MULTIPLE_DIRECTIVES",
+      "REASON_INVALID_CANDIDATE"
     ],
     "members": {
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL": {
@@ -449,49 +443,24 @@
           ]
         }
       },
-      "REASON_ORDINARY_NON_DIRECTIVE": {
-        "kind": "constant",
-        "value": "ordinary_non_directive"
+      "RejectedReason": {
+        "kind": "type_alias"
       },
-      "REASON_QUESTION_FORM": {
+      "REASON_NON_DIRECTIVE": {
         "kind": "constant",
-        "value": "question_form"
+        "value": "non_directive"
       },
-      "REASON_QUOTED_REPORTED": {
+      "REASON_INCOMPLETE": {
         "kind": "constant",
-        "value": "quoted_reported"
+        "value": "incomplete"
       },
-      "REASON_INCOMPLETE_DIRECTIVE": {
+      "REASON_MULTIPLE_DIRECTIVES": {
         "kind": "constant",
-        "value": "incomplete_directive"
+        "value": "multiple_directives"
       },
-      "REASON_COMPOUND_DIRECTIVE": {
+      "REASON_INVALID_CANDIDATE": {
         "kind": "constant",
-        "value": "compound_directive"
-      },
-      "REASON_MULTI_SENTENCE": {
-        "kind": "constant",
-        "value": "multi_sentence"
-      },
-      "REASON_MALFORMED_DIRECTIVE": {
-        "kind": "constant",
-        "value": "malformed_directive"
-      },
-      "REASON_UNSUPPORTED_INPUT": {
-        "kind": "constant",
-        "value": "unsupported_input"
-      },
-      "REASON_INVALID_FALLBACK_OUTPUT": {
-        "kind": "constant",
-        "value": "invalid_fallback_output"
-      },
-      "REASON_FALLBACK_NO_CANDIDATE": {
-        "kind": "constant",
-        "value": "fallback_no_candidate"
-      },
-      "REASON_SEMANTIC_UNCERTAINTY": {
-        "kind": "constant",
-        "value": "semantic_uncertainty"
+        "value": "invalid_candidate"
       }
     }
   }

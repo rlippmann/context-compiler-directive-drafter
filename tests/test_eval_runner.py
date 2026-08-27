@@ -74,7 +74,7 @@ def test_heuristic_handled_case_uses_normal_expectations() -> None:
 
     record = score_case(
         case,
-        DraftResult(source="heuristic", result=RejectedDirective(reason="ordinary_non_directive")),
+        DraftResult(source="heuristic", result=RejectedDirective(reason="non_directive")),
         fallback_invoked=False,
     )
 
@@ -126,7 +126,7 @@ def test_heuristic_handled_case_does_not_invoke_fallback() -> None:
     assert records[0]["raw_fallback_response"] is None
 
 
-def test_invalid_fallback_output_preserves_raw_model_text() -> None:
+def test_invalid_candidate_preserves_raw_model_text() -> None:
     case = _case(
         input="Could we maybe use uv later",
         expected_outcome="unknown",
@@ -140,7 +140,7 @@ def test_invalid_fallback_output_preserves_raw_model_text() -> None:
 
     records = run_cases([case], lambda _: "not a canonical directive")
 
-    assert records[0]["failure_category"] == "invalid_fallback_output"
+    assert records[0]["failure_category"] == "invalid_candidate"
     assert records[0]["raw_fallback_response"] == "not a canonical directive"
     assert records[0]["actual_outcome"] == "rejected"
 

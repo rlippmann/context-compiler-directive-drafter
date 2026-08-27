@@ -211,6 +211,8 @@ The heuristic uses these outcomes deliberately:
 - `RejectedDirective` means acquisition is terminally rejected, including
   ordinary prose, questions, quoted or reported commands, incomplete
   directives, and compound or malformed input. It is never fallback-eligible.
+  Its stable public reasons are `non_directive`, `incomplete`,
+  `multiple_directives`, and `invalid_candidate`.
 - `UnknownDirective` means semantic interpretation remains plausible but the
   heuristic cannot confidently produce one candidate. This result alone is
   eligible for host fallback interpretation.

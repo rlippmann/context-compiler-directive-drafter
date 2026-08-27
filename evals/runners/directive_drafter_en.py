@@ -185,10 +185,10 @@ def score_case(
     if (
         fallback_invoked
         and isinstance(result.result, RejectedDirective)
-        and result.result.reason == "invalid_fallback_output"
+        and result.result.reason == "invalid_candidate"
     ):
         failure: tuple[str, str] | None = _failure(
-            "invalid_fallback_output", "fallback output was not a canonical directive"
+            "invalid_candidate", "fallback output was not a canonical directive"
         )
     else:
         failure = _score_content(

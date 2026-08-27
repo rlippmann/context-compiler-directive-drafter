@@ -362,6 +362,36 @@ def test_heuristic_does_not_reduce_ambiguous_preference_forms() -> None:
         assert result["directive"] is None
 
 
+def test_preference_rewrite_preserves_nested_preference() -> None:
+    value = "i prefer concise replies and i prefer detailed examples"
+
+    assert heuristic_module._rewrite_bounded_candidate(value) == value
+
+
+def test_heuristic_rejects_mismatched_wrappers() -> None:
+    assert preprocess_heuristic("[use docker)") == {
+        "outcome": "rejected",
+        "directive": None,
+        "reason": "malformed_directive",
+    }
+
+
+def test_heuristic_preserves_core_invalid_result_as_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(heuristic_module, "decompose_directive", lambda _: object())
+
+    assert preprocess_heuristic("use docker")["reason"] == "malformed_directive"
+
+
+def test_heuristic_rejects_directive_cue_when_core_returns_no_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(heuristic_module, "decompose_directive", lambda _: None)
+
+    assert preprocess_heuristic("use docker")["reason"] == "malformed_directive"
+
+
 def test_heuristic_rewrites_change_premise_missing_to_forms() -> None:
     cases = [
         ("change premise concise replies", "change premise to concise replies"),
