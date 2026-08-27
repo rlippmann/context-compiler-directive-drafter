@@ -209,8 +209,10 @@ def _public_rejection_reason(reason: str) -> RejectedReason:
         return REASON_NON_DIRECTIVE
     if reason == _REASON_INCOMPLETE_DIRECTIVE:
         return REASON_INCOMPLETE
-    if reason in {_REASON_COMPOUND_DIRECTIVE, _REASON_MULTI_SENTENCE, _REASON_UNSUPPORTED_INPUT}:
+    if reason in {_REASON_COMPOUND_DIRECTIVE, _REASON_UNSUPPORTED_INPUT}:
         return REASON_MULTIPLE_DIRECTIVES
+    if reason == _REASON_MULTI_SENTENCE:
+        return REASON_NON_DIRECTIVE
     raise ValueError(f"Unsupported terminal heuristic reason: {reason!r}")
 
 
