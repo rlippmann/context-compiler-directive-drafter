@@ -30,16 +30,16 @@ Use this package when you want to:
 - Translate user requests into safe, canonical directives.
 - Handle near-canonical input, alternate phrasing, and malformed-but-recoverable
   directive attempts before compiler handoff.
-- Distinguish "no directive" from "unknown or failed interpretation" in a
-  stable host-facing contract.
+- Distinguish terminal rejection from semantic uncertainty in a stable
+  host-facing contract.
 - Avoid accidental candidate drafts from ambiguous input.
 - Add a conservative natural-language-to-directive step before applying changes.
 
 This package owns the human-facing acquisition boundary, including exact
 canonicalization, bounded deterministic rewrites, obvious non-directive
-rejection, and fallback deferral for ambiguous interpretation. It does not
-decide whether a drafted candidate is valid, applicable, allowed, contradictory,
-or executable; Core owns those decisions.
+rejection, and fallback eligibility for semantically uncertain interpretation.
+It does not decide whether a drafted candidate is valid, applicable, allowed,
+contradictory, or executable; Core owns those decisions.
 
 The normative acquisition contract lives in [docs/DrafterAcquisitionSpec.md](docs/DrafterAcquisitionSpec.md).
 This package does not own:
@@ -89,8 +89,7 @@ elif isinstance(result.result, UnknownDirective):
 The host validates drafted output before passing a `CanonicalDirective` candidate
 to `engine.apply_directive(...)` for authoritative evaluation and application.
 
-For small runnable examples, see [examples/basic_usage.py](examples/basic_usage.py)
-and [examples/prompt_rendering.py](examples/prompt_rendering.py).
+For a small runnable example, see [examples/basic_usage.py](examples/basic_usage.py).
 
 ## English Evaluation Corpus
 
@@ -268,12 +267,14 @@ Do not pass raw model output to the compiler.
 
 ## Current Limits
 
-This package is intentionally conservative. It abstains or returns `unknown`
-when input is:
+This package is intentionally conservative. It returns `UnknownDirective` only
+when a single acquisition unit is directive-adjacent but remains semantically
+uncertain:
 
-- Ambiguous, mixed-intent, or quoted.
-- Embedded in prose, markdown, or code.
-- Not safely interpretable as one canonical directive.
+- The input may be ambiguous or not safely interpretable as one canonical
+  directive.
+- The input may be embedded in prose, markdown, or code when the heuristic
+  cannot establish a terminal non-directive boundary.
 
 Boundary rules:
 
@@ -281,7 +282,7 @@ Boundary rules:
 - Treat one sentence or one directive request as the acquisition unit. The
   drafter does not perform conversational sentence segmentation.
 - Emit at most one canonical directive.
-- Abstain when one message contains multiple directive-shaped instructions.
+- Reject when one message contains multiple directive-shaped instructions.
 - Do not mine surrounding prose for commands.
 - Do not split one message into multiple drafted directives.
 - Do not invent new directive semantics.
@@ -304,8 +305,8 @@ return `rejected`; they never reach fallback or become heuristic candidates.
 
 Quoting is intentionally distinct from quoting an operand: a full-message
 command such as `"use docker"` is treated as quoted or reported text and is
-deferred, while `use "docker"` is a canonical `use` candidate whose operand is
-the literal quoted text. The heuristic does not strip operand quotes.
+terminally rejected, while `use "docker"` is a canonical `use` candidate whose
+operand is the literal quoted text. The heuristic does not strip operand quotes.
 
 `context-compiler-directive-drafter` only proposes at most one candidate
 directive. `context-compiler` remains responsible for independently enforcing

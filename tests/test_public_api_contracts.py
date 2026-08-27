@@ -263,6 +263,7 @@ def _assert_directive_drafter_fallback_routing_probe_schema(
             "mode",
             "user_input",
             "heuristic_result",
+            "fallback_output",
             "expect_fallback_calls",
             "expect_source",
             "expect_result",
@@ -273,6 +274,7 @@ def _assert_directive_drafter_fallback_routing_probe_schema(
     assert probe["mode"] in {"sync", "async"}, label
     assert isinstance(probe["user_input"], str), label
     assert probe["heuristic_result"] in {"canonical", "rejected", "unknown"}, label
+    assert probe["fallback_output"] in {"canonical", "none", "abstention", "invalid"}, label
     assert isinstance(probe["expect_fallback_calls"], int), label
     assert probe["expect_fallback_calls"] >= 0, label
     assert isinstance(probe["expect_source"], str), label
@@ -405,17 +407,27 @@ def _assert_directive_drafter_fallback_routing_probe(
 
     if probe["mode"] == "sync":
 
-        def fallback(user_input: str) -> str:
+        def fallback(user_input: str) -> str | None:
             calls.append(user_input)
-            return "use docker"
+            return {
+                "canonical": "use docker",
+                "none": None,
+                "abstention": None,
+                "invalid": "please use docker",
+            }[probe["fallback_output"]]
 
         drafter = exported(fallback=fallback, fallback_source="contract-fallback")
         result = drafter.draft_directive(probe["user_input"])
     else:
 
-        async def fallback(user_input: str) -> str:
+        async def fallback(user_input: str) -> str | None:
             calls.append(user_input)
-            return "use docker"
+            return {
+                "canonical": "use docker",
+                "none": None,
+                "abstention": None,
+                "invalid": "please use docker",
+            }[probe["fallback_output"]]
 
         drafter = exported(
             async_fallback=fallback,
