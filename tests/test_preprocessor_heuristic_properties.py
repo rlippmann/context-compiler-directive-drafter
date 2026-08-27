@@ -5,11 +5,15 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from context_compiler_directive_drafter import heuristic_preprocessor as heuristic_module
-from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.constants import (
-    DRAFT_OUTCOME_DIRECTIVE,
-    DRAFT_OUTCOME_REJECTED,
+    _DRAFT_OUTCOME_DIRECTIVE,
+    _DRAFT_OUTCOME_REJECTED,
 )
+from context_compiler_directive_drafter.heuristic_preprocessor import _preprocess_heuristic
+
+preprocess_heuristic = _preprocess_heuristic
+DRAFT_OUTCOME_DIRECTIVE = _DRAFT_OUTCOME_DIRECTIVE
+DRAFT_OUTCOME_REJECTED = _DRAFT_OUTCOME_REJECTED
 
 CANONICAL_DIRECTIVES = [
     "set premise concise replies",

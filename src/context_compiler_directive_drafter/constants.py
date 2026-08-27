@@ -2,13 +2,13 @@
 
 from typing import Final, Literal
 
-PREPROCESSOR_NO_DIRECTIVE_SENTINEL: Final = "<NO_DIRECTIVE>"
+_PREPROCESSOR_NO_DIRECTIVE_SENTINEL: Final = "<NO_DIRECTIVE>"
 
-DRAFT_OUTCOME_DIRECTIVE: Final = "directive"
-DRAFT_OUTCOME_REJECTED: Final = "rejected"
-DRAFT_OUTCOME_UNKNOWN: Final = "unknown"
-DraftOutcome = Literal["directive", "rejected", "unknown"]
-OutputClassification = Literal["directive", "rejected"]
+_DRAFT_OUTCOME_DIRECTIVE: Final = "directive"
+_DRAFT_OUTCOME_REJECTED: Final = "rejected"
+_DRAFT_OUTCOME_UNKNOWN: Final = "unknown"
+_DraftOutcome = Literal["directive", "rejected", "unknown"]
+_OutputClassification = Literal["directive", "rejected"]
 
 REASON_NON_DIRECTIVE: Final = "non_directive"
 REASON_INCOMPLETE: Final = "incomplete"

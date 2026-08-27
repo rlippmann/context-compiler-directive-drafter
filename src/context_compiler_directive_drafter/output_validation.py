@@ -1,8 +1,5 @@
 """Shared fallback-candidate normalization and validation helpers.
 
-Public API:
-- classify_drafter_output
-
 Internal helpers are implementation details and may change.
 """
 
@@ -12,17 +9,15 @@ from typing import TypedDict
 from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from .constants import (
-    DRAFT_OUTCOME_DIRECTIVE,
-    DRAFT_OUTCOME_REJECTED,
-    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
-    OutputClassification,
+    _DRAFT_OUTCOME_DIRECTIVE,
+    _DRAFT_OUTCOME_REJECTED,
+    _PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
+    _OutputClassification,
 )
 
-__all__ = ["classify_drafter_output"]
 
-
-class PreprocessorValidationResult(TypedDict):
-    classification: OutputClassification
+class _PreprocessorValidationResult(TypedDict):
+    classification: _OutputClassification
     output: str | None
 
 
@@ -33,19 +28,19 @@ def _parse_canonical_directive(raw_output: str) -> CanonicalDirective | None:
     return None
 
 
-def _invalid() -> PreprocessorValidationResult:
-    return {"classification": DRAFT_OUTCOME_REJECTED, "output": None}
+def _invalid() -> _PreprocessorValidationResult:
+    return {"classification": _DRAFT_OUTCOME_REJECTED, "output": None}
 
 
-def _directive(output: str) -> PreprocessorValidationResult:
-    return {"classification": DRAFT_OUTCOME_DIRECTIVE, "output": output}
+def _directive(output: str) -> _PreprocessorValidationResult:
+    return {"classification": _DRAFT_OUTCOME_DIRECTIVE, "output": output}
 
 
-def _rejected() -> PreprocessorValidationResult:
-    return {"classification": DRAFT_OUTCOME_REJECTED, "output": None}
+def _rejected() -> _PreprocessorValidationResult:
+    return {"classification": _DRAFT_OUTCOME_REJECTED, "output": None}
 
 
-def _validate_structured_output(raw_output: object) -> PreprocessorValidationResult:
+def _validate_structured_output(raw_output: object) -> _PreprocessorValidationResult:
     if not isinstance(raw_output, dict):
         return _invalid()
 
@@ -57,7 +52,7 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
     if not isinstance(classification, str):
         return _invalid()
 
-    if classification == DRAFT_OUTCOME_DIRECTIVE:
+    if classification == _DRAFT_OUTCOME_DIRECTIVE:
         if not isinstance(output, str):
             return _invalid()
         parsed = _parse_canonical_directive(output)
@@ -65,7 +60,7 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
             return _invalid()
         return _directive(parsed.text)
 
-    if classification == DRAFT_OUTCOME_REJECTED:
+    if classification == _DRAFT_OUTCOME_REJECTED:
         if output is not None:
             return _invalid()
         return _rejected()
@@ -73,12 +68,12 @@ def _validate_structured_output(raw_output: object) -> PreprocessorValidationRes
     return _invalid()
 
 
-def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
+def _validate_text_output(raw_output: str) -> _PreprocessorValidationResult:
     stripped = raw_output.strip()
     if not stripped:
         return _invalid()
 
-    if stripped.upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+    if stripped.upper() == _PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
         return _rejected()
 
     parsed = _parse_canonical_directive(stripped)
@@ -95,7 +90,7 @@ def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
     return _invalid()
 
 
-def classify_drafter_output(raw_output: object) -> PreprocessorValidationResult:
+def _classify_drafter_output(raw_output: object) -> _PreprocessorValidationResult:
     """Validate raw preprocessor output into a strict classification/output result.
 
     Contract:

@@ -1,9 +1,9 @@
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from context_compiler_directive_drafter.output_validation import (
-    classify_drafter_output,
-)
+from context_compiler_directive_drafter.output_validation import _classify_drafter_output
+
+classify_drafter_output = _classify_drafter_output
 
 CANONICAL_DIRECTIVES = [
     "set premise concise replies",

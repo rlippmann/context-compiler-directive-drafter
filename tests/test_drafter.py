@@ -5,13 +5,13 @@ import pytest
 from context_compiler.grammar import decompose_directive
 
 from context_compiler_directive_drafter import (
-    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DirectiveDrafter,
     DraftResult,
     RejectedDirective,
     UnknownDirective,
 )
 from context_compiler_directive_drafter import drafter as drafter_module
+from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 
 
 def _canonical(text: str):
@@ -102,7 +102,7 @@ def test_semantic_uncertainty_is_the_only_fallback_eligible_result() -> None:
 
 def test_provider_no_directive_sentinel_maps_to_public_terminal_reason() -> None:
     result = DirectiveDrafter(
-        fallback=lambda _: f"  {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}  "
+        fallback=lambda _: f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}  "
     ).draft_directive("Could we maybe use uv later")
 
     assert result == DraftResult(
@@ -115,7 +115,7 @@ def test_unrecognized_internal_terminal_reason_is_not_silently_published(
 ) -> None:
     monkeypatch.setattr(
         drafter_module,
-        "preprocess_heuristic",
+        "_preprocess_heuristic",
         lambda _: {"outcome": "rejected", "directive": None, "reason": "unexpected"},
     )
 
@@ -242,7 +242,7 @@ def test_fallback_is_used_when_heuristic_abstains_with_unknown(
         calls.append(f"fallback:{user_input}")
         return "use docker"
 
-    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+    monkeypatch.setattr(drafter_module, "_preprocess_heuristic", heuristic)
     drafter = DirectiveDrafter(fallback=fallback, fallback_source="llm")
     result = drafter.draft_directive("Could we maybe use uv later")
 
@@ -282,7 +282,7 @@ def test_heuristic_canonical_directive_is_preserved_without_fallback(
             "directive": canonical,
         }
 
-    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+    monkeypatch.setattr(drafter_module, "_preprocess_heuristic", heuristic)
 
     drafter = DirectiveDrafter()
 
@@ -382,7 +382,7 @@ def test_heuristic_attempt_happens_before_fallback_callback(
         calls.append(f"fallback:{user_input}")
         return None
 
-    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+    monkeypatch.setattr(drafter_module, "_preprocess_heuristic", heuristic)
     drafter = DirectiveDrafter(fallback=fallback, fallback_source="llm")
 
     result = drafter.draft_directive("can you help with lunch?")
@@ -462,7 +462,7 @@ def test_async_unknown_directive_invokes_async_fallback(
         calls.append(f"fallback:{user_input}")
         return "use docker"
 
-    monkeypatch.setattr(drafter_module, "preprocess_heuristic", heuristic)
+    monkeypatch.setattr(drafter_module, "_preprocess_heuristic", heuristic)
     drafter = DirectiveDrafter(async_fallback=async_fallback, async_fallback_source="llm")
 
     result = asyncio.run(drafter.async_draft_directive("Could we maybe use uv later"))

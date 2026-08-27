@@ -17,11 +17,8 @@ from context_compiler_directive_drafter.drafter import (
 
 _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
 _REQUIRED_CONTRACT_FILES = {
-    "acquisition-v1.json",
     "high-level-drafting-v1.json",
-    "prompt-rendering-v1.json",
     "public-api-v1.json",
-    "validation-v1.json",
 }
 
 pytestmark = pytest.mark.contract
@@ -699,21 +696,13 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
     path = _CONTRACTS_DIR / "public-api-v1.json"
     contract = _load_contract(path)
     assert set(contract["exports"]["names"]) == {
-        "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
-        "DRAFT_OUTCOME_DIRECTIVE",
-        "DRAFT_OUTCOME_REJECTED",
-        "DRAFT_OUTCOME_UNKNOWN",
         "DraftResult",
-        "DraftResultType",
         "DirectiveDrafter",
         "RejectedDirective",
         "RejectedReason",
         "UnknownDirective",
-        "preprocess_heuristic",
-        "get_converter_prompt",
         "create_openai_fallback",
         "create_async_openai_fallback",
-        "classify_drafter_output",
         "REASON_NON_DIRECTIVE",
         "REASON_INCOMPLETE",
         "REASON_MULTIPLE_DIRECTIVES",

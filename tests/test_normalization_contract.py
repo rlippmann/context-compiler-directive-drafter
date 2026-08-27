@@ -3,10 +3,11 @@ from pathlib import Path
 
 from context_compiler.grammar import CanonicalDirective
 
-from context_compiler_directive_drafter import (
-    classify_drafter_output,
-    preprocess_heuristic,
-)
+from context_compiler_directive_drafter.heuristic_preprocessor import _preprocess_heuristic
+from context_compiler_directive_drafter.output_validation import _classify_drafter_output
+
+preprocess_heuristic = _preprocess_heuristic
+classify_drafter_output = _classify_drafter_output
 
 _FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "normalization-v1.json"
 

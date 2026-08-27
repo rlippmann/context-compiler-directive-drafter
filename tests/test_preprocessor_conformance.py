@@ -1,18 +1,16 @@
 import json
 from pathlib import Path
 
-import pytest
 from context_compiler.grammar import CanonicalDirective
 
-from context_compiler_directive_drafter import (
-    classify_drafter_output,
-    preprocess_heuristic,
-)
+from context_compiler_directive_drafter.heuristic_preprocessor import _preprocess_heuristic
+from context_compiler_directive_drafter.output_validation import _classify_drafter_output
+
+preprocess_heuristic = _preprocess_heuristic
+classify_drafter_output = _classify_drafter_output
 
 _PREPROCESSOR_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
 _REQUIRED_FIXTURE_FAMILIES = {"heuristic", "validator"}
-
-pytestmark = pytest.mark.contract
 
 
 def _behavior_fixture_paths() -> list[Path]:

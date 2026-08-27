@@ -11,7 +11,7 @@ from context_compiler.grammar import (
     get_directive_metadata,
 )
 
-from .constants import PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from .constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 
 _DIRECTIVE_CATEGORY_LINES = """Directive categories:
 - Premise directives record contextual or background state that is not naturally
@@ -45,34 +45,34 @@ class _AcquisitionExample:
 
 _BEHAVIOR_EXAMPLES = f"""Examples of ordinary conversation that must not become directives:
 User: can you help with lunch?
-Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+        Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: Docker seems popular in this repo.
-Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: What does clear state do?
-Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 Examples of directive discussion or unresolved multi-directive input where you must not guess:
 User: use docker?
-Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: He said "use docker".
-Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 User: prohibit peanuts and use almonds
-Output: {PREPROCESSOR_NO_DIRECTIVE_SENTINEL}"""
+Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}"""
 
 _PROMPT_SUFFIX = f"""Your task:
 - Read one user message.
 - If the message clearly establishes one state change that can be represented
   by a canonical directive, produce exactly one candidate directive in
   canonical form.
-- Otherwise output exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+- Otherwise output exactly `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
 
 Output contract:
 - A single candidate directive line in canonical form, or
-- exactly `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`
+- exactly `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`
 
 Output rules:
 - Output exactly one line.
@@ -97,9 +97,9 @@ Conversion rules:
 - Do not invent directives from ordinary conversation.
 - If the input is ordinary conversation, quoted or reported directive text,
   directive discussion, or a mixed request you cannot safely reduce to one
-  directive, output `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+  directive, output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
 
-When to output `{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
+When to output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
 - Ordinary conversation, questions, explanations, or comments.
 - Requests that do not ask to change compiler-managed behavior.
 - Questions or discussion about directives rather than a request to change behavior.
@@ -235,7 +235,7 @@ def _build_converter_prompt() -> str:
     return "\n".join(sections).strip()
 
 
-def get_converter_prompt() -> str:
+def _get_converter_prompt() -> str:
     """Return the shared converter system prompt with metadata-derived grammar facts."""
 
     return _build_converter_prompt()

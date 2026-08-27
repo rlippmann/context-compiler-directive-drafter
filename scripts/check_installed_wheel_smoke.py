@@ -45,23 +45,17 @@ def _assert_packaged_resources() -> None:
     )
 
 
-def _assert_converter_prompt_behavior() -> None:
-    contract = _load_contract("tests/fixtures/contracts/prompt-rendering-v1.json")
-    probes = contract["members"]["get_converter_prompt"]["behavior_probes"]
-    prompt = package.get_converter_prompt()
-
-    for probe in probes:
-        for substring in probe["expect_substrings"]:
-            assert substring in prompt, substring
-        for substring in probe.get("reject_substrings", []):
-            assert substring not in prompt, substring
+def _assert_supported_drafter_api() -> None:
+    result = package.DirectiveDrafter().draft_directive("use docker")
+    assert result.source == "heuristic"
+    assert result.result.text == "use docker"
 
 
 def main() -> None:
     _assert_installed_wheel_import()
     _assert_public_exports()
     _assert_packaged_resources()
-    _assert_converter_prompt_behavior()
+    _assert_supported_drafter_api()
     print("wheel-smoke: ok")
 
 
