@@ -8,7 +8,11 @@ import pytest
 from context_compiler.grammar import CanonicalDirective
 
 import context_compiler_directive_drafter as package
-from context_compiler_directive_drafter.drafter import DraftResult, NoDirective, UnknownDirective
+from context_compiler_directive_drafter.drafter import (
+    DraftResult,
+    RejectedDirective,
+    UnknownDirective,
+)
 
 _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
 _REQUIRED_CONTRACT_FILES = {
@@ -98,7 +102,7 @@ def _serialize_contract_value(value: object) -> object:
     if isinstance(value, DraftResult):
         _assert_public_data_attributes(value, {"source", "result"})
         return {"source": value.source, "result": _serialize_contract_value(value.result)}
-    if isinstance(value, NoDirective | UnknownDirective):
+    if isinstance(value, RejectedDirective | UnknownDirective):
         _assert_public_data_attributes(value, {"reason"})
         return {"reason": value.reason}
     if isinstance(value, dict):
@@ -270,7 +274,7 @@ def _assert_directive_drafter_fallback_routing_probe_schema(
     assert probe["kind"] == "directive_drafter_fallback_routing", label
     assert probe["mode"] in {"sync", "async"}, label
     assert isinstance(probe["user_input"], str), label
-    assert probe["heuristic_result"] in {"canonical", "no_directive", "unknown"}, label
+    assert probe["heuristic_result"] in {"canonical", "rejected", "unknown"}, label
     assert isinstance(probe["expect_fallback_calls"], int), label
     assert probe["expect_fallback_calls"] >= 0, label
     assert isinstance(probe["expect_source"], str), label
@@ -426,9 +430,9 @@ def _assert_directive_drafter_fallback_routing_probe(
     if probe["heuristic_result"] == "canonical":
         assert result.source == "heuristic"
         assert isinstance(result.result, CanonicalDirective)
-    elif probe["heuristic_result"] == "no_directive":
+    elif probe["heuristic_result"] == "rejected":
         assert result.source == "heuristic"
-        assert isinstance(result.result, NoDirective)
+        assert isinstance(result.result, RejectedDirective)
     else:
         assert probe["heuristic_result"] == "unknown"
         assert len(calls) == 1
@@ -668,18 +672,29 @@ def test_public_api_surface_contract_matches_exact_export_set() -> None:
     assert set(contract["exports"]["names"]) == {
         "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
         "DRAFT_OUTCOME_DIRECTIVE",
-        "DRAFT_OUTCOME_NO_DIRECTIVE",
+        "DRAFT_OUTCOME_REJECTED",
         "DRAFT_OUTCOME_UNKNOWN",
         "DraftResult",
         "DraftResultType",
         "DirectiveDrafter",
-        "NoDirective",
+        "RejectedDirective",
         "UnknownDirective",
         "preprocess_heuristic",
         "get_converter_prompt",
         "create_openai_fallback",
         "create_async_openai_fallback",
         "classify_drafter_output",
+        "REASON_ORDINARY_NON_DIRECTIVE",
+        "REASON_QUESTION_FORM",
+        "REASON_QUOTED_REPORTED",
+        "REASON_INCOMPLETE_DIRECTIVE",
+        "REASON_COMPOUND_DIRECTIVE",
+        "REASON_MULTI_SENTENCE",
+        "REASON_MALFORMED_DIRECTIVE",
+        "REASON_UNSUPPORTED_INPUT",
+        "REASON_INVALID_FALLBACK_OUTPUT",
+        "REASON_FALLBACK_NO_CANDIDATE",
+        "REASON_SEMANTIC_UNCERTAINTY",
     }
 
 

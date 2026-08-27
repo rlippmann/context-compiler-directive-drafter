@@ -2,8 +2,8 @@
   "name": "mixed-intent-use-docker-because-repo-has-docker-unknown",
   "input": "use docker because this repo already has Docker",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.multi_segment_or_mixed_prose"
+    "reason": "compound_directive"
   }
 }

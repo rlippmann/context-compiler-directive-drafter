@@ -3,7 +3,7 @@
   "kind": "validator",
   "raw_output": "<NO_DIRECTIVE>",
   "expected": {
-    "classification": "no_directive",
+    "classification": "rejected",
     "output": null
   }
 }

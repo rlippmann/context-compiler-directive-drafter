@@ -14,7 +14,7 @@ _CORPUS_PATH = (
 )
 _FIXTURES_PATH = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
 _CLASSIFICATIONS = {"CONTRACT", "EVALUATION", "BOTH"}
-_OUTCOMES = {"directive", "no_directive", "unknown"}
+_OUTCOMES = {"directive", "rejected", "unknown"}
 _PATHS = {"heuristic", "fallback", "either"}
 _CATEGORIES = {
     "canonical_exact",

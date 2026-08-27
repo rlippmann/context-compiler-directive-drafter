@@ -19,7 +19,7 @@ from context_compiler.grammar import CanonicalDirective
 
 from context_compiler_directive_drafter import (
     DirectiveDrafter,
-    NoDirective,
+    RejectedDirective,
     UnknownDirective,
     create_openai_fallback,
 )
@@ -95,8 +95,8 @@ def select_cases(
 def _actual_variant(result: DraftResult) -> tuple[str, str | None]:
     if isinstance(result.result, CanonicalDirective):
         return "directive", result.result.text
-    if isinstance(result.result, NoDirective):
-        return "no_directive", None
+    if isinstance(result.result, RejectedDirective):
+        return "rejected", None
     if isinstance(result.result, UnknownDirective):
         return "unknown", None
     raise TypeError(f"Unsupported DraftResult variant: {type(result.result)!r}")
@@ -184,8 +184,8 @@ def score_case(
 
     if (
         fallback_invoked
-        and isinstance(result.result, UnknownDirective)
-        and result.result.reason == "invalid_canonical_directive"
+        and isinstance(result.result, RejectedDirective)
+        and result.result.reason == "invalid_fallback_output"
     ):
         failure: tuple[str, str] | None = _failure(
             "invalid_fallback_output", "fallback output was not a canonical directive"

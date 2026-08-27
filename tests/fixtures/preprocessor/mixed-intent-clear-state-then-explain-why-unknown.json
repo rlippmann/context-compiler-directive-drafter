@@ -2,8 +2,8 @@
   "name": "mixed-intent-clear-state-then-explain-why-unknown",
   "input": "clear state, then explain why",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "malformed_directive"
   }
 }

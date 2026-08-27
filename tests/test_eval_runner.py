@@ -4,7 +4,7 @@ from pathlib import Path
 
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter import DraftResult, NoDirective
+from context_compiler_directive_drafter import DraftResult, RejectedDirective
 from evals.runners.directive_drafter_en import (
     build_parser,
     load_corpus,
@@ -63,7 +63,7 @@ def test_load_and_select_cases_support_filters_and_limit(tmp_path: Path) -> None
 
 def test_heuristic_handled_case_uses_normal_expectations() -> None:
     case = _case(
-        expected_outcome="no_directive",
+        expected_outcome="rejected",
         expected_directive=None,
         fallback_expectation={
             "preferred_outcome": "directive",
@@ -74,7 +74,7 @@ def test_heuristic_handled_case_uses_normal_expectations() -> None:
 
     record = score_case(
         case,
-        DraftResult(source="heuristic", result=NoDirective(reason="confident_non_directive")),
+        DraftResult(source="heuristic", result=RejectedDirective(reason="ordinary_non_directive")),
         fallback_invoked=False,
     )
 
@@ -86,7 +86,7 @@ def test_heuristic_handled_case_uses_normal_expectations() -> None:
 def test_fallback_invocation_and_raw_response_are_recorded() -> None:
     case = _case(
         id="unknown",
-        input="use docker?",
+        input="Could we maybe use uv later",
         expected_outcome="unknown",
         expected_directive=None,
         expected_path="fallback",
@@ -104,7 +104,7 @@ def test_fallback_invocation_and_raw_response_are_recorded() -> None:
 
     records = run_cases([case], fallback)
 
-    assert calls == ["use docker?"]
+    assert calls == ["Could we maybe use uv later"]
     assert records[0]["fallback_invoked"] is True
     assert records[0]["fallback_invocation_count"] == 1
     assert records[0]["raw_fallback_response"] == "use podman"
@@ -128,13 +128,13 @@ def test_heuristic_handled_case_does_not_invoke_fallback() -> None:
 
 def test_invalid_fallback_output_preserves_raw_model_text() -> None:
     case = _case(
-        input="use docker?",
+        input="Could we maybe use uv later",
         expected_outcome="unknown",
         expected_directive=None,
         expected_path="fallback",
         fallback_expectation={
             "preferred_outcome": "unknown",
-            "acceptable_outcomes": ["unknown", "no_directive"],
+            "acceptable_outcomes": ["unknown", "rejected"],
         },
     )
 
@@ -142,7 +142,7 @@ def test_invalid_fallback_output_preserves_raw_model_text() -> None:
 
     assert records[0]["failure_category"] == "invalid_fallback_output"
     assert records[0]["raw_fallback_response"] == "not a canonical directive"
-    assert records[0]["actual_outcome"] == "unknown"
+    assert records[0]["actual_outcome"] == "rejected"
 
 
 def test_semantic_pass_with_path_mismatch_is_reported_separately() -> None:
@@ -204,14 +204,14 @@ def test_summary_counts_contractual_routing_mismatch_as_failed() -> None:
 
 def test_acceptable_fallback_abstention_passes_and_records_none_response() -> None:
     case = _case(
-        input="use docker?",
+        input="Could we maybe use uv later",
         expected_outcome="unknown",
         expected_directive=None,
         expected_path="fallback",
         fallback_expectation={
             "preferred_outcome": "directive",
             "preferred_directive": "use podman",
-            "acceptable_outcomes": ["directive", "unknown", "no_directive"],
+            "acceptable_outcomes": ["directive", "unknown", "rejected"],
         },
     )
 
@@ -227,13 +227,13 @@ def test_summary_fallback_count_uses_callback_observation() -> None:
         _case(id="heuristic", input="use docker"),
         _case(
             id="fallback",
-            input="use docker?",
+            input="Could we maybe use uv later",
             expected_outcome="unknown",
             expected_directive=None,
             expected_path="fallback",
             fallback_expectation={
                 "preferred_outcome": "unknown",
-                "acceptable_outcomes": ["unknown", "no_directive"],
+                "acceptable_outcomes": ["unknown", "rejected"],
             },
         ),
     ]
@@ -253,7 +253,7 @@ def test_summary_report_and_jsonl_output(tmp_path: Path) -> None:
             DraftResult(source="heuristic", result=_canonical("use docker")),
         ),
         score_case(
-            _case(id="two", expected_outcome="no_directive", expected_directive=None),
+            _case(id="two", expected_outcome="rejected", expected_directive=None),
             DraftResult(source="heuristic", result=_canonical("use docker")),
         ),
     ]

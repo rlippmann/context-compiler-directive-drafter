@@ -18,33 +18,33 @@ def test_validate_text_accepts_canonical_directive() -> None:
     }
 
 
-def test_validate_text_accepts_exact_no_directive_sentinel() -> None:
+def test_validate_text_rejects_exact_no_directive_sentinel() -> None:
     result = classify_drafter_output("<NO_DIRECTIVE>")
     assert result == {
-        "classification": "no_directive",
+        "classification": "rejected",
         "output": None,
     }
 
 
-def test_validate_text_rejects_malformed_or_mixed_output_as_unknown() -> None:
+def test_validate_text_rejects_malformed_or_mixed_output() -> None:
     assert classify_drafter_output("<NO_DIRECTIPLE>") == {
-        "classification": "unknown",
+        "classification": "rejected",
         "output": None,
     }
     assert classify_drafter_output("set premise to concise replies") == {
-        "classification": "unknown",
+        "classification": "rejected",
         "output": None,
     }
     assert classify_drafter_output("prohibit peanuts and use almonds") == {
-        "classification": "unknown",
+        "classification": "rejected",
         "output": None,
     }
     assert classify_drafter_output("clear premise and reset policies") == {
-        "classification": "unknown",
+        "classification": "rejected",
         "output": None,
     }
     assert classify_drafter_output("remove policy docker\nuse podman") == {
-        "classification": "unknown",
+        "classification": "rejected",
         "output": None,
     }
 
@@ -62,11 +62,11 @@ def test_validate_structured_output_accepts_strict_contract_shape() -> None:
 
     assert classify_drafter_output(
         {
-            "classification": "no_directive",
+            "classification": "rejected",
             "output": None,
         }
     ) == {
-        "classification": "no_directive",
+        "classification": "rejected",
         "output": None,
     }
 
@@ -76,7 +76,7 @@ def test_validate_structured_output_accepts_strict_contract_shape() -> None:
             "output": None,
         }
     ) == {
-        "classification": "unknown",
+        "classification": "rejected",
         "output": None,
     }
 
@@ -91,7 +91,7 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
         {"classification": "directive", "output": None},
         {"classification": "directive", "output": ""},
         {"classification": "directive", "output": "set premise to concise replies"},
-        {"classification": "no_directive", "output": "clear state"},
+        {"classification": "rejected", "output": "clear state"},
         {"classification": "unknown", "output": "clear state"},
         {"classification": "unsupported_action", "output": None},
         {"classification": "directive", "output": "clear state\nreset policies"},
@@ -102,12 +102,12 @@ def test_validate_structured_output_rejects_malformed_shape_or_payload_as_unknow
         {"classification": "directive", "output": "clear state", "extra": True},
         {"classification": "directive", "output": "use docker", "extra": True},
         {"classification": "directive", "output": "use docker", "extra_field": "use docker"},
-        {"classification": "no_directive", "output": None, "extra": "hello"},
+        {"classification": "rejected", "output": None, "extra": "hello"},
         {"action": "prohibit", "item": "peanuts"},
     ]
     for raw in cases:
         assert classify_drafter_output(raw) == {
-            "classification": "unknown",
+            "classification": "rejected",
             "output": None,
         }
 

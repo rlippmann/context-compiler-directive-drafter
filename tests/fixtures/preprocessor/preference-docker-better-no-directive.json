@@ -4,6 +4,6 @@
   "expected": {
     "outcome": "unknown",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "semantic_uncertainty"
   }
 }

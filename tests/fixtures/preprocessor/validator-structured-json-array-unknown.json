@@ -8,7 +8,7 @@
     }
   ],
   "expected": {
-    "classification": "unknown",
+    "classification": "rejected",
     "output": null
   }
 }

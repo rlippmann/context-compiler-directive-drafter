@@ -2,8 +2,8 @@
   "name": "near-miss-change-premise-to-empty-unknown",
   "input": "change premise to",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "incomplete_directive"
   }
 }

@@ -21,7 +21,7 @@ Required fields:
 - `language`: `en` for this initial corpus;
 - `classification`: `CONTRACT`, `EVALUATION`, or `BOTH`;
 - `input`: one English user message;
-- `expected_outcome`: `directive`, `no_directive`, or `unknown`;
+- `expected_outcome`: `directive`, `rejected`, or `unknown`;
 - `expected_directive`: canonical directive text, or `null`;
 - `expected_path`: `heuristic`, `fallback`, or `either`;
 - `category` and `domain`;
@@ -56,12 +56,11 @@ outcome, preferred canonical candidate, and acceptable abstentions. Fallback
 behavior is not treated as a hard contract unless the case is explicitly
 promoted.
 
-`no_directive` means the heuristic has positive evidence that the complete
-input is confidently non-directive. `unknown` means the heuristic cannot
-confidently produce one candidate and cannot confidently classify the input as
-non-directive; an eligible host may send it to fallback. Obvious
-multi-sentence input remains `no_directive` because sentence segmentation
-belongs to the host.
+`rejected` means acquisition is terminal and must not reach fallback. This
+includes ordinary prose, questions, quoted or reported commands, incomplete
+directives, and compound or malformed directive-shaped input. `unknown` means
+semantic interpretation remains plausible but the heuristic cannot confidently
+produce one candidate; only this outcome is eligible for fallback.
 
 ## Conformance relationship
 

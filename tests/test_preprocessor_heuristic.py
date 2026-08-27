@@ -32,22 +32,22 @@ def test_heuristic_rejects_consistent_high_risk_non_directives() -> None:
 
     for message in cases:
         result = preprocess_heuristic(message)
-        assert result["outcome"] == "unknown"
+        assert result["outcome"] == "rejected"
         assert result["directive"] is None
         assert result["reason"] is not None
 
 
 def test_heuristic_rejects_structural_near_miss_alias_forms() -> None:
     cases = [
-        ("use instead of pytest", "reject.ambiguous_candidate"),
-        ("use uv not pip", "reject.ambiguous_candidate"),
-        ("wipe policies", "reject.unsupported_alias"),
-        ("reset policy", "reject.unsupported_alias"),
-        ("remove policies shell", "reject.unsupported_alias"),
+        ("use instead of pytest", "compound_directive"),
+        ("use uv not pip", "compound_directive"),
+        ("wipe policies", "malformed_directive"),
+        ("reset policy", "malformed_directive"),
+        ("remove policies shell", "malformed_directive"),
     ]
     for message, reason in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
             "reason": reason,
         }
@@ -80,9 +80,9 @@ def test_heuristic_rejects_quoted_or_backticked_exact_directives() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.quoted_exact",
+            "reason": "quoted_reported",
         }
 
 
@@ -102,9 +102,9 @@ def test_heuristic_case_normalizes_exact_command_shapes() -> None:
 
 def test_heuristic_question_mark_only_non_directive_is_confident() -> None:
     assert preprocess_heuristic("can you help with lunch?") == {
-        "outcome": "no_directive",
+        "outcome": "rejected",
         "directive": None,
-        "reason": "reject.confident_non_directive",
+        "reason": "ordinary_non_directive",
     }
 
 
@@ -117,7 +117,7 @@ def test_heuristic_rejects_question_mark_after_directive_like_text() -> None:
     ]
     for message in cases:
         result = preprocess_heuristic(message)
-        assert result["outcome"] == "unknown"
+        assert result["outcome"] == "rejected"
         assert result["directive"] is None
         assert result["reason"] is not None
 
@@ -132,9 +132,9 @@ def test_heuristic_rejects_meta_reporting_or_example_prefixes() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.meta_or_reporting",
+            "reason": "quoted_reported",
         }
 
 
@@ -145,9 +145,9 @@ def test_heuristic_rejects_reported_quoted_directives_structurally() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.quoted_reported",
+            "reason": "quoted_reported",
         }
 
 
@@ -159,9 +159,9 @@ def test_heuristic_rejects_list_or_enumeration_inputs() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.list_or_enumeration",
+            "reason": "unsupported_input",
         }
 
 
@@ -172,9 +172,9 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.multi_segment_or_mixed_prose",
+            "reason": "compound_directive",
         }
 
 
@@ -185,9 +185,9 @@ def test_heuristic_rejects_obvious_multi_sentence_input_for_host_segmentation() 
         "please use docker. thanks.",
     ]:
         assert preprocess_heuristic(message) == {
-            "outcome": "no_directive",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.multi_sentence_host_segmentation",
+            "reason": "multi_sentence",
         }
 
 
@@ -240,9 +240,9 @@ def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.cannot_confidently_reduce",
+            "reason": "compound_directive",
         }
 
 
@@ -254,19 +254,19 @@ def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start
     assert preprocess_heuristic("misuse docker and prohibitively expensive peanuts") == {
         "outcome": "unknown",
         "directive": None,
-        "reason": "reject.cannot_confidently_reduce",
+        "reason": "semantic_uncertainty",
     }
 
 
 def test_heuristic_rejects_incomplete_or_ambiguous_replacement_syntax() -> None:
     cases = [
-        ("use instead of docker", "reject.ambiguous_candidate"),
-        ("use podman instead of", "reject.cannot_confidently_reduce"),
-        ("use podman not docker", "reject.ambiguous_candidate"),
+        ("use instead of docker", "compound_directive"),
+        ("use podman instead of", "incomplete_directive"),
+        ("use podman not docker", "compound_directive"),
     ]
     for message, reason in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
             "reason": reason,
         }
@@ -279,9 +279,9 @@ def test_heuristic_rejects_admin_near_miss_aliases() -> None:
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.unsupported_alias",
+            "reason": "malformed_directive",
         }
 
 
@@ -293,9 +293,9 @@ def test_heuristic_rejects_notes_and_reporting_with_bracketed_mentions() -> None
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "unknown",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.quoted_reported_bracket",
+            "reason": "quoted_reported",
         }
 
 
@@ -325,9 +325,9 @@ def test_heuristic_rewrites_prohibition_aliases() -> None:
 
 def test_heuristic_does_not_canonicalize_set_premise_to_with_empty_payload() -> None:
     assert preprocess_heuristic("set premise to   ") == {
-        "outcome": "unknown",
+        "outcome": "rejected",
         "directive": None,
-        "reason": "reject.cannot_confidently_reduce",
+        "reason": "incomplete_directive",
     }
 
 
@@ -373,9 +373,9 @@ def test_heuristic_rewrites_change_premise_missing_to_forms() -> None:
 
 def test_heuristic_does_not_canonicalize_change_premise_with_empty_payload() -> None:
     assert preprocess_heuristic("change premise   ") == {
-        "outcome": "unknown",
+        "outcome": "rejected",
         "directive": None,
-        "reason": "reject.cannot_confidently_reduce",
+        "reason": "incomplete_directive",
     }
 
 
@@ -389,9 +389,9 @@ def test_heuristic_rewrites_polite_change_premise_form() -> None:
 def test_heuristic_does_not_strip_please_from_mixed_prose() -> None:
     result = preprocess_heuristic("please use docker because containers are nice")
     assert result == {
-        "outcome": "unknown",
+        "outcome": "rejected",
         "directive": None,
-        "reason": "reject.multi_segment_or_mixed_prose",
+        "reason": "compound_directive",
     }
 
 
@@ -465,9 +465,9 @@ def test_heuristic_directive_shaped_text_does_not_bypass_grammar_validation() ->
 def test_heuristic_unknown_directive_like_text_remains_non_canonical() -> None:
     result = preprocess_heuristic("wipe policies")
     assert result == {
-        "outcome": "unknown",
+        "outcome": "rejected",
         "directive": None,
-        "reason": "reject.unsupported_alias",
+        "reason": "malformed_directive",
     }
 
 
@@ -478,7 +478,7 @@ def test_heuristic_returns_unknown_for_unresolved_cases() -> None:
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.cannot_confidently_reduce",
+            "reason": "semantic_uncertainty",
         }
 
 
@@ -492,9 +492,9 @@ def test_heuristic_returns_no_directive_for_ordinary_non_directive_content() -> 
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
-            "outcome": "no_directive",
+            "outcome": "rejected",
             "directive": None,
-            "reason": "reject.confident_non_directive",
+            "reason": "ordinary_non_directive",
         }
 
 
@@ -507,7 +507,7 @@ def test_heuristic_does_not_ignore_directive_adjacent_text_after_greeting() -> N
         assert preprocess_heuristic(message) == {
             "outcome": "unknown",
             "directive": None,
-            "reason": "reject.cannot_confidently_reduce",
+            "reason": "semantic_uncertainty",
         }
 
 

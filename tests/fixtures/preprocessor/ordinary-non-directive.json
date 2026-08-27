@@ -2,8 +2,8 @@
   "name": "ordinary-non-directive",
   "input": "thanks for the help today",
   "expected": {
-    "outcome": "no_directive",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.confident_non_directive"
+    "reason": "ordinary_non_directive"
   }
 }

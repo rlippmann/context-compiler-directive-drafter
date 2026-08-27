@@ -2,8 +2,8 @@
   "name": "rejected-ambiguous-not-replacement",
   "input": "use uv not pip",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.ambiguous_candidate"
+    "reason": "compound_directive"
   }
 }

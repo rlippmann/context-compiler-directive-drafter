@@ -2,8 +2,8 @@
   "name": "compound-remove-policy-newline-use-unknown",
   "input": "remove policy docker\nuse podman",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "compound_directive"
   }
 }

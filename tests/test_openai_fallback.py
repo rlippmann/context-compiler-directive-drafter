@@ -9,7 +9,7 @@ from context_compiler_directive_drafter import (
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DirectiveDrafter,
     DraftResult,
-    NoDirective,
+    RejectedDirective,
     create_async_openai_fallback,
     create_openai_fallback,
 )
@@ -222,7 +222,7 @@ def test_callback_works_with_existing_drafter_fallback_pipeline(
         fallback_source="openai-compatible",
     )
 
-    result = drafter.draft_directive("use docker?")
+    result = drafter.draft_directive("Could we maybe use uv later")
 
     assert result.source == "openai-compatible"
     assert result.result.text == "use docker"
@@ -241,9 +241,9 @@ def test_no_directive_sentinel_produces_drafter_no_directive(
         fallback_source="openai-compatible",
     )
 
-    result = drafter.draft_directive("use docker?")
+    result = drafter.draft_directive("Could we maybe use uv later")
 
     assert result == DraftResult(
         source="openai-compatible",
-        result=NoDirective(reason="fallback_no_candidate"),
+        result=RejectedDirective(reason="fallback_no_candidate"),
     )

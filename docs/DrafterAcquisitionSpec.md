@@ -55,7 +55,7 @@ A drafted directive is a proposal only.
 The drafter accepts one sentence or one directive request as its acquisition
 unit. It does not split conversational input into multiple sentences and does
 not emit multiple candidates. Obvious multi-sentence input is outside that
-unit and returns `no_directive`, with responsibility for segmentation left to
+unit and returns `rejected`, with responsibility for segmentation left to
 the host. A host may segment the message and submit the resulting units to the
 drafter individually.
 
@@ -66,14 +66,15 @@ reach fallback through this boundary.
 
 The outcome distinction is evidence-based:
 
-- `no_directive` requires positive evidence that the acquisition unit is
-  confidently non-directive;
+- `rejected` is terminal and covers confidently ordinary input as well as
+  questions, quoted or reported commands, incomplete directives, and compound
+  or malformed directive-shaped input;
 - `unknown` means that the drafter cannot confidently produce one candidate and
   cannot confidently classify the input as non-directive, so fallback may
   interpret it.
 
 Failure to recognize canonical syntax or a bounded rewrite is not sufficient by
-itself to return `no_directive`. Preference, evaluative, factual, or otherwise
+itself to return `rejected`. Preference, evaluative, factual, or otherwise
 directive-adjacent language remains `unknown` unless a separate deterministic
 boundary establishes that it is confidently non-directive. The heuristic does
 not interpret such language into directives as part of this distinction.

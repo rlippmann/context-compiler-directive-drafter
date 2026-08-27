@@ -46,7 +46,7 @@
               "classification": {
                 "type": "string",
                 "enum": [
-                  "no_directive",
+                  "rejected",
                   "unknown"
                 ]
               },

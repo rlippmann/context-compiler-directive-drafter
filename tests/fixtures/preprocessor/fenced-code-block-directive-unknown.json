@@ -2,8 +2,8 @@
   "name": "fenced-code-block-directive-unknown",
   "input": "```\nuse docker\n```",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.quoted_exact"
+    "reason": "quoted_reported"
   }
 }

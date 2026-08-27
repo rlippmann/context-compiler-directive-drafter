@@ -2,8 +2,8 @@
   "name": "malformed-wrapper-use-unknown",
   "input": "(use)",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "incomplete_directive"
   }
 }

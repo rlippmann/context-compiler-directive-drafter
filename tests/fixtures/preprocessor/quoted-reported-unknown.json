@@ -2,8 +2,8 @@
   "name": "quoted-reported-unknown",
   "input": "he said \"use docker\".",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.meta_or_reporting"
+    "reason": "quoted_reported"
   }
 }

@@ -3,7 +3,7 @@
   "kind": "validator",
   "raw_output": "[{\"classification\":\"directive\",\"output\":\"use docker\"}]",
   "expected": {
-    "classification": "unknown",
+    "classification": "rejected",
     "output": null
   }
 }

@@ -2,31 +2,38 @@
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import cast
 
 from context_compiler.grammar import CanonicalDirective, decompose_directive
 
+from context_compiler_directive_drafter.constants import (
+    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
+    REASON_FALLBACK_NO_CANDIDATE,
+    REASON_INVALID_FALLBACK_OUTPUT,
+    RejectedReason,
+    UnknownReason,
+)
 from context_compiler_directive_drafter.heuristic_preprocessor import (
     PreprocessResult,
     preprocess_heuristic,
 )
-from context_compiler_directive_drafter.output_validation import classify_drafter_output
 
 
 @dataclass(frozen=True)
 class UnknownDirective:
-    """Represent an unresolved drafting result."""
+    """Represent semantic uncertainty that may be sent to fallback."""
 
-    reason: str
+    reason: UnknownReason
 
 
 @dataclass(frozen=True)
-class NoDirective:
-    """Represent a confident non-directive drafting result."""
+class RejectedDirective:
+    """Represent a terminal acquisition rejection."""
 
-    reason: str
+    reason: RejectedReason
 
 
-DraftResultType = CanonicalDirective | UnknownDirective | NoDirective
+DraftResultType = CanonicalDirective | RejectedDirective | UnknownDirective
 
 
 @dataclass(frozen=True)
@@ -171,9 +178,15 @@ def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> Dra
     reason = heuristic_result["reason"]
 
     if heuristic_result["outcome"] == "unknown":
-        return DraftResult(source="heuristic", result=UnknownDirective(reason=reason))
+        return DraftResult(
+            source="heuristic",
+            result=UnknownDirective(reason=cast(UnknownReason, reason)),
+        )
 
-    return DraftResult(source="heuristic", result=NoDirective(reason=reason))
+    return DraftResult(
+        source="heuristic",
+        result=RejectedDirective(reason=cast(RejectedReason, reason)),
+    )
 
 
 def _is_fallback_eligible(drafted: DraftResult) -> bool:
@@ -182,18 +195,22 @@ def _is_fallback_eligible(drafted: DraftResult) -> bool:
 
 def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str) -> DraftResult:
     if fallback_text is None:
-        return DraftResult(source=source, result=NoDirective(reason="fallback_no_candidate"))
-
-    validated = classify_drafter_output(fallback_text)
-    if validated["classification"] != "directive":
         return DraftResult(
             source=source,
-            result=UnknownDirective(reason="invalid_canonical_directive"),
+            result=RejectedDirective(reason=REASON_FALLBACK_NO_CANDIDATE),
         )
 
-    output = validated["output"]
-    assert isinstance(output, str)
-    parsed = decompose_directive(output)
-    assert isinstance(parsed, CanonicalDirective)
+    if fallback_text.strip().upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+        return DraftResult(
+            source=source,
+            result=RejectedDirective(reason=REASON_FALLBACK_NO_CANDIDATE),
+        )
 
-    return DraftResult(source=source, result=parsed)
+    parsed = decompose_directive(fallback_text.strip())
+    if isinstance(parsed, CanonicalDirective):
+        return DraftResult(source=source, result=parsed)
+
+    return DraftResult(
+        source=source,
+        result=RejectedDirective(reason=REASON_INVALID_FALLBACK_OUTPUT),
+    )
