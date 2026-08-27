@@ -1,6 +1,8 @@
 from context_compiler.grammar import decompose_directive
 
-from context_compiler_directive_drafter.output_validation import classify_drafter_output
+from context_compiler_directive_drafter.output_validation import _classify_drafter_output
+
+classify_drafter_output = _classify_drafter_output
 
 
 def test_core_canonical_validation_accepts_canonical_shapes() -> None:

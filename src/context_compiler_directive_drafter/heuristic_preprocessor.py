@@ -16,6 +16,9 @@ from context_compiler.grammar import (
 )
 
 from .constants import (
+    _DRAFT_OUTCOME_DIRECTIVE,
+    _DRAFT_OUTCOME_REJECTED,
+    _DRAFT_OUTCOME_UNKNOWN,
     _REASON_COMPOUND_DIRECTIVE,
     _REASON_INCOMPLETE_DIRECTIVE,
     _REASON_MALFORMED_DIRECTIVE,
@@ -25,24 +28,21 @@ from .constants import (
     _REASON_QUOTED_REPORTED,
     _REASON_SEMANTIC_UNCERTAINTY,
     _REASON_UNSUPPORTED_INPUT,
-    DRAFT_OUTCOME_DIRECTIVE,
-    DRAFT_OUTCOME_REJECTED,
-    DRAFT_OUTCOME_UNKNOWN,
 )
 
 
-class DirectivePreprocessResult(TypedDict):
+class _DirectivePreprocessResult(TypedDict):
     outcome: Literal["directive"]
     directive: CanonicalDirective
 
 
-class NonDirectivePreprocessResult(TypedDict):
+class _NonDirectivePreprocessResult(TypedDict):
     outcome: Literal["rejected", "unknown"]
     directive: None
     reason: str
 
 
-PreprocessResult = DirectivePreprocessResult | NonDirectivePreprocessResult
+_PreprocessResult = _DirectivePreprocessResult | _NonDirectivePreprocessResult
 
 
 _REPORTING_BRACKET_MARKERS = (
@@ -282,14 +282,14 @@ def _is_unsupported_alias(message: str) -> bool:
     return any(pattern.fullmatch(message) for pattern in _UNSUPPORTED_ALIAS_PATTERNS)
 
 
-def preprocess_heuristic(message: str) -> PreprocessResult:
+def _preprocess_heuristic(message: str) -> _PreprocessResult:
     """Run the bounded structural heuristic preprocessing pass.
 
     Args:
         message: Raw user text to evaluate as a possible directive.
 
     Returns:
-        A PreprocessResult with:
+        An internal preprocessing result with:
         - outcome="directive" and a canonical directive object when matched
         - outcome="rejected" when the input is terminally undraftable
         - outcome="unknown" when unresolved and fallback may interpret it
@@ -302,7 +302,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
     """
     if _LIST_MARKER_PATTERN.match(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_UNSUPPORTED_INPUT,
         }
@@ -315,70 +315,70 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         or normalized.startswith("i prefer")
     ):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_QUESTION_FORM,
         }
 
     if "?" in message:
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_ORDINARY_NON_DIRECTIVE,
         }
 
     if _CONFIDENT_NON_DIRECTIVE_PATTERN.fullmatch(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_ORDINARY_NON_DIRECTIVE,
         }
 
     if _META_PREFIX_PATTERN.match(normalized):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _matches_multi_segment_pattern(normalized):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     if _contains_reporting_bracket_mention(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _is_quoted_or_backtick_wrapped(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _is_reported_quoted_directive(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_QUOTED_REPORTED,
         }
 
     if _MALFORMED_DIRECTIVE_LOOKALIKE_PATTERN.fullmatch(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     if _has_obvious_multi_sentence_boundary(message):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_MULTI_SENTENCE,
         }
@@ -388,7 +388,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         " because " in normalized_candidate or " and i prefer " in normalized_candidate
     ):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": _DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
             "reason": _REASON_SEMANTIC_UNCERTAINTY,
         }
@@ -401,42 +401,42 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
         and (normalized_candidate[0], normalized_candidate[-1]) not in _WRAPPER_PAIRS
     ):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     if _matches_multi_segment_pattern(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     if _is_ambiguous_alias(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_COMPOUND_DIRECTIVE,
         }
 
     if _is_incomplete_directive(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_INCOMPLETE_DIRECTIVE,
         }
 
     if _is_unsupported_alias(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     if _has_multiple_directive_starts(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_COMPOUND_DIRECTIVE,
         }
@@ -444,13 +444,13 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
     decomposed = decompose_directive(normalized_candidate)
     if isinstance(decomposed, CanonicalDirective):
         return {
-            "outcome": DRAFT_OUTCOME_DIRECTIVE,
+            "outcome": _DRAFT_OUTCOME_DIRECTIVE,
             "directive": decomposed,
         }
 
     if decomposed is not None:
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": (
                 _REASON_INCOMPLETE_DIRECTIVE
@@ -461,13 +461,13 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     if _DIRECTIVE_REWRITE_CUE_PATTERN.match(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_REJECTED,
+            "outcome": _DRAFT_OUTCOME_REJECTED,
             "directive": None,
             "reason": _REASON_MALFORMED_DIRECTIVE,
         }
 
     return {
-        "outcome": DRAFT_OUTCOME_UNKNOWN,
+        "outcome": _DRAFT_OUTCOME_UNKNOWN,
         "directive": None,
         "reason": _REASON_SEMANTIC_UNCERTAINTY,
     }

@@ -7,6 +7,7 @@ from typing import cast
 from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter.constants import (
+    _PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     _REASON_COMPOUND_DIRECTIVE,
     _REASON_INCOMPLETE_DIRECTIVE,
     _REASON_MALFORMED_DIRECTIVE,
@@ -15,7 +16,6 @@ from context_compiler_directive_drafter.constants import (
     _REASON_QUESTION_FORM,
     _REASON_QUOTED_REPORTED,
     _REASON_UNSUPPORTED_INPUT,
-    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     REASON_INCOMPLETE,
     REASON_INVALID_CANDIDATE,
     REASON_MULTIPLE_DIRECTIVES,
@@ -24,8 +24,8 @@ from context_compiler_directive_drafter.constants import (
     UnknownReason,
 )
 from context_compiler_directive_drafter.heuristic_preprocessor import (
-    PreprocessResult,
-    preprocess_heuristic,
+    _preprocess_heuristic,
+    _PreprocessResult,
 )
 
 
@@ -43,7 +43,7 @@ class RejectedDirective:
     reason: RejectedReason
 
 
-DraftResultType = CanonicalDirective | RejectedDirective | UnknownDirective
+_DraftResultType = CanonicalDirective | RejectedDirective | UnknownDirective
 
 
 @dataclass(frozen=True)
@@ -56,11 +56,11 @@ class DraftResult:
     """
 
     source: str
-    result: DraftResultType
+    result: _DraftResultType
 
 
-DraftFallback = Callable[[str], str | None]
-AsyncDraftFallback = Callable[[str], Awaitable[str | None]]
+_DraftFallback = Callable[[str], str | None]
+_AsyncDraftFallback = Callable[[str], Awaitable[str | None]]
 
 
 class DirectiveDrafter:
@@ -74,9 +74,9 @@ class DirectiveDrafter:
 
     def __init__(
         self,
-        fallback: DraftFallback | None = None,
+        fallback: _DraftFallback | None = None,
         fallback_source: str = "fallback",
-        async_fallback: AsyncDraftFallback | None = None,
+        async_fallback: _AsyncDraftFallback | None = None,
         async_fallback_source: str = "fallback",
     ) -> None:
         """Create a drafter with optional fallback acquisition callbacks.
@@ -97,9 +97,9 @@ class DirectiveDrafter:
                 values produced from the configured async fallback callback.
         """
 
-        self._fallback: DraftFallback | None = None
+        self._fallback: _DraftFallback | None = None
         self._fallback_source = fallback_source
-        self._async_fallback: AsyncDraftFallback | None = None
+        self._async_fallback: _AsyncDraftFallback | None = None
         self._async_fallback_source = async_fallback_source
 
         if fallback is not None:
@@ -119,7 +119,7 @@ class DirectiveDrafter:
 
         return self._async_fallback is not None
 
-    def configure_fallback(self, fallback: DraftFallback, *, source: str) -> None:
+    def configure_fallback(self, fallback: _DraftFallback, *, source: str) -> None:
         """Configure a sync fallback acquisition callback and its source metadata."""
 
         self._fallback = fallback
@@ -130,7 +130,7 @@ class DirectiveDrafter:
 
         self._fallback = None
 
-    def configure_async_fallback(self, async_fallback: AsyncDraftFallback, *, source: str) -> None:
+    def configure_async_fallback(self, async_fallback: _AsyncDraftFallback, *, source: str) -> None:
         """Configure an async fallback acquisition callback and its source metadata."""
 
         self._async_fallback = async_fallback
@@ -151,7 +151,7 @@ class DirectiveDrafter:
         the final DraftResult itself.
         """
 
-        heuristic_result = preprocess_heuristic(user_input)
+        heuristic_result = _preprocess_heuristic(user_input)
         heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
         if not _is_fallback_eligible(heuristic_draft) or self._fallback is None:
@@ -170,7 +170,7 @@ class DirectiveDrafter:
         and build the final DraftResult itself.
         """
 
-        heuristic_result = preprocess_heuristic(user_input)
+        heuristic_result = _preprocess_heuristic(user_input)
         heuristic_draft = _heuristic_result_to_draft_result(heuristic_result)
 
         if not _is_fallback_eligible(heuristic_draft) or self._async_fallback is None:
@@ -180,7 +180,7 @@ class DirectiveDrafter:
         return _draft_result_from_fallback_output(fallback_text, source=self._async_fallback_source)
 
 
-def _heuristic_result_to_draft_result(heuristic_result: PreprocessResult) -> DraftResult:
+def _heuristic_result_to_draft_result(heuristic_result: _PreprocessResult) -> DraftResult:
     if heuristic_result["outcome"] == "directive":
         directive = heuristic_result["directive"]
         return DraftResult(source="heuristic", result=directive)
@@ -227,7 +227,7 @@ def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str
             result=RejectedDirective(reason=REASON_NON_DIRECTIVE),
         )
 
-    if fallback_text.strip().upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+    if fallback_text.strip().upper() == _PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
         return DraftResult(
             source=source,
             result=RejectedDirective(reason=REASON_NON_DIRECTIVE),

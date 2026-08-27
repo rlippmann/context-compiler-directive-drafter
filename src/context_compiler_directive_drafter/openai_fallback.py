@@ -4,9 +4,9 @@ from collections.abc import Mapping
 from importlib import import_module
 from typing import Any, cast
 
-from context_compiler_directive_drafter.constants import PREPROCESSOR_NO_DIRECTIVE_SENTINEL
-from context_compiler_directive_drafter.drafter import AsyncDraftFallback, DraftFallback
-from context_compiler_directive_drafter.prompt_utils import get_converter_prompt
+from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from context_compiler_directive_drafter.drafter import _AsyncDraftFallback, _DraftFallback
+from context_compiler_directive_drafter.prompt_utils import _get_converter_prompt
 
 
 def _load_openai_clients() -> tuple[type[Any], type[Any]]:
@@ -35,7 +35,7 @@ def _request_kwargs(
     kwargs = dict(request_kwargs or {})
     kwargs["model"] = model
     kwargs["messages"] = [
-        {"role": "system", "content": get_converter_prompt()},
+        {"role": "system", "content": _get_converter_prompt()},
         {"role": "user", "content": user_input},
     ]
     return kwargs
@@ -47,7 +47,7 @@ def _response_text(response: Any) -> str | None:
 
 def _normalize_response_text(response: Any) -> str | None:
     text = _response_text(response)
-    if text is not None and text.strip() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+    if text is not None and text.strip() == _PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
         return None
     return text
 
@@ -58,7 +58,7 @@ def create_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
-) -> DraftFallback:
+) -> _DraftFallback:
     """Create a synchronous OpenAI-compatible Directive Drafter fallback."""
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
@@ -78,7 +78,7 @@ def create_async_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
-) -> AsyncDraftFallback:
+) -> _AsyncDraftFallback:
     """Create an asynchronous OpenAI-compatible Directive Drafter fallback."""
     _, async_openai_client = _load_openai_clients()
     client = async_openai_client(**_client_kwargs(api_key, base_url))

@@ -6,7 +6,6 @@ from types import SimpleNamespace
 import pytest
 
 from context_compiler_directive_drafter import (
-    PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     DirectiveDrafter,
     DraftResult,
     RejectedDirective,
@@ -14,6 +13,7 @@ from context_compiler_directive_drafter import (
     create_openai_fallback,
 )
 from context_compiler_directive_drafter import openai_fallback as adapter
+from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 
 
 class _FakeResponse:
@@ -69,7 +69,7 @@ def test_sync_fallback_forwards_configuration_request_and_prompt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "get_converter_prompt", lambda: "converter instructions")
+    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "converter instructions")
 
     fallback = create_openai_fallback(
         model="compatible-model",
@@ -101,7 +101,7 @@ def test_sync_fallback_omits_unset_client_configuration(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "get_converter_prompt", lambda: "prompt")
+    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "prompt")
 
     fallback = create_openai_fallback(model="compatible-model")
 
@@ -115,7 +115,7 @@ def test_sync_fallback_normalizes_no_directive_sentinel(
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
     _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(
-        f"  {PREPROCESSOR_NO_DIRECTIVE_SENTINEL} \n"
+        f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL} \n"
     )
 
     assert fallback("input") is None
@@ -139,7 +139,7 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "get_converter_prompt", lambda: "async prompt")
+    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "async prompt")
 
     fallback = create_async_openai_fallback(
         model="compatible-model",
@@ -168,7 +168,7 @@ def test_async_fallback_normalizes_no_directive_sentinel(
     _patch_clients(monkeypatch)
     fallback = create_async_openai_fallback(model="compatible-model")
     _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse(
-        f"\n{PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
+        f"\n{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
     )
 
     assert asyncio.run(fallback("input")) is None
@@ -215,7 +215,7 @@ def test_callback_works_with_existing_drafter_fallback_pipeline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "get_converter_prompt", lambda: "prompt")
+    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "prompt")
 
     drafter = DirectiveDrafter(
         fallback=create_openai_fallback(model="compatible-model"),
@@ -234,7 +234,7 @@ def test_no_directive_sentinel_produces_drafter_no_directive(
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
     _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(
-        PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+        _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
     )
     drafter = DirectiveDrafter(
         fallback=fallback,

@@ -10,20 +10,4 @@ def test_basic_usage_example_runs(capsys) -> None:
     runpy.run_path(str(_example_path("basic_usage.py")), run_name="__main__")
 
     output = capsys.readouterr().out.strip().splitlines()
-    assert output == [
-        "heuristic result: {'outcome': 'directive', 'directive': 'use docker'}",
-        "heuristic candidate: use docker",
-        ("ambiguous result: {'outcome': 'rejected', 'directive': None, 'reason': 'question_form'}"),
-        "ambiguous candidate: None",
-        "fallback candidate: use podman",
-    ]
-
-
-def test_prompt_rendering_example_runs(capsys) -> None:
-    runpy.run_path(str(_example_path("prompt_rendering.py")), run_name="__main__")
-
-    output = capsys.readouterr().out
-    assert output.strip()
-    assert "You are a directive converter that drafts candidate" in output
-    assert "Directive categories:" in output
-    assert "Canonical directive forms:" in output
+    assert output == ["candidate directive: use docker for container examples"]

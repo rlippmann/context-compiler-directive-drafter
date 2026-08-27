@@ -10,7 +10,7 @@ import json
 import os
 import sys
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TextIO, cast
@@ -23,7 +23,9 @@ from context_compiler_directive_drafter import (
     UnknownDirective,
     create_openai_fallback,
 )
-from context_compiler_directive_drafter.drafter import DraftFallback, DraftResult
+from context_compiler_directive_drafter.drafter import DraftResult
+
+DraftFallback = Callable[[str], str | None]
 
 DEFAULT_CORPUS_PATH = (
     Path(__file__).resolve().parents[1] / "corpus" / "english" / "directive-drafter-en.jsonl"

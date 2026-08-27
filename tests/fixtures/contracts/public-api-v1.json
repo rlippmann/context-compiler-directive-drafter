@@ -3,6 +3,14 @@
   "kind": "api-surface-contract",
   "module": "context_compiler_directive_drafter",
   "forbidden_exports": [
+    "DraftResultType",
+    "preprocess_heuristic",
+    "classify_drafter_output",
+    "get_converter_prompt",
+    "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
+    "DRAFT_OUTCOME_DIRECTIVE",
+    "DRAFT_OUTCOME_REJECTED",
+    "DRAFT_OUTCOME_UNKNOWN",
     "DraftOutcome",
     "PreprocessResult",
     "parse_preprocessor_output",
@@ -11,39 +19,19 @@
   "exports": {
     "mode": "exact",
     "names": [
-      "DRAFT_OUTCOME_DIRECTIVE",
-      "DRAFT_OUTCOME_REJECTED",
-      "DRAFT_OUTCOME_UNKNOWN",
-      "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
       "DraftResult",
-      "DraftResultType",
       "DirectiveDrafter",
       "RejectedDirective",
       "RejectedReason",
       "UnknownDirective",
-      "preprocess_heuristic",
-      "get_converter_prompt",
       "create_openai_fallback",
       "create_async_openai_fallback",
-      "classify_drafter_output",
       "REASON_NON_DIRECTIVE",
       "REASON_INCOMPLETE",
       "REASON_MULTIPLE_DIRECTIVES",
       "REASON_INVALID_CANDIDATE"
     ],
     "members": {
-      "PREPROCESSOR_NO_DIRECTIVE_SENTINEL": {
-        "kind": "constant",
-        "value": "<NO_DIRECTIVE>"
-      },
-      "DRAFT_OUTCOME_DIRECTIVE": {
-        "kind": "constant",
-        "value": "directive"
-      },
-      "DRAFT_OUTCOME_UNKNOWN": {
-        "kind": "constant",
-        "value": "unknown"
-      },
       "DraftResult": {
         "kind": "class",
         "forbidden_members": [
@@ -89,9 +77,6 @@
             }
           ]
         }
-      },
-      "DraftResultType": {
-        "kind": "type_alias"
       },
       "DirectiveDrafter": {
         "kind": "class",
@@ -308,39 +293,6 @@
           ]
         }
       },
-      "preprocess_heuristic": {
-        "kind": "callable",
-        "signature": {
-          "is_async": false,
-          "params": [
-            {
-              "name": "message",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            }
-          ]
-        }
-      },
-      "classify_drafter_output": {
-        "kind": "callable",
-        "signature": {
-          "is_async": false,
-          "params": [
-            {
-              "name": "raw_output",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            }
-          ]
-        }
-      },
-      "get_converter_prompt": {
-        "kind": "callable",
-        "signature": {
-          "is_async": false,
-          "params": []
-        }
-      },
       "create_openai_fallback": {
         "kind": "callable",
         "signature": {
@@ -402,10 +354,6 @@
             }
           ]
         }
-      },
-      "DRAFT_OUTCOME_REJECTED": {
-        "kind": "constant",
-        "value": "rejected"
       },
       "RejectedDirective": {
         "kind": "class",

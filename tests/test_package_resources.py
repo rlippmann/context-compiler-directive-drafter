@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from context_compiler_directive_drafter import get_converter_prompt
+from context_compiler_directive_drafter.prompt_utils import _get_converter_prompt
+
+get_converter_prompt = _get_converter_prompt
 
 _PACKAGE = "context_compiler_directive_drafter"
 _RESOURCE_PATHS = [

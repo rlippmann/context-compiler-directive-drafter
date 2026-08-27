@@ -4,7 +4,9 @@ import pytest
 from context_compiler.grammar import CanonicalDirective, DirectiveKind
 
 from context_compiler_directive_drafter import heuristic_preprocessor as heuristic_module
-from context_compiler_directive_drafter import preprocess_heuristic
+from context_compiler_directive_drafter.heuristic_preprocessor import _preprocess_heuristic
+
+preprocess_heuristic = _preprocess_heuristic
 
 
 def _assert_directive_result(result: dict[str, object], expected: str) -> None:
