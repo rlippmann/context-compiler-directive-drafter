@@ -2,8 +2,8 @@
   "name": "compound-clear-premise-and-reset-policies-unknown",
   "input": "clear premise and reset policies",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "compound_directive"
   }
 }

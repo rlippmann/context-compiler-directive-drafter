@@ -14,13 +14,39 @@
         "signature": {
           "is_async": false,
           "params": [
-            {"name": "source", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
-            {"name": "result", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false}
+            {
+              "name": "source",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "result",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
           ]
         },
         "probes": [
-          {"case": "missing_required", "args": [], "kwargs": {}, "expect": {"exception": "TypeError"}},
-          {"case": "extra_argument", "args": ["source", "result", "extra"], "kwargs": {}, "expect": {"exception": "TypeError"}}
+          {
+            "case": "missing_required",
+            "args": [],
+            "kwargs": {},
+            "expect": {
+              "exception": "TypeError"
+            }
+          },
+          {
+            "case": "extra_argument",
+            "args": [
+              "source",
+              "result",
+              "extra"
+            ],
+            "kwargs": {},
+            "expect": {
+              "exception": "TypeError"
+            }
+          }
         ]
       }
     },
@@ -30,103 +56,145 @@
         "signature": {
           "is_async": false,
           "params": [
-            {"name": "fallback", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": null},
-            {"name": "fallback_source", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": "fallback"},
-            {"name": "async_fallback", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": null},
-            {"name": "async_fallback_source", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": "fallback"}
+            {
+              "name": "fallback",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "fallback_source",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": true,
+              "default": "fallback"
+            },
+            {
+              "name": "async_fallback",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "async_fallback_source",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": true,
+              "default": "fallback"
+            }
           ]
         },
         "probes": [
-          {"case": "extra_argument", "args": ["extra", "too", "many", "arguments", "here"], "kwargs": {}, "expect": {"exception": "TypeError"}},
-          {"case": "wrong_type", "args": [], "kwargs": {"fallback_source": 1}, "expect": {"success": true}}
+          {
+            "case": "extra_argument",
+            "args": [
+              "extra",
+              "too",
+              "many",
+              "arguments",
+              "here"
+            ],
+            "kwargs": {},
+            "expect": {
+              "exception": "TypeError"
+            }
+          },
+          {
+            "case": "wrong_type",
+            "args": [],
+            "kwargs": {
+              "fallback_source": 1
+            },
+            "expect": {
+              "success": true
+            }
+          }
         ]
       },
-        "public_members": {
-          "mode": "exact",
-          "members": {
-            "fallback": {
-              "kind": "property"
-            },
-            "async_fallback": {
-              "kind": "property"
-            },
-            "configure_fallback": {
-              "kind": "method",
-              "signature": {
-                "is_async": false,
-                "params": [
-                  {
-                    "name": "self",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  },
-                  {
-                    "name": "fallback",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  },
-                  {
-                    "name": "source",
-                    "kind": "KEYWORD_ONLY",
-                    "has_default": false
-                  }
-                ]
-              }
-            },
-            "clear_fallback": {
-              "kind": "method",
-              "signature": {
-                "is_async": false,
-                "params": [
-                  {
-                    "name": "self",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  }
-                ]
-              }
-            },
-            "configure_async_fallback": {
-              "kind": "method",
-              "signature": {
-                "is_async": false,
-                "params": [
-                  {
-                    "name": "self",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  },
-                  {
-                    "name": "async_fallback",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  },
-                  {
-                    "name": "source",
-                    "kind": "KEYWORD_ONLY",
-                    "has_default": false
-                  }
-                ]
-              }
-            },
-            "clear_async_fallback": {
-              "kind": "method",
-              "signature": {
-                "is_async": false,
-                "params": [
-                  {
-                    "name": "self",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  }
-                ]
-              }
-            },
-            "draft_directive": {
-              "kind": "method",
-              "signature": {
-                "is_async": false,
-                "params": [
+      "public_members": {
+        "mode": "exact",
+        "members": {
+          "fallback": {
+            "kind": "property"
+          },
+          "async_fallback": {
+            "kind": "property"
+          },
+          "configure_fallback": {
+            "kind": "method",
+            "signature": {
+              "is_async": false,
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "fallback",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "source",
+                  "kind": "KEYWORD_ONLY",
+                  "has_default": false
+                }
+              ]
+            }
+          },
+          "clear_fallback": {
+            "kind": "method",
+            "signature": {
+              "is_async": false,
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                }
+              ]
+            }
+          },
+          "configure_async_fallback": {
+            "kind": "method",
+            "signature": {
+              "is_async": false,
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "async_fallback",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "source",
+                  "kind": "KEYWORD_ONLY",
+                  "has_default": false
+                }
+              ]
+            }
+          },
+          "clear_async_fallback": {
+            "kind": "method",
+            "signature": {
+              "is_async": false,
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                }
+              ]
+            }
+          },
+          "draft_directive": {
+            "kind": "method",
+            "signature": {
+              "is_async": false,
+              "params": [
                 {
                   "name": "self",
                   "kind": "POSITIONAL_OR_KEYWORD",
@@ -136,30 +204,30 @@
                   "name": "user_input",
                   "kind": "POSITIONAL_OR_KEYWORD",
                   "has_default": false
-                  }
-                ]
-              }
-            },
-            "async_draft_directive": {
-              "kind": "method",
-              "signature": {
-                "is_async": true,
-                "params": [
-                  {
-                    "name": "self",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  },
-                  {
-                    "name": "user_input",
-                    "kind": "POSITIONAL_OR_KEYWORD",
-                    "has_default": false
-                  }
-                ]
-              }
+                }
+              ]
+            }
+          },
+          "async_draft_directive": {
+            "kind": "method",
+            "signature": {
+              "is_async": true,
+              "params": [
+                {
+                  "name": "self",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                },
+                {
+                  "name": "user_input",
+                  "kind": "POSITIONAL_OR_KEYWORD",
+                  "has_default": false
+                }
+              ]
             }
           }
-        },
+        }
+      },
       "behavior_probes": [
         {
           "kind": "directive_drafter_draft",
@@ -177,16 +245,16 @@
               },
               "result": {
                 "type": "object",
-                  "required_keys": [
-                    "text",
-                    "kind",
-                    "operands"
-                  ],
-                  "properties": {
-                    "text": {
-                      "type": "string"
-                    },
-                    "kind": {
+                "required_keys": [
+                  "text",
+                  "kind",
+                  "operands"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "kind": {
                     "type": "string",
                     "const": "set_premise"
                   },
@@ -229,7 +297,7 @@
                 "properties": {
                   "reason": {
                     "type": "string",
-                    "const": "reject.confident_non_directive"
+                    "const": "ordinary_non_directive"
                   }
                 }
               }
@@ -245,10 +313,21 @@
           "expect_source": "heuristic",
           "expect_result": {
             "type": "object",
-            "required_keys": ["source", "result"],
+            "required_keys": [
+              "source",
+              "result"
+            ],
             "properties": {
-              "source": {"type": "string", "const": "heuristic"},
-              "result": {"type": "object", "required_keys": ["kind"]}
+              "source": {
+                "type": "string",
+                "const": "heuristic"
+              },
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "kind"
+                ]
+              }
             }
           }
         },
@@ -256,31 +335,53 @@
           "kind": "directive_drafter_fallback_routing",
           "mode": "sync",
           "user_input": "can you help with lunch?",
-          "heuristic_result": "no_directive",
+          "heuristic_result": "rejected",
           "expect_fallback_calls": 0,
           "expect_source": "heuristic",
           "expect_result": {
             "type": "object",
-            "required_keys": ["source", "result"],
+            "required_keys": [
+              "source",
+              "result"
+            ],
             "properties": {
-              "source": {"type": "string", "const": "heuristic"},
-              "result": {"type": "object", "required_keys": ["reason"]}
+              "source": {
+                "type": "string",
+                "const": "heuristic"
+              },
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "reason"
+                ]
+              }
             }
           }
         },
         {
           "kind": "directive_drafter_fallback_routing",
           "mode": "sync",
-          "user_input": "use docker?",
+          "user_input": "Could we maybe use uv later",
           "heuristic_result": "unknown",
           "expect_fallback_calls": 1,
           "expect_source": "contract-fallback",
           "expect_result": {
             "type": "object",
-            "required_keys": ["source", "result"],
+            "required_keys": [
+              "source",
+              "result"
+            ],
             "properties": {
-              "source": {"type": "string", "const": "contract-fallback"},
-              "result": {"type": "object", "required_keys": ["kind"]}
+              "source": {
+                "type": "string",
+                "const": "contract-fallback"
+              },
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "kind"
+                ]
+              }
             }
           }
         },
@@ -293,10 +394,21 @@
           "expect_source": "heuristic",
           "expect_result": {
             "type": "object",
-            "required_keys": ["source", "result"],
+            "required_keys": [
+              "source",
+              "result"
+            ],
             "properties": {
-              "source": {"type": "string", "const": "heuristic"},
-              "result": {"type": "object", "required_keys": ["kind"]}
+              "source": {
+                "type": "string",
+                "const": "heuristic"
+              },
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "kind"
+                ]
+              }
             }
           }
         },
@@ -304,31 +416,53 @@
           "kind": "directive_drafter_fallback_routing",
           "mode": "async",
           "user_input": "can you help with lunch?",
-          "heuristic_result": "no_directive",
+          "heuristic_result": "rejected",
           "expect_fallback_calls": 0,
           "expect_source": "heuristic",
           "expect_result": {
             "type": "object",
-            "required_keys": ["source", "result"],
+            "required_keys": [
+              "source",
+              "result"
+            ],
             "properties": {
-              "source": {"type": "string", "const": "heuristic"},
-              "result": {"type": "object", "required_keys": ["reason"]}
+              "source": {
+                "type": "string",
+                "const": "heuristic"
+              },
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "reason"
+                ]
+              }
             }
           }
         },
         {
           "kind": "directive_drafter_fallback_routing",
           "mode": "async",
-          "user_input": "use docker?",
+          "user_input": "Could we maybe use uv later",
           "heuristic_result": "unknown",
           "expect_fallback_calls": 1,
           "expect_source": "contract-fallback",
           "expect_result": {
             "type": "object",
-            "required_keys": ["source", "result"],
+            "required_keys": [
+              "source",
+              "result"
+            ],
             "properties": {
-              "source": {"type": "string", "const": "contract-fallback"},
-              "result": {"type": "object", "required_keys": ["kind"]}
+              "source": {
+                "type": "string",
+                "const": "contract-fallback"
+              },
+              "result": {
+                "type": "object",
+                "required_keys": [
+                  "kind"
+                ]
+              }
             }
           }
         }

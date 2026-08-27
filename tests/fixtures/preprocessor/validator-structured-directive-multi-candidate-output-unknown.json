@@ -6,7 +6,7 @@
     "output": "clear state; reset policies"
   },
   "expected": {
-    "classification": "unknown",
+    "classification": "rejected",
     "output": null
   }
 }

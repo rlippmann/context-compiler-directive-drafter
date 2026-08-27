@@ -2,8 +2,8 @@
   "name": "meta-prefix-the-command-is-clear-state-unknown",
   "input": "the command is clear state",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.meta_or_reporting"
+    "reason": "quoted_reported"
   }
 }

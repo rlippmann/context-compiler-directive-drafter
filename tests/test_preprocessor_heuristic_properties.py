@@ -8,8 +8,7 @@ from context_compiler_directive_drafter import heuristic_preprocessor as heurist
 from context_compiler_directive_drafter import preprocess_heuristic
 from context_compiler_directive_drafter.constants import (
     DRAFT_OUTCOME_DIRECTIVE,
-    DRAFT_OUTCOME_NO_DIRECTIVE,
-    DRAFT_OUTCOME_UNKNOWN,
+    DRAFT_OUTCOME_REJECTED,
 )
 
 CANONICAL_DIRECTIVES = [
@@ -71,16 +70,16 @@ def test_heuristic_obvious_multi_sentence_input_is_not_fallback_eligible(
 ) -> None:
     result = preprocess_heuristic(f"{first_sentence}. explain more.")
     assert result == {
-        "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+        "outcome": DRAFT_OUTCOME_REJECTED,
         "directive": None,
-        "reason": "reject.multi_sentence_host_segmentation",
+        "reason": "multi_sentence",
     }
 
 
 @given(st.sampled_from(CANONICAL_DIRECTIVES))
 def test_heuristic_question_suffix_never_produces_directive(directive: str) -> None:
     result = preprocess_heuristic(f"{directive}?")
-    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert result["directive"] is None
 
 
@@ -100,7 +99,7 @@ def test_heuristic_quoted_exact_wrappers_never_directive(
 ) -> None:
     left, right = wrapper
     result = preprocess_heuristic(f"{left}{directive}{right}")
-    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert result["directive"] is None
 
 
@@ -166,7 +165,7 @@ def test_heuristic_ambiguous_not_replacement_never_becomes_candidate(
 ) -> None:
     assume(new_item != old_item)
     result = preprocess_heuristic(f"use {new_item} not {old_item}")
-    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert result["directive"] is None
 
 
@@ -176,7 +175,7 @@ def test_heuristic_ambiguous_not_replacement_never_becomes_candidate(
 )
 def test_heuristic_please_mixed_prose_never_becomes_candidate(directive: str, detail: str) -> None:
     result = preprocess_heuristic(f"please {directive} because {detail}")
-    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert result["directive"] is None
 
 
@@ -189,7 +188,7 @@ def test_heuristic_quoted_operand_is_literal_but_quoted_command_is_deferred(
     assert operand_result["directive"].text == f'use "{item}"'
 
     command_result = preprocess_heuristic(f'"use {item}"')
-    assert command_result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert command_result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert command_result["directive"] is None
 
 
@@ -211,7 +210,7 @@ def test_heuristic_rejects_wrapped_directive_with_surrounding_meta_text(
 def test_heuristic_question_mark_is_always_rejected(prefix: str, suffix: str) -> None:
     message = f"{prefix}?{suffix}"
     result = preprocess_heuristic(message)
-    assert result["outcome"] in {DRAFT_OUTCOME_NO_DIRECTIVE, DRAFT_OUTCOME_UNKNOWN}
+    assert result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert result["directive"] is None
 
 
@@ -289,7 +288,7 @@ def test_heuristic_compound_directives_always_abstain(
 ) -> None:
     assume(first != second)
     result = preprocess_heuristic(f"{first}{separator}{second}")
-    assert result["outcome"] == DRAFT_OUTCOME_UNKNOWN
+    assert result["outcome"] == DRAFT_OUTCOME_REJECTED
     assert result["directive"] is None
 
 

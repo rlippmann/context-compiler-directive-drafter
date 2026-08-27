@@ -41,7 +41,7 @@ def _assert_validation_expected_contract(expected: object, label: str) -> None:
     _assert_exact_keys(expected, {"classification", "output"}, label)
     classification = expected["classification"]
     output = expected["output"]
-    assert classification in {"directive", "no_directive", "unknown"}, label
+    assert classification in {"directive", "rejected"}, label
     assert isinstance(output, str) or output is None, label
     if classification == "directive":
         assert isinstance(output, str), label
@@ -54,7 +54,7 @@ def _assert_heuristic_expected_contract(expected: object, label: str) -> None:
     _assert_exact_keys(expected, {"outcome", "directive"} | ({"reason"} & set(expected)), label)
     outcome = expected["outcome"]
     directive = expected["directive"]
-    assert outcome in {"directive", "no_directive", "unknown"}, label
+    assert outcome in {"directive", "rejected", "unknown"}, label
     if outcome == "directive":
         assert isinstance(directive, dict), label
         _assert_exact_keys(directive, {"text", "kind", "operands"}, label)

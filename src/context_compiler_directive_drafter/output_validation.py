@@ -13,17 +13,16 @@ from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
-    DRAFT_OUTCOME_NO_DIRECTIVE,
-    DRAFT_OUTCOME_UNKNOWN,
+    DRAFT_OUTCOME_REJECTED,
     PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
-    DraftOutcome,
+    OutputClassification,
 )
 
 __all__ = ["classify_drafter_output"]
 
 
 class PreprocessorValidationResult(TypedDict):
-    classification: DraftOutcome
+    classification: OutputClassification
     output: str | None
 
 
@@ -34,58 +33,53 @@ def _parse_canonical_directive(raw_output: str) -> CanonicalDirective | None:
     return None
 
 
-def _unknown() -> PreprocessorValidationResult:
-    return {"classification": DRAFT_OUTCOME_UNKNOWN, "output": None}
+def _invalid() -> PreprocessorValidationResult:
+    return {"classification": DRAFT_OUTCOME_REJECTED, "output": None}
 
 
 def _directive(output: str) -> PreprocessorValidationResult:
     return {"classification": DRAFT_OUTCOME_DIRECTIVE, "output": output}
 
 
-def _no_directive() -> PreprocessorValidationResult:
-    return {"classification": DRAFT_OUTCOME_NO_DIRECTIVE, "output": None}
+def _rejected() -> PreprocessorValidationResult:
+    return {"classification": DRAFT_OUTCOME_REJECTED, "output": None}
 
 
 def _validate_structured_output(raw_output: object) -> PreprocessorValidationResult:
     if not isinstance(raw_output, dict):
-        return _unknown()
+        return _invalid()
 
     if set(raw_output.keys()) != {"classification", "output"}:
-        return _unknown()
+        return _invalid()
 
     classification = raw_output.get("classification")
     output = raw_output.get("output")
     if not isinstance(classification, str):
-        return _unknown()
+        return _invalid()
 
     if classification == DRAFT_OUTCOME_DIRECTIVE:
         if not isinstance(output, str):
-            return _unknown()
+            return _invalid()
         parsed = _parse_canonical_directive(output)
         if parsed is None:
-            return _unknown()
+            return _invalid()
         return _directive(parsed.text)
 
-    if classification == DRAFT_OUTCOME_NO_DIRECTIVE:
+    if classification == DRAFT_OUTCOME_REJECTED:
         if output is not None:
-            return _unknown()
-        return _no_directive()
+            return _invalid()
+        return _rejected()
 
-    if classification == DRAFT_OUTCOME_UNKNOWN:
-        if output is not None:
-            return _unknown()
-        return _unknown()
-
-    return _unknown()
+    return _invalid()
 
 
 def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
     stripped = raw_output.strip()
     if not stripped:
-        return _unknown()
+        return _invalid()
 
     if stripped.upper() == PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
-        return _no_directive()
+        return _rejected()
 
     parsed = _parse_canonical_directive(stripped)
     if parsed is not None:
@@ -95,10 +89,10 @@ def _validate_text_output(raw_output: str) -> PreprocessorValidationResult:
         try:
             parsed_json = json.loads(stripped)
         except json.JSONDecodeError:
-            return _unknown()
+            return _invalid()
         return _validate_structured_output(parsed_json)
 
-    return _unknown()
+    return _invalid()
 
 
 def classify_drafter_output(raw_output: object) -> PreprocessorValidationResult:
@@ -106,10 +100,10 @@ def classify_drafter_output(raw_output: object) -> PreprocessorValidationResult:
 
     Contract:
         - directive: output is a canonical directive string
-        - no_directive: output is None
-        - unknown: output is None
+        - rejected: output is None
 
-    This function validates structure and canonical directive shape only. It
+    This function validates provider output structure and canonical directive
+    shape only. It
     does not decide whether a directive is allowed in the current compiler
     context, and it does not apply any directive.
     """

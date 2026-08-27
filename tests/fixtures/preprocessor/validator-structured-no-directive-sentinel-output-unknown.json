@@ -6,7 +6,7 @@
     "output": "<NO_DIRECTIVE>"
   },
   "expected": {
-    "classification": "unknown",
+    "classification": "rejected",
     "output": null
   }
 }

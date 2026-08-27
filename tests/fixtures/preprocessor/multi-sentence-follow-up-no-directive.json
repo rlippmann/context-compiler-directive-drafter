@@ -2,8 +2,8 @@
   "name": "multi-sentence-follow-up-no-directive",
   "input": "use docker. then tell me why.",
   "expected": {
-    "outcome": "no_directive",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.multi_sentence_host_segmentation"
+    "reason": "multi_sentence"
   }
 }

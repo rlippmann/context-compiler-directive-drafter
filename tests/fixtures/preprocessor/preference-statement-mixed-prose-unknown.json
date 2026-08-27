@@ -4,6 +4,6 @@
   "expected": {
     "outcome": "unknown",
     "directive": null,
-    "reason": "reject.multi_segment_or_mixed_prose"
+    "reason": "semantic_uncertainty"
   }
 }

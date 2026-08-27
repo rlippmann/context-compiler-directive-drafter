@@ -2,8 +2,8 @@
   "name": "near-miss-remove-policy-empty-unknown",
   "input": "remove policy",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "incomplete_directive"
   }
 }

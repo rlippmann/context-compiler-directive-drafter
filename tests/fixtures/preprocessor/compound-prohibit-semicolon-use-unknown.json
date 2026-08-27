@@ -2,8 +2,8 @@
   "name": "compound-prohibit-semicolon-use-unknown",
   "input": "prohibit peanuts; use docker",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "compound_directive"
   }
 }

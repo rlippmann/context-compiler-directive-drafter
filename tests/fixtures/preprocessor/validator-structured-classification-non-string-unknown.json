@@ -6,7 +6,7 @@
     "output": null
   },
   "expected": {
-    "classification": "unknown",
+    "classification": "rejected",
     "output": null
   }
 }

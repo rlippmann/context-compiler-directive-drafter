@@ -2,8 +2,8 @@
   "name": "rejected-please-set-premise-because",
   "input": "please set premise to concise replies because brevity helps",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.multi_segment_or_mixed_prose"
+    "reason": "compound_directive"
   }
 }

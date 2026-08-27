@@ -55,7 +55,7 @@
       "rule": "quoted wrappers are not accepted as commands",
       "polarity": "reject",
       "input": "\"use docker\"",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.quoted_exact"}
+      "expected": {"outcome": "rejected", "directive": null, "reason": "quoted_reported"}
     },
     {
       "name": "heuristic-backtick-wrapper-rejected",
@@ -63,7 +63,7 @@
       "rule": "backtick wrappers are not accepted as commands",
       "polarity": "reject",
       "input": "`use docker`",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.quoted_exact"}
+      "expected": {"outcome": "rejected", "directive": null, "reason": "quoted_reported"}
     },
     {
       "name": "heuristic-mismatched-wrapper-rejected",
@@ -71,7 +71,7 @@
       "rule": "mismatched wrappers are not removed",
       "polarity": "reject",
       "input": "[use docker)",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
+      "expected": {"outcome": "rejected", "directive": null, "reason": "malformed_directive"}
     },
     {
       "name": "heuristic-fullwidth-lookalike-rejected",
@@ -79,7 +79,7 @@
       "rule": "Unicode fullwidth lookalikes are not ASCII casing",
       "polarity": "reject",
       "input": "ＵＳＥ docker",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
+      "expected": {"outcome": "rejected", "directive": null, "reason": "malformed_directive"}
     },
     {
       "name": "heuristic-cyrillic-lookalike-rejected",
@@ -87,7 +87,7 @@
       "rule": "Unicode Cyrillic lookalikes are not ASCII casing",
       "polarity": "reject",
       "input": "uѕe docker",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
+      "expected": {"outcome": "rejected", "directive": null, "reason": "malformed_directive"}
     },
     {
       "name": "heuristic-dotted-i-rejected",
@@ -95,7 +95,7 @@
       "rule": "locale-sensitive dotted-I casing is not folded to ASCII",
       "polarity": "reject",
       "input": "İSE docker",
-      "expected": {"outcome": "unknown", "directive": null, "reason": "reject.cannot_confidently_reduce"}
+      "expected": {"outcome": "rejected", "directive": null, "reason": "malformed_directive"}
     },
     {
       "name": "validator-ascii-case-and-outer-whitespace",
@@ -119,7 +119,7 @@
       "rule": "sentinel casing and outer Unicode whitespace are normalized",
       "polarity": "accept",
       "input": "\u3000<no_directive>\u00a0",
-      "expected": {"classification": "no_directive", "output": null}
+      "expected": {"classification": "rejected", "output": null}
     },
     {
       "name": "validator-sentinel-punctuation-rejected",
@@ -127,7 +127,7 @@
       "rule": "sentinel punctuation is not stripped",
       "polarity": "reject",
       "input": "<NO_DIRECTIVE>!",
-      "expected": {"classification": "unknown", "output": null}
+      "expected": {"classification": "rejected", "output": null}
     },
     {
       "name": "validator-sentinel-lookalike-rejected",
@@ -135,7 +135,7 @@
       "rule": "sentinel Unicode lookalikes are not accepted",
       "polarity": "reject",
       "input": "<ＮＯ_DIRECTIVE>",
-      "expected": {"classification": "unknown", "output": null}
+      "expected": {"classification": "rejected", "output": null}
     },
     {
       "name": "validator-unicode-internal-whitespace-rejected",
@@ -143,7 +143,7 @@
       "rule": "Unicode internal whitespace is not normalized by fallback validation",
       "polarity": "reject",
       "input": "use\u00a0docker",
-      "expected": {"classification": "unknown", "output": null}
+      "expected": {"classification": "rejected", "output": null}
     },
     {
       "name": "validator-wrapper-rejected",
@@ -151,7 +151,7 @@
       "rule": "directive wrappers are not removed by fallback validation",
       "polarity": "reject",
       "input": "[use docker]",
-      "expected": {"classification": "unknown", "output": null}
+      "expected": {"classification": "rejected", "output": null}
     }
   ]
 }

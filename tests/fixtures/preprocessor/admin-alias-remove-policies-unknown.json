@@ -2,8 +2,8 @@
   "name": "admin-alias-remove-policies-unknown",
   "input": "remove policies docker",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.unsupported_alias"
+    "reason": "malformed_directive"
   }
 }

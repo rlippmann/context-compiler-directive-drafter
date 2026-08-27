@@ -2,8 +2,8 @@
   "name": "compound-use-and-prohibit-unknown",
   "input": "use docker and prohibit peanuts",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "compound_directive"
   }
 }

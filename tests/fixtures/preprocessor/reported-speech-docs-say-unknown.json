@@ -2,8 +2,8 @@
   "name": "reported-speech-docs-say-unknown",
   "input": "the docs say \"use docker\"",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "quoted_reported"
   }
 }

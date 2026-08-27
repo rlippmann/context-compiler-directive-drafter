@@ -2,8 +2,8 @@
   "name": "rejected-incomplete-replacement",
   "input": "use podman instead of",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "incomplete_directive"
   }
 }

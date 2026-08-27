@@ -12,19 +12,30 @@
     "mode": "exact",
     "names": [
       "DRAFT_OUTCOME_DIRECTIVE",
-      "DRAFT_OUTCOME_NO_DIRECTIVE",
+      "DRAFT_OUTCOME_REJECTED",
       "DRAFT_OUTCOME_UNKNOWN",
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
       "DraftResult",
       "DraftResultType",
       "DirectiveDrafter",
-      "NoDirective",
+      "RejectedDirective",
       "UnknownDirective",
       "preprocess_heuristic",
       "get_converter_prompt",
       "create_openai_fallback",
       "create_async_openai_fallback",
-      "classify_drafter_output"
+      "classify_drafter_output",
+      "REASON_ORDINARY_NON_DIRECTIVE",
+      "REASON_QUESTION_FORM",
+      "REASON_QUOTED_REPORTED",
+      "REASON_INCOMPLETE_DIRECTIVE",
+      "REASON_COMPOUND_DIRECTIVE",
+      "REASON_MULTI_SENTENCE",
+      "REASON_MALFORMED_DIRECTIVE",
+      "REASON_UNSUPPORTED_INPUT",
+      "REASON_INVALID_FALLBACK_OUTPUT",
+      "REASON_FALLBACK_NO_CANDIDATE",
+      "REASON_SEMANTIC_UNCERTAINTY"
     ],
     "members": {
       "PREPROCESSOR_NO_DIRECTIVE_SENTINEL": {
@@ -34,10 +45,6 @@
       "DRAFT_OUTCOME_DIRECTIVE": {
         "kind": "constant",
         "value": "directive"
-      },
-      "DRAFT_OUTCOME_NO_DIRECTIVE": {
-        "kind": "constant",
-        "value": "no_directive"
       },
       "DRAFT_OUTCOME_UNKNOWN": {
         "kind": "constant",
@@ -53,13 +60,39 @@
           "signature": {
             "is_async": false,
             "params": [
-              {"name": "source", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
-              {"name": "result", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false}
+              {
+                "name": "source",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              },
+              {
+                "name": "result",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              }
             ]
           },
           "probes": [
-            {"case": "missing_required", "args": [], "kwargs": {}, "expect": {"exception": "TypeError"}},
-            {"case": "extra_argument", "args": ["source", "result", "extra"], "kwargs": {}, "expect": {"exception": "TypeError"}}
+            {
+              "case": "missing_required",
+              "args": [],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            },
+            {
+              "case": "extra_argument",
+              "args": [
+                "source",
+                "result",
+                "extra"
+              ],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            }
           ]
         }
       },
@@ -72,15 +105,57 @@
           "signature": {
             "is_async": false,
             "params": [
-              {"name": "fallback", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": null},
-              {"name": "fallback_source", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": "fallback"},
-              {"name": "async_fallback", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": null},
-              {"name": "async_fallback_source", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true, "default": "fallback"}
+              {
+                "name": "fallback",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": true,
+                "default": null
+              },
+              {
+                "name": "fallback_source",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": true,
+                "default": "fallback"
+              },
+              {
+                "name": "async_fallback",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": true,
+                "default": null
+              },
+              {
+                "name": "async_fallback_source",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": true,
+                "default": "fallback"
+              }
             ]
           },
           "probes": [
-            {"case": "extra_argument", "args": ["extra", "too", "many", "arguments", "here"], "kwargs": {}, "expect": {"exception": "TypeError"}},
-            {"case": "wrong_type", "args": [], "kwargs": {"fallback_source": 1}, "expect": {"success": true}}
+            {
+              "case": "extra_argument",
+              "args": [
+                "extra",
+                "too",
+                "many",
+                "arguments",
+                "here"
+              ],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            },
+            {
+              "case": "wrong_type",
+              "args": [],
+              "kwargs": {
+                "fallback_source": 1
+              },
+              "expect": {
+                "success": true
+              }
+            }
           ]
         },
         "public_members": {
@@ -203,23 +278,39 @@
           }
         }
       },
-      "NoDirective": {
-        "kind": "class",
-        "constructor": {
-          "signature": {"is_async": false, "params": [{"name": "reason", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false}]},
-          "probes": [
-            {"case": "missing_required", "args": [], "kwargs": {}, "expect": {"exception": "TypeError"}},
-            {"case": "extra_argument", "args": ["reason", "extra"], "kwargs": {}, "expect": {"exception": "TypeError"}}
-          ]
-        }
-      },
       "UnknownDirective": {
         "kind": "class",
         "constructor": {
-          "signature": {"is_async": false, "params": [{"name": "reason", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false}]},
+          "signature": {
+            "is_async": false,
+            "params": [
+              {
+                "name": "reason",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              }
+            ]
+          },
           "probes": [
-            {"case": "missing_required", "args": [], "kwargs": {}, "expect": {"exception": "TypeError"}},
-            {"case": "extra_argument", "args": ["reason", "extra"], "kwargs": {}, "expect": {"exception": "TypeError"}}
+            {
+              "case": "missing_required",
+              "args": [],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            },
+            {
+              "case": "extra_argument",
+              "args": [
+                "reason",
+                "extra"
+              ],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            }
           ]
         }
       },
@@ -261,10 +352,29 @@
         "signature": {
           "is_async": false,
           "params": [
-            {"name": "model", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
-            {"name": "api_key", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
-            {"name": "base_url", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
-            {"name": "request_kwargs", "kind": "KEYWORD_ONLY", "has_default": true, "default": null}
+            {
+              "name": "model",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "api_key",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "base_url",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "request_kwargs",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            }
           ]
         }
       },
@@ -273,12 +383,115 @@
         "signature": {
           "is_async": false,
           "params": [
-            {"name": "model", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
-            {"name": "api_key", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
-            {"name": "base_url", "kind": "KEYWORD_ONLY", "has_default": true, "default": null},
-            {"name": "request_kwargs", "kind": "KEYWORD_ONLY", "has_default": true, "default": null}
+            {
+              "name": "model",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "api_key",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "base_url",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "request_kwargs",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            }
           ]
         }
+      },
+      "DRAFT_OUTCOME_REJECTED": {
+        "kind": "constant",
+        "value": "rejected"
+      },
+      "RejectedDirective": {
+        "kind": "class",
+        "constructor": {
+          "signature": {
+            "is_async": false,
+            "params": [
+              {
+                "name": "reason",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              }
+            ]
+          },
+          "probes": [
+            {
+              "case": "missing_required",
+              "args": [],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            },
+            {
+              "case": "extra_argument",
+              "args": [
+                "reason",
+                "extra"
+              ],
+              "kwargs": {},
+              "expect": {
+                "exception": "TypeError"
+              }
+            }
+          ]
+        }
+      },
+      "REASON_ORDINARY_NON_DIRECTIVE": {
+        "kind": "constant",
+        "value": "ordinary_non_directive"
+      },
+      "REASON_QUESTION_FORM": {
+        "kind": "constant",
+        "value": "question_form"
+      },
+      "REASON_QUOTED_REPORTED": {
+        "kind": "constant",
+        "value": "quoted_reported"
+      },
+      "REASON_INCOMPLETE_DIRECTIVE": {
+        "kind": "constant",
+        "value": "incomplete_directive"
+      },
+      "REASON_COMPOUND_DIRECTIVE": {
+        "kind": "constant",
+        "value": "compound_directive"
+      },
+      "REASON_MULTI_SENTENCE": {
+        "kind": "constant",
+        "value": "multi_sentence"
+      },
+      "REASON_MALFORMED_DIRECTIVE": {
+        "kind": "constant",
+        "value": "malformed_directive"
+      },
+      "REASON_UNSUPPORTED_INPUT": {
+        "kind": "constant",
+        "value": "unsupported_input"
+      },
+      "REASON_INVALID_FALLBACK_OUTPUT": {
+        "kind": "constant",
+        "value": "invalid_fallback_output"
+      },
+      "REASON_FALLBACK_NO_CANDIDATE": {
+        "kind": "constant",
+        "value": "fallback_no_candidate"
+      },
+      "REASON_SEMANTIC_UNCERTAINTY": {
+        "kind": "constant",
+        "value": "semantic_uncertainty"
       }
     }
   }

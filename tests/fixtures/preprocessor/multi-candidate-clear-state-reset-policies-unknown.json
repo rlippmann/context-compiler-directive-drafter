@@ -2,8 +2,8 @@
   "name": "multi-candidate-clear-state-reset-policies-unknown",
   "input": "clear state; reset policies",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "compound_directive"
   }
 }

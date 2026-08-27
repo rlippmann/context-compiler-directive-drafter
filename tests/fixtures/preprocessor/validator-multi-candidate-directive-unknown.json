@@ -3,7 +3,7 @@
   "kind": "validator",
   "raw_output": "prohibit peanuts and use almonds",
   "expected": {
-    "classification": "unknown",
+    "classification": "rejected",
     "output": null
   }
 }

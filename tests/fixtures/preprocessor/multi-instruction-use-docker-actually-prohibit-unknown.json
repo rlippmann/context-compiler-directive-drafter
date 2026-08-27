@@ -2,8 +2,8 @@
   "name": "multi-instruction-use-docker-actually-prohibit-unknown",
   "input": "use docker, actually prohibit docker",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.cannot_confidently_reduce"
+    "reason": "compound_directive"
   }
 }

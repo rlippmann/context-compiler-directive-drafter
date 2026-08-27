@@ -17,8 +17,17 @@ from context_compiler.grammar import (
 
 from .constants import (
     DRAFT_OUTCOME_DIRECTIVE,
-    DRAFT_OUTCOME_NO_DIRECTIVE,
+    DRAFT_OUTCOME_REJECTED,
     DRAFT_OUTCOME_UNKNOWN,
+    REASON_COMPOUND_DIRECTIVE,
+    REASON_INCOMPLETE_DIRECTIVE,
+    REASON_MALFORMED_DIRECTIVE,
+    REASON_MULTI_SENTENCE,
+    REASON_ORDINARY_NON_DIRECTIVE,
+    REASON_QUESTION_FORM,
+    REASON_QUOTED_REPORTED,
+    REASON_SEMANTIC_UNCERTAINTY,
+    REASON_UNSUPPORTED_INPUT,
 )
 
 
@@ -28,7 +37,7 @@ class DirectivePreprocessResult(TypedDict):
 
 
 class NonDirectivePreprocessResult(TypedDict):
-    outcome: Literal["no_directive", "unknown"]
+    outcome: Literal["rejected", "unknown"]
     directive: None
     reason: str
 
@@ -50,7 +59,7 @@ _PUNCTUATION_TRIM_PATTERN = re.compile(r"[.!]+\s*$")
 _SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<!\d)[.!?](?!\d)(?:[\"')\]]+)?\s+(?=[A-Za-z])")
 _QUOTED_REPORTING_PATTERN = re.compile(
     r"^\s*(?:the\s+(?:doc|docs?|documentation)|\w+)\s+"
-    r"(?:literally\s+)?(?:say|says?|said|wrote|quoted)\s*:\s*"
+    r"(?:literally\s+)?(?:say|says?|said|wrote|quoted)\s*:?\s*"
     r'["\'`].+["\'`][.!]?\s*$',
     re.IGNORECASE,
 )
@@ -65,7 +74,7 @@ _PROHIBIT_ALIAS_PATTERN = re.compile(r"^(?:do not|don't) use (?P<item>\S(?:.*\S)
 _STOP_USING_ALIAS_PATTERN = re.compile(r"^stop using (?P<item>\S(?:.*\S)?)$")
 _TRANSPOSED_PROHIBIT_PATTERN = re.compile(r"^set policy (?P<item>\S(?:.*\S)?) prohibit$")
 _DIRECTIVE_REWRITE_CUE_PATTERN = re.compile(
-    r"^\s*(?:please|i prefer|allow|(?:do not|don't) use|stop using|set premise|"
+    r"^\s*(?:please|allow|(?:do not|don't) use|stop using|set premise|"
     r"change premise|use)\b"
 )
 _CONFIDENT_NON_DIRECTIVE_PATTERN = re.compile(
@@ -95,6 +104,29 @@ _WRAPPER_PAIRS = {
     ("(", ")"),
     ("[", "]"),
 }
+_MALFORMED_DIRECTIVE_LOOKALIKE_PATTERN = re.compile(r"^\s*[^\s]*[^\x00-\x7f][^\s]*\s+\S(?:.*\S)?$")
+
+
+def _has_multiple_directive_starts(message: str) -> bool:
+    pattern = rf"\b(?:{_directive_alternation(_directive_canonical_starts())})\b"
+    return len(re.findall(pattern, message)) > 1
+
+
+def _is_incomplete_directive(message: str) -> bool:
+    return (
+        message
+        in {
+            "use",
+            "prohibit",
+            "remove policy",
+            "change premise",
+            "change premise to",
+            "set premise",
+            "set premise to",
+        }
+        or message.endswith(" instead of")
+        or message.startswith("use instead of ")
+    )
 
 
 def _normalized_for_match(message: str) -> str:
@@ -259,8 +291,7 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
     Returns:
         A PreprocessResult with:
         - outcome="directive" and a canonical directive object when matched
-        - outcome="no_directive" when positive evidence identifies confident
-          non-directive content
+        - outcome="rejected" when the input is terminally undraftable
         - outcome="unknown" when unresolved and fallback may interpret it
 
     Notes:
@@ -271,99 +302,143 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
     """
     if _LIST_MARKER_PATTERN.match(message):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.list_or_enumeration",
+            "reason": REASON_UNSUPPORTED_INPUT,
         }
 
     normalized = _normalized_for_match(message)
 
     if "?" in message and (
-        _contains_directive_cue(normalized) or _DIRECTIVE_REWRITE_CUE_PATTERN.match(normalized)
+        _contains_directive_cue(normalized)
+        or _DIRECTIVE_REWRITE_CUE_PATTERN.match(normalized)
+        or normalized.startswith("i prefer")
     ):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.question_form",
+            "reason": REASON_QUESTION_FORM,
         }
 
     if "?" in message:
         return {
-            "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.confident_non_directive",
+            "reason": REASON_ORDINARY_NON_DIRECTIVE,
         }
 
     if _CONFIDENT_NON_DIRECTIVE_PATTERN.fullmatch(message):
         return {
-            "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.confident_non_directive",
+            "reason": REASON_ORDINARY_NON_DIRECTIVE,
         }
 
     if _META_PREFIX_PATTERN.match(normalized):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.meta_or_reporting",
+            "reason": REASON_QUOTED_REPORTED,
         }
 
     if _matches_multi_segment_pattern(normalized):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.multi_segment_or_mixed_prose",
+            "reason": REASON_COMPOUND_DIRECTIVE,
         }
 
     if _contains_reporting_bracket_mention(message):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.quoted_reported_bracket",
+            "reason": REASON_QUOTED_REPORTED,
         }
 
     if _is_quoted_or_backtick_wrapped(message):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.quoted_exact",
+            "reason": REASON_QUOTED_REPORTED,
         }
 
     if _is_reported_quoted_directive(message):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.quoted_reported",
+            "reason": REASON_QUOTED_REPORTED,
+        }
+
+    if _MALFORMED_DIRECTIVE_LOOKALIKE_PATTERN.fullmatch(message):
+        return {
+            "outcome": DRAFT_OUTCOME_REJECTED,
+            "directive": None,
+            "reason": REASON_MALFORMED_DIRECTIVE,
         }
 
     if _has_obvious_multi_sentence_boundary(message):
         return {
-            "outcome": DRAFT_OUTCOME_NO_DIRECTIVE,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.multi_sentence_host_segmentation",
+            "reason": REASON_MULTI_SENTENCE,
         }
 
-    normalized_candidate = _rewrite_bounded_candidate(_normalize_candidate(message))
-
-    if _matches_multi_segment_pattern(normalized_candidate):
+    normalized_candidate = _normalize_candidate(message)
+    if normalized_candidate.startswith("i prefer ") and (
+        " because " in normalized_candidate or " and i prefer " in normalized_candidate
+    ):
         return {
             "outcome": DRAFT_OUTCOME_UNKNOWN,
             "directive": None,
-            "reason": "reject.multi_segment_or_mixed_prose",
+            "reason": REASON_SEMANTIC_UNCERTAINTY,
+        }
+    normalized_candidate = _rewrite_bounded_candidate(normalized_candidate)
+
+    if (
+        len(normalized_candidate) >= 2
+        and normalized_candidate[0] in "\"'`(["
+        and normalized_candidate[-1] in "\"'`)]"
+        and (normalized_candidate[0], normalized_candidate[-1]) not in _WRAPPER_PAIRS
+    ):
+        return {
+            "outcome": DRAFT_OUTCOME_REJECTED,
+            "directive": None,
+            "reason": REASON_MALFORMED_DIRECTIVE,
+        }
+
+    if _matches_multi_segment_pattern(normalized_candidate):
+        return {
+            "outcome": DRAFT_OUTCOME_REJECTED,
+            "directive": None,
+            "reason": REASON_COMPOUND_DIRECTIVE,
         }
 
     if _is_ambiguous_alias(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.ambiguous_candidate",
+            "reason": REASON_COMPOUND_DIRECTIVE,
+        }
+
+    if _is_incomplete_directive(normalized_candidate):
+        return {
+            "outcome": DRAFT_OUTCOME_REJECTED,
+            "directive": None,
+            "reason": REASON_INCOMPLETE_DIRECTIVE,
         }
 
     if _is_unsupported_alias(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.unsupported_alias",
+            "reason": REASON_MALFORMED_DIRECTIVE,
+        }
+
+    if _has_multiple_directive_starts(normalized_candidate):
+        return {
+            "outcome": DRAFT_OUTCOME_REJECTED,
+            "directive": None,
+            "reason": REASON_COMPOUND_DIRECTIVE,
         }
 
     decomposed = decompose_directive(normalized_candidate)
@@ -375,20 +450,24 @@ def preprocess_heuristic(message: str) -> PreprocessResult:
 
     if decomposed is not None:
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.cannot_confidently_reduce",
+            "reason": (
+                REASON_INCOMPLETE_DIRECTIVE
+                if _is_incomplete_directive(normalized_candidate)
+                else REASON_MALFORMED_DIRECTIVE
+            ),
         }
 
-    if _contains_directive_cue(normalized_candidate):
+    if _DIRECTIVE_REWRITE_CUE_PATTERN.match(normalized_candidate):
         return {
-            "outcome": DRAFT_OUTCOME_UNKNOWN,
+            "outcome": DRAFT_OUTCOME_REJECTED,
             "directive": None,
-            "reason": "reject.cannot_confidently_reduce",
+            "reason": REASON_MALFORMED_DIRECTIVE,
         }
 
     return {
         "outcome": DRAFT_OUTCOME_UNKNOWN,
         "directive": None,
-        "reason": "reject.cannot_confidently_reduce",
+        "reason": REASON_SEMANTIC_UNCERTAINTY,
     }

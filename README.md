@@ -70,7 +70,7 @@ Draft a candidate directive:
 
 ```python
 from context_compiler_directive_drafter import DirectiveDrafter
-from context_compiler_directive_drafter import NoDirective, UnknownDirective
+from context_compiler_directive_drafter import RejectedDirective, UnknownDirective
 
 drafter = DirectiveDrafter()
 
@@ -80,8 +80,8 @@ result = drafter.draft_directive(
 
 if hasattr(result.result, "text"):
     print("Candidate directive:", result.result.text)
-elif isinstance(result.result, NoDirective):
-    print("No canonical directive drafted:", result.result.reason)
+elif isinstance(result.result, RejectedDirective):
+    print("Directive acquisition rejected:", result.result.reason)
 elif isinstance(result.result, UnknownDirective):
     print("Need clarification before drafting:", result.result.reason)
 ```
@@ -185,9 +185,9 @@ Public interface:
 
 - `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, fallback output parsing and validation, and final result construction.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
-- `NoDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
+- `RejectedDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `preprocess_heuristic(message)`: Heuristically draft a candidate directive and, on success, return the `CanonicalDirective` directly.
-- `classify_drafter_output(raw_output)`: Classify raw output as directive, no_directive, or unknown.
+- `classify_drafter_output(raw_output)`: Parse provider output as a canonical directive or rejected output.
 - `get_converter_prompt()`: Load the shared static converter system prompt.
 - `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
@@ -203,21 +203,20 @@ The intended drafting boundary is:
 Every drafting path should end in one of three host-visible result variants:
 
 - `CanonicalDirective`: a proposed canonical directive that is ready for compiler review and independent policy checks
-- `NoDirective(reason=...)`: the input is not asking for a directive
+- `RejectedDirective(reason=...)`: acquisition is terminally rejected and must not reach fallback
 - `UnknownDirective(reason=...)`: the input appears directive-related or interpretation failed, but the drafter should not guess
 
 The heuristic uses these outcomes deliberately:
 
-- `NoDirective` means the heuristic has positive evidence that the input is
-  confidently non-directive, such as ordinary conversation, a clearly
-  non-directive question, or an obvious multi-sentence message reserved for
-  host segmentation.
-- `UnknownDirective` means the heuristic could not confidently produce one
-  candidate and also could not confidently classify the input as non-directive.
-  This result is eligible for host fallback interpretation.
+- `RejectedDirective` means acquisition is terminally rejected, including
+  ordinary prose, questions, quoted or reported commands, incomplete
+  directives, and compound or malformed input. It is never fallback-eligible.
+- `UnknownDirective` means semantic interpretation remains plausible but the
+  heuristic cannot confidently produce one candidate. This result alone is
+  eligible for host fallback interpretation.
 
 Failure to recognize canonical syntax or a bounded rewrite is not, by itself,
-evidence for `NoDirective`.
+evidence for `RejectedDirective`.
 
 As a bounded deterministic rewrite, a clear whole-message `I prefer X` form is
 treated like `please use X` and produces the proposed candidate `use X` when
@@ -239,7 +238,7 @@ not "this directive is permitted" and not "this directive has been applied."
 2. If you configure a fallback, have it return canonical directive text or `None`, and register the source metadata you want preserved on any fallback-produced `DraftResult`.
 3. If the result yields a `CanonicalDirective`, pass that canonical directive to
    `context-compiler` for authoritative review and application.
-4. If the result yields `NoDirective`, continue the host flow without a
+4. If the result yields `RejectedDirective`, continue the host flow without a
    directive handoff.
 5. If the result yields `UnknownDirective`, preserve the boundary: ask for
    clarification, show resubmission guidance, or retry drafting in a safer
@@ -335,7 +334,7 @@ Boundary rules:
 - Defer ambiguous semantic interpretation to the host fallback when available.
 
 Obvious multi-sentence conversational input is outside the acquisition unit.
-The heuristic returns `no_directive` for that input rather than sending it to
+The heuristic returns `rejected` for that input rather than sending it to
 fallback. The host is responsible for sentence segmentation and may resubmit
 the resulting units individually. `unknown` is reserved for an eligible
 single acquisition unit that is directive-adjacent but cannot be confidently
@@ -343,11 +342,9 @@ reduced to one canonical candidate and may require fallback. Core remains
 responsible for canonical directive validity, applicability, authorization,
 and execution; it does not own host sentence segmentation.
 
-Questions are directive-adjacent but not explicit directive requests. Forms such
-as `allow docker?`, `do not use peanuts?`, and `please use docker?` return an
-`unknown` result so a host fallback can interpret them; they never become
-heuristic candidates. Clearly non-directive questions such as `can you help
-with lunch?` return `no_directive`.
+Questions are terminal acquisition rejections. Forms such as `allow docker?`,
+`do not use peanuts?`, `please use docker?`, and `can you help with lunch?`
+return `rejected`; they never reach fallback or become heuristic candidates.
 
 Quoting is intentionally distinct from quoting an operand: a full-message
 command such as `"use docker"` is treated as quoted or reported text and is

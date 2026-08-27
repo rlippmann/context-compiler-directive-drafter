@@ -2,8 +2,8 @@
   "name": "multi-sentence-thanks-no-directive",
   "input": "please use docker. thanks.",
   "expected": {
-    "outcome": "no_directive",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.multi_sentence_host_segmentation"
+    "reason": "multi_sentence"
   }
 }

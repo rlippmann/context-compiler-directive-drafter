@@ -2,8 +2,8 @@
   "name": "quoted-exact-use-docker-backtick-unknown",
   "input": "`use docker`",
   "expected": {
-    "outcome": "unknown",
+    "outcome": "rejected",
     "directive": null,
-    "reason": "reject.quoted_exact"
+    "reason": "quoted_reported"
   }
 }
