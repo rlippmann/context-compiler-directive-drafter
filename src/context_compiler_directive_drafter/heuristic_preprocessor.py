@@ -156,7 +156,7 @@ def _matches_multi_segment_pattern(message: str) -> bool:
     return bool(
         re.match(
             rf"^\s*(?:{_directive_alternation(_directive_canonical_starts())})\b"
-            r".*\b(?:because|then continue|and then continue|and explain)\b",
+            r".*\b(?:because|then continue|and then continue|and explain|and summarize)\b",
             message,
         )
     )
