@@ -234,40 +234,20 @@
           "user_input": "set premise concise replies",
           "expect_result": {
             "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
+            "required_keys": ["source", "result"],
             "properties": {
-              "source": {
-                "type": "string",
-                "const": "heuristic"
-              },
+              "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": [
-                  "text",
-                  "kind",
-                  "operands"
-                ],
+                "required_keys": ["text", "kind", "operands"],
                 "properties": {
-                  "text": {
-                    "type": "string"
-                  },
-                  "kind": {
-                    "type": "string",
-                    "const": "set_premise"
-                  },
+                  "text": {"type": "string", "const": "set premise concise replies"},
+                  "kind": {"type": "string", "const": "set_premise"},
                   "operands": {
                     "type": "object",
-                    "required_keys": [
-                      "value"
-                    ],
+                    "required_keys": ["value"],
                     "properties": {
-                      "value": {
-                        "type": "string",
-                        "const": "concise replies"
-                      }
+                      "value": {"type": "string", "const": "concise replies"}
                     }
                   }
                 }
@@ -280,24 +260,135 @@
           "user_input": "can you help with lunch?",
           "expect_result": {
             "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
+            "required_keys": ["source", "result"],
             "properties": {
-              "source": {
-                "type": "string",
-                "const": "heuristic"
-              },
+              "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": [
-                  "reason"
-                ],
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_draft",
+          "user_input": "use",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "incomplete"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_draft",
+          "user_input": "use docker and prohibit peanuts",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "multiple_directives"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "set premise concise replies",
+          "heuristic_result": "canonical",
+          "fallback_output": "canonical",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["kind"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "can you help with lunch?",
+          "heuristic_result": "rejected",
+          "fallback_output": "canonical",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["reason"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "Could we maybe use uv later",
+          "heuristic_result": "unknown",
+          "fallback_output": "canonical",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {
+                "type": "object",
+                "required_keys": ["text", "kind", "operands"],
                 "properties": {
-                  "reason": {
-                    "type": "string",
-                    "const": "non_directive"
+                  "text": {"type": "string", "const": "use docker"},
+                  "kind": {"type": "string", "const": "use_item"},
+                  "operands": {
+                    "type": "object",
+                    "required_keys": ["item"],
+                    "properties": {"item": {"type": "string", "const": "docker"}}
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "Could we maybe use uv later",
+          "heuristic_result": "unknown",
+          "fallback_output": "canonical",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {
+                "type": "object",
+                "required_keys": ["text", "kind", "operands"],
+                "properties": {
+                  "text": {"type": "string", "const": "use docker"},
+                  "kind": {"type": "string", "const": "use_item"},
+                  "operands": {
+                    "type": "object",
+                    "required_keys": ["item"],
+                    "properties": {"item": {"type": "string", "const": "docker"}}
                   }
                 }
               }
@@ -307,134 +398,20 @@
         {
           "kind": "directive_drafter_fallback_routing",
           "mode": "sync",
-          "user_input": "set premise concise replies",
-          "heuristic_result": "canonical",
-          "expect_fallback_calls": 0,
-          "expect_source": "heuristic",
-          "expect_result": {
-            "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
-            "properties": {
-              "source": {
-                "type": "string",
-                "const": "heuristic"
-              },
-              "result": {
-                "type": "object",
-                "required_keys": [
-                  "kind"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "kind": "directive_drafter_fallback_routing",
-          "mode": "sync",
-          "user_input": "can you help with lunch?",
-          "heuristic_result": "rejected",
-          "expect_fallback_calls": 0,
-          "expect_source": "heuristic",
-          "expect_result": {
-            "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
-            "properties": {
-              "source": {
-                "type": "string",
-                "const": "heuristic"
-              },
-              "result": {
-                "type": "object",
-                "required_keys": [
-                  "reason"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "kind": "directive_drafter_fallback_routing",
-          "mode": "sync",
           "user_input": "Could we maybe use uv later",
           "heuristic_result": "unknown",
+          "fallback_output": "none",
           "expect_fallback_calls": 1,
           "expect_source": "contract-fallback",
           "expect_result": {
             "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
+            "required_keys": ["source", "result"],
             "properties": {
-              "source": {
-                "type": "string",
-                "const": "contract-fallback"
-              },
+              "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": [
-                  "kind"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "kind": "directive_drafter_fallback_routing",
-          "mode": "async",
-          "user_input": "set premise concise replies",
-          "heuristic_result": "canonical",
-          "expect_fallback_calls": 0,
-          "expect_source": "heuristic",
-          "expect_result": {
-            "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
-            "properties": {
-              "source": {
-                "type": "string",
-                "const": "heuristic"
-              },
-              "result": {
-                "type": "object",
-                "required_keys": [
-                  "kind"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "kind": "directive_drafter_fallback_routing",
-          "mode": "async",
-          "user_input": "can you help with lunch?",
-          "heuristic_result": "rejected",
-          "expect_fallback_calls": 0,
-          "expect_source": "heuristic",
-          "expect_result": {
-            "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
-            "properties": {
-              "source": {
-                "type": "string",
-                "const": "heuristic"
-              },
-              "result": {
-                "type": "object",
-                "required_keys": [
-                  "reason"
-                ]
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "non_directive"}}
               }
             }
           }
@@ -444,24 +421,102 @@
           "mode": "async",
           "user_input": "Could we maybe use uv later",
           "heuristic_result": "unknown",
+          "fallback_output": "none",
           "expect_fallback_calls": 1,
           "expect_source": "contract-fallback",
           "expect_result": {
             "type": "object",
-            "required_keys": [
-              "source",
-              "result"
-            ],
+            "required_keys": ["source", "result"],
             "properties": {
-              "source": {
-                "type": "string",
-                "const": "contract-fallback"
-              },
+              "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": [
-                  "kind"
-                ]
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "Could we maybe use uv later",
+          "heuristic_result": "unknown",
+          "fallback_output": "abstention",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "Could we maybe use uv later",
+          "heuristic_result": "unknown",
+          "fallback_output": "abstention",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "sync",
+          "user_input": "Could we maybe use uv later",
+          "heuristic_result": "unknown",
+          "fallback_output": "invalid",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "invalid_candidate"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "Could we maybe use uv later",
+          "heuristic_result": "unknown",
+          "fallback_output": "invalid",
+          "expect_fallback_calls": 1,
+          "expect_source": "contract-fallback",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "contract-fallback"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "invalid_candidate"}}
               }
             }
           }
