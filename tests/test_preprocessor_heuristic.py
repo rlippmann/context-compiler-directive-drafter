@@ -236,6 +236,7 @@ def test_heuristic_rejects_multiple_canonical_directive_starts() -> None:
         "prohibit peanuts; use docker",
         "set premise deployment target is staging, then use cautious rollout",
         "clear premise and reset policies",
+        "Reset policies and summarize the changes",
         "remove policy docker\nuse podman",
     ]
     for message in cases:
