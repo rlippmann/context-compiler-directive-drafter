@@ -282,6 +282,28 @@ def _assert_directive_drafter_fallback_routing_probe_schema(
     _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
 
 
+def _assert_directive_drafter_api_probe_schema(probe: dict[str, object], label: str) -> None:
+    _assert_exact_keys(
+        probe,
+        {
+            "kind",
+            "mode",
+            "expect_constructor_source",
+            "expect_configured_source",
+            "expect_replaced_source",
+        },
+        label,
+    )
+    assert probe["kind"] == "directive_drafter_configuration", label
+    assert probe["mode"] in {"sync", "async"}, label
+    for key in {
+        "expect_constructor_source",
+        "expect_configured_source",
+        "expect_replaced_source",
+    }:
+        assert isinstance(probe[key], str), label
+
+
 def _assert_export_kind(name: str, exported: object, expected_kind: str) -> None:
     if expected_kind == "callable":
         assert inspect.isroutine(exported), name
@@ -350,12 +372,37 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
                 {"concept", "required_fields", "result_variants"},
                 f"{label}.api_contract",
             )
-            assert api_contract["concept"] == "immutable result envelope"
+            assert api_contract["concept"] == "result envelope"
             assert api_contract["required_fields"] == ["source", "result"]
             assert api_contract["result_variants"] == ["canonical", "rejected", "unknown"]
             return
 
-        _assert_exact_keys(api_contract, {"constructor", "members"}, f"{label}.api_contract")
+        if label in {"RejectedDirective", "UnknownDirective"}:
+            _assert_exact_keys(
+                api_contract,
+                {"concept", "required_fields", "reason_values"},
+                f"{label}.api_contract",
+            )
+            assert api_contract["required_fields"] == ["reason"]
+            reason_values = api_contract["reason_values"]
+            assert isinstance(reason_values, list) and reason_values
+            assert all(isinstance(reason, str) for reason in reason_values)
+            if label == "RejectedDirective":
+                assert reason_values == [
+                    "non_directive",
+                    "incomplete",
+                    "multiple_directives",
+                    "invalid_candidate",
+                ]
+            else:
+                assert reason_values == ["semantic_uncertainty"]
+            return
+
+        _assert_exact_keys(
+            api_contract,
+            {"constructor", "members", "api_probes"},
+            f"{label}.api_contract",
+        )
         constructor = api_contract["constructor"]
         assert isinstance(constructor, dict), f"{label}.api_contract.constructor"
         _assert_exact_keys(
@@ -370,6 +417,12 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
             "async_fallback_source",
         ]
         assert constructor["default_source"] == "fallback"
+        api_probes = api_contract["api_probes"]
+        assert isinstance(api_probes, list) and api_probes
+        for index, probe in enumerate(api_probes):
+            _assert_directive_drafter_api_probe_schema(
+                probe, f"{label}.api_contract.api_probes[{index}]"
+            )
         members = api_contract["members"]
         assert isinstance(members, dict), f"{label}.api_contract.members"
         expected_members = {
@@ -528,6 +581,69 @@ def _assert_directive_drafter_fallback_routing_probe(
     _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
+def _assert_directive_drafter_api_probe(exported: object, probe: dict[str, object]) -> None:
+    if probe["mode"] == "sync":
+
+        def first_fallback(_: str) -> str:
+            return "use docker"
+
+        def second_fallback(_: str) -> str:
+            return "set premise concise replies"
+
+        drafter = exported(fallback=first_fallback)
+        assert drafter.fallback is True
+        assert (
+            drafter.draft_directive("Could we maybe use uv later").source
+            == (probe["expect_constructor_source"])
+        )
+        drafter.configure_fallback(first_fallback, source=probe["expect_configured_source"])
+        assert drafter.fallback is True
+        assert (
+            drafter.draft_directive("Could we maybe use uv later").source
+            == (probe["expect_configured_source"])
+        )
+        drafter.configure_fallback(second_fallback, source=probe["expect_replaced_source"])
+        assert drafter.fallback is True
+        assert (
+            drafter.draft_directive("Could we maybe use uv later").source
+            == (probe["expect_replaced_source"])
+        )
+        drafter.clear_fallback()
+        assert drafter.fallback is False
+        assert drafter.draft_directive("Could we maybe use uv later").source == "heuristic"
+        return
+
+    async def first_fallback(_: str) -> str:
+        return "use docker"
+
+    async def second_fallback(_: str) -> str:
+        return "set premise concise replies"
+
+    drafter = exported(async_fallback=first_fallback)
+    assert drafter.async_fallback is True
+    assert (
+        asyncio.run(drafter.async_draft_directive("Could we maybe use uv later")).source
+        == (probe["expect_constructor_source"])
+    )
+    drafter.configure_async_fallback(first_fallback, source=probe["expect_configured_source"])
+    assert drafter.async_fallback is True
+    assert (
+        asyncio.run(drafter.async_draft_directive("Could we maybe use uv later")).source
+        == (probe["expect_configured_source"])
+    )
+    drafter.configure_async_fallback(second_fallback, source=probe["expect_replaced_source"])
+    assert drafter.async_fallback is True
+    assert (
+        asyncio.run(drafter.async_draft_directive("Could we maybe use uv later")).source
+        == (probe["expect_replaced_source"])
+    )
+    drafter.clear_async_fallback()
+    assert drafter.async_fallback is False
+    assert asyncio.run(drafter.async_draft_directive("Could we maybe use uv later")).source == (
+        "heuristic"
+    )
+
+
 def _resolve_constructor_value(value: object) -> object:
     if isinstance(value, list):
         return [_resolve_constructor_value(item) for item in value]
@@ -586,11 +702,16 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
         if name == "DraftResult":
             return
 
+        if name in {"RejectedDirective", "UnknownDirective"}:
+            return
+
         members = api_contract["members"]
         for member_name, member_contract in members.items():
             assert hasattr(exported, member_name), f"{name}.{member_name}"
             if member_contract["kind"] == "operation":
                 assert callable(getattr(exported, member_name)), f"{name}.{member_name}"
+        for probe in api_contract["api_probes"]:
+            _assert_directive_drafter_api_probe(exported, probe)
         for probe in spec.get("behavior_probes", []):
             if probe["kind"] == "directive_drafter_draft":
                 _assert_directive_drafter_behavior_probe(exported, probe)
@@ -666,7 +787,20 @@ def _assert_member_specs_schema(members: dict[str, object], label: str) -> None:
             _assert_exact_keys(export_contract, {"kind", "value"}, export_name)
             continue
         if kind in {"type_alias", "type"}:
-            _assert_exact_keys(export_contract, {"kind"}, export_name)
+            if "api_contract" in export_contract:
+                _assert_exact_keys(export_contract, {"kind", "api_contract"}, export_name)
+                api_contract = export_contract["api_contract"]
+                assert isinstance(api_contract, dict), export_name
+                _assert_exact_keys(api_contract, {"concept", "values"}, export_name)
+                assert isinstance(api_contract["values"], list)
+                assert api_contract["values"] == [
+                    "non_directive",
+                    "incomplete",
+                    "multiple_directives",
+                    "invalid_candidate",
+                ]
+            else:
+                _assert_exact_keys(export_contract, {"kind"}, export_name)
             continue
         _assert_class_spec_schema(export_contract, export_name)
 
@@ -799,6 +933,9 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
                 _assert_class_contract(name, exported, spec)
                 continue
             if kind == "type_alias":
+                api_contract = spec.get("api_contract")
+                if api_contract is not None:
+                    assert set(get_args(exported)) == set(api_contract["values"]), name
                 continue
             raise AssertionError(f"Unsupported contract kind for {name}: {kind}")
 
