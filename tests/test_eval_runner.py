@@ -98,7 +98,7 @@ def test_fallback_invocation_and_raw_response_are_recorded() -> None:
     )
     calls: list[str] = []
 
-    def fallback(user_input: str) -> str:
+    def fallback(user_input: str, prompt: str) -> str:
         calls.append(user_input)
         return "use podman"
 
@@ -114,7 +114,7 @@ def test_fallback_invocation_and_raw_response_are_recorded() -> None:
 def test_heuristic_handled_case_does_not_invoke_fallback() -> None:
     calls: list[str] = []
 
-    def fallback(user_input: str) -> str:
+    def fallback(user_input: str, prompt: str) -> str:
         calls.append(user_input)
         return "use podman"
 
@@ -138,7 +138,7 @@ def test_invalid_candidate_preserves_raw_model_text() -> None:
         },
     )
 
-    records = run_cases([case], lambda _: "not a canonical directive")
+    records = run_cases([case], lambda _, __: "not a canonical directive")
 
     assert records[0]["failure_category"] == "invalid_candidate"
     assert records[0]["raw_fallback_response"] == "not a canonical directive"
@@ -215,7 +215,7 @@ def test_acceptable_fallback_abstention_passes_and_records_none_response() -> No
         },
     )
 
-    records = run_cases([case], lambda _: None)
+    records = run_cases([case], lambda _, __: None)
 
     assert records[0]["semantic_passed"] is True
     assert records[0]["fallback_invoked"] is True
@@ -238,7 +238,7 @@ def test_summary_fallback_count_uses_callback_observation() -> None:
         ),
     ]
 
-    records = run_cases(cases, lambda _: None)
+    records = run_cases(cases, lambda _, __: None)
     summary = summarize_results(records)
 
     assert summary["heuristic_handled"] == 1

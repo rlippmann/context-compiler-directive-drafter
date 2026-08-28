@@ -69,8 +69,6 @@ def test_sync_fallback_forwards_configuration_request_and_prompt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "converter instructions")
-
     fallback = create_openai_fallback(
         model="compatible-model",
         api_key="test-key",
@@ -78,7 +76,7 @@ def test_sync_fallback_forwards_configuration_request_and_prompt(
         request_kwargs={"temperature": 0, "timeout": 12},
     )
 
-    assert fallback("Use Docker unchanged") == "use docker"
+    assert fallback("Use Docker unchanged", "converter instructions") == "use docker"
     client = _FakeOpenAI.instances[0]
     assert client.init_kwargs == {
         "api_key": "test-key",
@@ -101,11 +99,9 @@ def test_sync_fallback_omits_unset_client_configuration(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "prompt")
-
     fallback = create_openai_fallback(model="compatible-model")
 
-    assert fallback("input") == "use docker"
+    assert fallback("input", "prompt") == "use docker"
     assert _FakeOpenAI.instances[0].init_kwargs == {}
 
 
@@ -118,7 +114,7 @@ def test_sync_fallback_normalizes_no_directive_sentinel(
         f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL} \n"
     )
 
-    assert fallback("input") is None
+    assert fallback("input", "prompt") is None
 
 
 def test_sync_fallback_preserves_canonical_and_invalid_text(
@@ -129,18 +125,16 @@ def test_sync_fallback_preserves_canonical_and_invalid_text(
     completions = _FakeOpenAI.instances[0].chat.completions
 
     completions.response = _FakeResponse("use docker")
-    assert fallback("input") == "use docker"
+    assert fallback("input", "prompt") == "use docker"
 
     completions.response = _FakeResponse("not a directive")
-    assert fallback("input") == "not a directive"
+    assert fallback("input", "prompt") == "not a directive"
 
 
 def test_async_fallback_forwards_configuration_and_returns_raw_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "async prompt")
-
     fallback = create_async_openai_fallback(
         model="compatible-model",
         api_key="test-key",
@@ -148,7 +142,7 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
         request_kwargs={"temperature": 0.2},
     )
 
-    assert asyncio.run(fallback("original input")) == "use podman"
+    assert asyncio.run(fallback("original input", "async prompt")) == "use podman"
     client = _FakeAsyncOpenAI.instances[0]
     assert client.init_kwargs == {
         "api_key": "test-key",
@@ -171,7 +165,7 @@ def test_async_fallback_normalizes_no_directive_sentinel(
         f"\n{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
     )
 
-    assert asyncio.run(fallback("input")) is None
+    assert asyncio.run(fallback("input", "prompt")) is None
 
 
 def test_missing_optional_dependency_has_actionable_error(
@@ -215,8 +209,6 @@ def test_callback_works_with_existing_drafter_fallback_pipeline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    monkeypatch.setattr(adapter, "_get_converter_prompt", lambda: "prompt")
-
     drafter = DirectiveDrafter(
         fallback=create_openai_fallback(model="compatible-model"),
         fallback_source="openai-compatible",
