@@ -10,221 +10,65 @@
         "outcome",
         "directive"
       ],
-      "constructor": {
-        "signature": {
-          "is_async": false,
-          "params": [
-            {
-              "name": "source",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            },
-            {
-              "name": "result",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": false
-            }
-          ]
-        },
-        "probes": [
-          {
-            "case": "missing_required",
-            "args": [],
-            "kwargs": {},
-            "expect": {
-              "exception": "TypeError"
-            }
-          },
-          {
-            "case": "extra_argument",
-            "args": [
-              "source",
-              "result",
-              "extra"
-            ],
-            "kwargs": {},
-            "expect": {
-              "exception": "TypeError"
-            }
-          }
-        ]
+      "api_contract": {
+        "concept": "immutable result envelope",
+        "required_fields": ["source", "result"],
+        "result_variants": ["canonical", "rejected", "unknown"]
       }
     },
     "DirectiveDrafter": {
       "kind": "class",
-      "constructor": {
-        "signature": {
-          "is_async": false,
-          "params": [
-            {
-              "name": "fallback",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": true,
-              "default": null
-            },
-            {
-              "name": "fallback_source",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": true,
-              "default": "fallback"
-            },
-            {
-              "name": "async_fallback",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": true,
-              "default": null
-            },
-            {
-              "name": "async_fallback_source",
-              "kind": "POSITIONAL_OR_KEYWORD",
-              "has_default": true,
-              "default": "fallback"
-            }
-          ]
+      "api_contract": {
+        "constructor": {
+          "supports": [
+            "fallback",
+            "fallback_source",
+            "async_fallback",
+            "async_fallback_source"
+          ],
+          "default_source": "fallback"
         },
-        "probes": [
-          {
-            "case": "extra_argument",
-            "args": [
-              "extra",
-              "too",
-              "many",
-              "arguments",
-              "here"
-            ],
-            "kwargs": {},
-            "expect": {
-              "exception": "TypeError"
-            }
-          },
-          {
-            "case": "wrong_type",
-            "args": [],
-            "kwargs": {
-              "fallback_source": 1
-            },
-            "expect": {
-              "success": true
-            }
-          }
-        ]
-      },
-      "public_members": {
-        "mode": "exact",
         "members": {
           "fallback": {
-            "kind": "property"
+            "kind": "configuration_status",
+            "meaning": "whether a sync fallback is configured"
           },
           "async_fallback": {
-            "kind": "property"
+            "kind": "configuration_status",
+            "meaning": "whether an async fallback is configured"
           },
           "configure_fallback": {
-            "kind": "method",
-            "signature": {
-              "is_async": false,
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                },
-                {
-                  "name": "fallback",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                },
-                {
-                  "name": "source",
-                  "kind": "KEYWORD_ONLY",
-                  "has_default": false
-                }
-              ]
-            }
+            "kind": "operation",
+            "inputs": ["fallback", "source"],
+            "meaning": "install or replace the sync fallback"
           },
           "clear_fallback": {
-            "kind": "method",
-            "signature": {
-              "is_async": false,
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                }
-              ]
-            }
+            "kind": "operation",
+            "inputs": [],
+            "meaning": "remove the sync fallback"
           },
           "configure_async_fallback": {
-            "kind": "method",
-            "signature": {
-              "is_async": false,
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                },
-                {
-                  "name": "async_fallback",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                },
-                {
-                  "name": "source",
-                  "kind": "KEYWORD_ONLY",
-                  "has_default": false
-                }
-              ]
-            }
+            "kind": "operation",
+            "inputs": ["async_fallback", "source"],
+            "meaning": "install or replace the async fallback"
           },
           "clear_async_fallback": {
-            "kind": "method",
-            "signature": {
-              "is_async": false,
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                }
-              ]
-            }
+            "kind": "operation",
+            "inputs": [],
+            "meaning": "remove the async fallback"
           },
           "draft_directive": {
-            "kind": "method",
-            "signature": {
-              "is_async": false,
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                },
-                {
-                  "name": "user_input",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                }
-              ]
-            }
+            "kind": "operation",
+            "inputs": ["user_input"],
+            "returns": "DraftResult",
+            "async": false
           },
           "async_draft_directive": {
-            "kind": "method",
-            "signature": {
-              "is_async": true,
-              "params": [
-                {
-                  "name": "self",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                },
-                {
-                  "name": "user_input",
-                  "kind": "POSITIONAL_OR_KEYWORD",
-                  "has_default": false
-                }
-              ]
-            }
+            "kind": "operation",
+            "inputs": ["user_input"],
+            "returns": "DraftResult",
+            "async": true,
+            "availability": "when the target language supports an async equivalent"
           }
         }
       },
@@ -299,6 +143,22 @@
                 "type": "object",
                 "required_keys": ["reason"],
                 "properties": {"reason": {"type": "string", "const": "multiple_directives"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_draft",
+          "user_input": "Could we maybe use uv later",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "semantic_uncertainty"}}
               }
             }
           }

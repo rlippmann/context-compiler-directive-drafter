@@ -4,6 +4,7 @@
   "expected": {
     "outcome": "rejected",
     "directive": null,
-    "reason": "unsupported_input"
+    "reason": "multiple_directives",
+    "internal_reason": "unsupported_input"
   }
 }

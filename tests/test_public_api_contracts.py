@@ -335,6 +335,85 @@ def _assert_callable_spec_schema(spec: dict[str, object], label: str) -> None:
 
 
 def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
+    if "api_contract" in spec:
+        allowed_keys = {"kind", "api_contract"}
+        if "forbidden_members" in spec:
+            allowed_keys.add("forbidden_members")
+        if "behavior_probes" in spec:
+            allowed_keys.add("behavior_probes")
+        _assert_exact_keys(spec, allowed_keys, label)
+        api_contract = spec["api_contract"]
+        assert isinstance(api_contract, dict), f"{label}.api_contract"
+        if label == "DraftResult":
+            _assert_exact_keys(
+                api_contract,
+                {"concept", "required_fields", "result_variants"},
+                f"{label}.api_contract",
+            )
+            assert api_contract["concept"] == "immutable result envelope"
+            assert api_contract["required_fields"] == ["source", "result"]
+            assert api_contract["result_variants"] == ["canonical", "rejected", "unknown"]
+            return
+
+        _assert_exact_keys(api_contract, {"constructor", "members"}, f"{label}.api_contract")
+        constructor = api_contract["constructor"]
+        assert isinstance(constructor, dict), f"{label}.api_contract.constructor"
+        _assert_exact_keys(
+            constructor,
+            {"supports", "default_source"},
+            f"{label}.api_contract.constructor",
+        )
+        assert constructor["supports"] == [
+            "fallback",
+            "fallback_source",
+            "async_fallback",
+            "async_fallback_source",
+        ]
+        assert constructor["default_source"] == "fallback"
+        members = api_contract["members"]
+        assert isinstance(members, dict), f"{label}.api_contract.members"
+        expected_members = {
+            "fallback",
+            "async_fallback",
+            "configure_fallback",
+            "clear_fallback",
+            "configure_async_fallback",
+            "clear_async_fallback",
+            "draft_directive",
+            "async_draft_directive",
+        }
+        assert set(members) == expected_members, f"{label}.api_contract.members"
+        for member_name, member_contract in members.items():
+            assert isinstance(member_contract, dict), f"{label}.{member_name}"
+            assert member_contract["kind"] in {"configuration_status", "operation"}
+            if member_contract["kind"] == "configuration_status":
+                _assert_exact_keys(member_contract, {"kind", "meaning"}, f"{label}.{member_name}")
+                continue
+            _assert_exact_keys(
+                member_contract,
+                {"kind", "inputs", "meaning"}
+                if member_name.startswith("configure_") or member_name.startswith("clear_")
+                else {"kind", "inputs", "returns", "async"}
+                | ({"availability"} if "availability" in member_contract else set()),
+                f"{label}.{member_name}",
+            )
+        behavior_probes = spec.get("behavior_probes", [])
+        assert isinstance(behavior_probes, list), f"{label}.behavior_probes"
+        for index, probe in enumerate(behavior_probes):
+            assert isinstance(probe, dict), f"{label}.behavior_probes[{index}]"
+            if probe.get("kind") == "directive_drafter_draft":
+                _assert_directive_drafter_behavior_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
+            if probe.get("kind") == "directive_drafter_fallback_routing":
+                _assert_directive_drafter_fallback_routing_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
+            raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
+        return
+
     _assert_exact_keys(
         spec,
         {"kind"}
@@ -501,6 +580,26 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
 
     for member_name in spec.get("forbidden_members", []):
         assert not hasattr(exported, member_name), f"{name}.{member_name}"
+
+    api_contract = spec.get("api_contract")
+    if api_contract is not None:
+        if name == "DraftResult":
+            return
+
+        members = api_contract["members"]
+        for member_name, member_contract in members.items():
+            assert hasattr(exported, member_name), f"{name}.{member_name}"
+            if member_contract["kind"] == "operation":
+                assert callable(getattr(exported, member_name)), f"{name}.{member_name}"
+        for probe in spec.get("behavior_probes", []):
+            if probe["kind"] == "directive_drafter_draft":
+                _assert_directive_drafter_behavior_probe(exported, probe)
+                continue
+            if probe["kind"] == "directive_drafter_fallback_routing":
+                _assert_directive_drafter_fallback_routing_probe(exported, probe)
+                continue
+            raise AssertionError(f"Unsupported behavior probe for {name}: {probe!r}")
+        return
 
     if "constructor" in spec:
         _assert_constructor_contract(exported, spec["constructor"], name)

@@ -4,6 +4,7 @@
   "expected": {
     "outcome": "rejected",
     "directive": null,
-    "reason": "compound_directive"
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
   }
 }

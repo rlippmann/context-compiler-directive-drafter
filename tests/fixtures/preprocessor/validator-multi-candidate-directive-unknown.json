@@ -5,5 +5,9 @@
   "expected": {
     "classification": "rejected",
     "output": null
+  },
+  "public_expected": {
+    "result_kind": "rejected",
+    "reason": "invalid_candidate"
   }
 }
