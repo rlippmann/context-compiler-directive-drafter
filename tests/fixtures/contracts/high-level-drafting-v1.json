@@ -431,6 +431,10 @@
               }
             }
           }
+        },
+        {
+          "kind": "directive_drafter_prompt_consistency",
+          "user_input": "Could we maybe use uv later"
         }
       ]
     }
