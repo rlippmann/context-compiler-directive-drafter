@@ -407,7 +407,12 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
         assert isinstance(constructor, dict), f"{label}.api_contract.constructor"
         _assert_exact_keys(
             constructor,
-            {"supports", "default_source"},
+            {
+                "supports",
+                "fallback_arguments",
+                "async_fallback_arguments",
+                "default_source",
+            },
             f"{label}.api_contract.constructor",
         )
         assert constructor["supports"] == [
@@ -417,6 +422,8 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
             "async_fallback_source",
         ]
         assert constructor["default_source"] == "fallback"
+        assert constructor["fallback_arguments"] == ["user_input", "prompt"]
+        assert constructor["async_fallback_arguments"] == ["user_input", "prompt"]
         api_probes = api_contract["api_probes"]
         assert isinstance(api_probes, list) and api_probes
         for index, probe in enumerate(api_probes):
@@ -535,12 +542,12 @@ def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, 
 def _assert_directive_drafter_fallback_routing_probe(
     exported: object, probe: dict[str, object]
 ) -> None:
-    calls: list[str] = []
+    calls: list[tuple[str, str]] = []
 
     if probe["mode"] == "sync":
 
-        def fallback(user_input: str) -> str | None:
-            calls.append(user_input)
+        def fallback(user_input: str, prompt: str) -> str | None:
+            calls.append((user_input, prompt))
             return {
                 "canonical": "use docker",
                 "none": None,
@@ -552,8 +559,8 @@ def _assert_directive_drafter_fallback_routing_probe(
         result = drafter.draft_directive(probe["user_input"])
     else:
 
-        async def fallback(user_input: str) -> str | None:
-            calls.append(user_input)
+        async def fallback(user_input: str, prompt: str) -> str | None:
+            calls.append((user_input, prompt))
             return {
                 "canonical": "use docker",
                 "none": None,
@@ -568,6 +575,9 @@ def _assert_directive_drafter_fallback_routing_probe(
         result = asyncio.run(drafter.async_draft_directive(probe["user_input"]))
 
     assert len(calls) == probe["expect_fallback_calls"]
+    if calls:
+        assert calls[0][0] == probe["user_input"]
+        assert calls[0][1].strip()
     assert result.source == probe["expect_source"]
     if probe["heuristic_result"] == "canonical":
         assert result.source == "heuristic"
@@ -584,10 +594,12 @@ def _assert_directive_drafter_fallback_routing_probe(
 def _assert_directive_drafter_api_probe(exported: object, probe: dict[str, object]) -> None:
     if probe["mode"] == "sync":
 
-        def first_fallback(_: str) -> str:
+        def first_fallback(_: str, prompt: str) -> str:
+            assert prompt.strip()
             return "use docker"
 
-        def second_fallback(_: str) -> str:
+        def second_fallback(_: str, prompt: str) -> str:
+            assert prompt.strip()
             return "set premise concise replies"
 
         drafter = exported(fallback=first_fallback)
@@ -613,10 +625,12 @@ def _assert_directive_drafter_api_probe(exported: object, probe: dict[str, objec
         assert drafter.draft_directive("Could we maybe use uv later").source == "heuristic"
         return
 
-    async def first_fallback(_: str) -> str:
+    async def first_fallback(_: str, prompt: str) -> str:
+        assert prompt.strip()
         return "use docker"
 
-    async def second_fallback(_: str) -> str:
+    async def second_fallback(_: str, prompt: str) -> str:
+        assert prompt.strip()
         return "set premise concise replies"
 
     drafter = exported(async_fallback=first_fallback)

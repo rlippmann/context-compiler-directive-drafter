@@ -6,7 +6,6 @@ from typing import Any, cast
 
 from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 from context_compiler_directive_drafter.drafter import _AsyncDraftFallback, _DraftFallback
-from context_compiler_directive_drafter.prompt_utils import _get_converter_prompt
 
 
 def _load_openai_clients() -> tuple[type[Any], type[Any]]:
@@ -30,12 +29,15 @@ def _client_kwargs(api_key: str | None, base_url: str | None) -> dict[str, str]:
 
 
 def _request_kwargs(
-    model: str, user_input: str, request_kwargs: Mapping[str, object] | None
+    model: str,
+    user_input: str,
+    prompt: str,
+    request_kwargs: Mapping[str, object] | None,
 ) -> dict[str, object]:
     kwargs = dict(request_kwargs or {})
     kwargs["model"] = model
     kwargs["messages"] = [
-        {"role": "system", "content": _get_converter_prompt()},
+        {"role": "system", "content": prompt},
         {"role": "user", "content": user_input},
     ]
     return kwargs
@@ -63,9 +65,9 @@ def create_openai_fallback(
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
 
-    def fallback(user_input: str) -> str | None:
+    def fallback(user_input: str, prompt: str) -> str | None:
         response = client.chat.completions.create(
-            **_request_kwargs(model, user_input, request_kwargs)
+            **_request_kwargs(model, user_input, prompt, request_kwargs)
         )
         return _normalize_response_text(response)
 
@@ -83,9 +85,9 @@ def create_async_openai_fallback(
     _, async_openai_client = _load_openai_clients()
     client = async_openai_client(**_client_kwargs(api_key, base_url))
 
-    async def fallback(user_input: str) -> str | None:
+    async def fallback(user_input: str, prompt: str) -> str | None:
         response = await client.chat.completions.create(
-            **_request_kwargs(model, user_input, request_kwargs)
+            **_request_kwargs(model, user_input, prompt, request_kwargs)
         )
         return _normalize_response_text(response)
 

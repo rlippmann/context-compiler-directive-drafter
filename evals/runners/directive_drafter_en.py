@@ -25,7 +25,7 @@ from context_compiler_directive_drafter import (
 )
 from context_compiler_directive_drafter.drafter import DraftResult
 
-DraftFallback = Callable[[str], str | None]
+DraftFallback = Callable[[str, str], str | None]
 
 DEFAULT_CORPUS_PATH = (
     Path(__file__).resolve().parents[1] / "corpus" / "english" / "directive-drafter-en.jsonl"
@@ -44,9 +44,9 @@ class FallbackObserver:
     raw_responses: list[str | None] = field(default_factory=list)
 
     def wrap(self, fallback: DraftFallback) -> DraftFallback:
-        def observed(user_input: str) -> str | None:
+        def observed(user_input: str, prompt: str) -> str | None:
             self.invocation_count += 1
-            response = fallback(user_input)
+            response = fallback(user_input, prompt)
             self.raw_responses.append(response)
             return response
 

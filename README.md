@@ -138,8 +138,9 @@ fallback = create_openai_fallback(
 )
 ```
 
-The helper sends the package-owned converter prompt and the original user
-input, translating the provider-level `<NO_DIRECTIVE>` abstention sentinel to
+The Drafter constructs the package-owned converter prompt and passes it with
+the original user input to the helper. The helper translates the provider-level
+`<NO_DIRECTIVE>` abstention sentinel to
 the generic fallback callback contract's Python `None` value. Other model text
 is returned unchanged. The Drafter remains responsible for parsing, validation,
 and result shaping.
@@ -258,9 +259,9 @@ not "this directive is permitted" and not "this directive has been applied."
    clarification, show resubmission guidance, or retry drafting in a safer
    workflow.
 
-Custom fallback callbacks receive the original user input and return canonical
-directive text or `None`. `DirectiveDrafter` owns provider-output parsing,
-normalization, and result construction.
+Custom fallback callbacks receive the original user input and the Drafter-built
+converter prompt, then return raw text or `None`. `DirectiveDrafter` owns
+provider-output parsing, normalization, and result construction.
 
 **Safety Guidance:**
 

@@ -27,6 +27,7 @@ from context_compiler_directive_drafter.heuristic_preprocessor import (
     _preprocess_heuristic,
     _PreprocessResult,
 )
+from context_compiler_directive_drafter.prompt_utils import _get_converter_prompt
 
 
 @dataclass(frozen=True)
@@ -59,8 +60,8 @@ class DraftResult:
     result: _DraftResultType
 
 
-_DraftFallback = Callable[[str], str | None]
-_AsyncDraftFallback = Callable[[str], Awaitable[str | None]]
+_DraftFallback = Callable[[str, str], str | None]
+_AsyncDraftFallback = Callable[[str, str], Awaitable[str | None]]
 
 
 class DirectiveDrafter:
@@ -83,16 +84,18 @@ class DirectiveDrafter:
 
         Args:
             fallback: Optional non-authoritative callback that accepts the
-                original user input and returns candidate directive text or
-                None. The callback is only used when heuristic drafting does
-                not produce a directly returnable result.
+                original user input and the Drafter-constructed converter
+                prompt, and returns candidate directive text or None. The
+                callback is only used when heuristic drafting does not
+                produce a directly returnable result.
             fallback_source: Source metadata to preserve on DraftResult values
                 produced from the configured sync fallback callback.
             async_fallback: Optional non-authoritative async callback that
-                accepts the original user input and returns candidate
-                directive text or None. The callback is only used by async
-                drafting when heuristic drafting does not produce a directly
-                returnable result.
+                accepts the original user input and the Drafter-constructed
+                converter prompt, and returns candidate directive text or
+                None. The callback is only used by async drafting when
+                heuristic drafting does not produce a directly returnable
+                result.
             async_fallback_source: Source metadata to preserve on DraftResult
                 values produced from the configured async fallback callback.
         """
@@ -157,7 +160,7 @@ class DirectiveDrafter:
         if not _is_fallback_eligible(heuristic_draft) or self._fallback is None:
             return heuristic_draft
 
-        fallback_text = self._fallback(user_input)
+        fallback_text = self._fallback(user_input, _get_converter_prompt())
         return _draft_result_from_fallback_output(fallback_text, source=self._fallback_source)
 
     async def async_draft_directive(self, user_input: str) -> DraftResult:
@@ -176,7 +179,7 @@ class DirectiveDrafter:
         if not _is_fallback_eligible(heuristic_draft) or self._async_fallback is None:
             return heuristic_draft
 
-        fallback_text = await self._async_fallback(user_input)
+        fallback_text = await self._async_fallback(user_input, _get_converter_prompt())
         return _draft_result_from_fallback_output(fallback_text, source=self._async_fallback_source)
 
 

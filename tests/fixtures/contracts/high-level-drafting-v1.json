@@ -59,6 +59,8 @@
             "async_fallback",
             "async_fallback_source"
           ],
+          "fallback_arguments": ["user_input", "prompt"],
+          "async_fallback_arguments": ["user_input", "prompt"],
           "default_source": "fallback"
         },
         "members": {
