@@ -11,9 +11,42 @@
         "directive"
       ],
       "api_contract": {
-        "concept": "immutable result envelope",
+        "concept": "result envelope",
         "required_fields": ["source", "result"],
         "result_variants": ["canonical", "rejected", "unknown"]
+      }
+    },
+    "RejectedDirective": {
+      "kind": "class",
+      "api_contract": {
+        "concept": "terminal rejected result variant",
+        "required_fields": ["reason"],
+        "reason_values": [
+          "non_directive",
+          "incomplete",
+          "multiple_directives",
+          "invalid_candidate"
+        ]
+      }
+    },
+    "UnknownDirective": {
+      "kind": "class",
+      "api_contract": {
+        "concept": "fallback-eligible uncertainty result variant",
+        "required_fields": ["reason"],
+        "reason_values": ["semantic_uncertainty"]
+      }
+    },
+    "RejectedReason": {
+      "kind": "type_alias",
+      "api_contract": {
+        "concept": "closed public rejection reason set",
+        "values": [
+          "non_directive",
+          "incomplete",
+          "multiple_directives",
+          "invalid_candidate"
+        ]
       }
     },
     "DirectiveDrafter": {
@@ -70,7 +103,23 @@
             "async": true,
             "availability": "when the target language supports an async equivalent"
           }
-        }
+        },
+        "api_probes": [
+          {
+            "kind": "directive_drafter_configuration",
+            "mode": "sync",
+            "expect_constructor_source": "fallback",
+            "expect_configured_source": "configured-sync",
+            "expect_replaced_source": "replaced-sync"
+          },
+          {
+            "kind": "directive_drafter_configuration",
+            "mode": "async",
+            "expect_constructor_source": "fallback",
+            "expect_configured_source": "configured-async",
+            "expect_replaced_source": "replaced-async"
+          }
+        ]
       },
       "behavior_probes": [
         {
