@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
 
+import pytest
 from context_compiler.grammar import CanonicalDirective
 
+from context_compiler_directive_drafter.drafter import DirectiveDrafter, RejectedDirective
 from context_compiler_directive_drafter.heuristic_preprocessor import _preprocess_heuristic
 from context_compiler_directive_drafter.output_validation import _classify_drafter_output
 
@@ -11,6 +13,18 @@ classify_drafter_output = _classify_drafter_output
 
 _PREPROCESSOR_FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "preprocessor"
 _REQUIRED_FIXTURE_FAMILIES = {"heuristic", "validator"}
+_SHARED_VALIDATOR_FIXTURES = {
+    "validator-malformed-text-unknown",
+    "validator-multi-candidate-directive-unknown",
+}
+
+_PUBLIC_REASONS = {
+    "non_directive",
+    "incomplete",
+    "multiple_directives",
+    "invalid_candidate",
+}
+_UNKNOWN_REASONS = {"semantic_uncertainty"}
 
 
 def _behavior_fixture_paths() -> list[Path]:
@@ -49,7 +63,12 @@ def _assert_validation_expected_contract(expected: object, label: str) -> None:
 
 def _assert_heuristic_expected_contract(expected: object, label: str) -> None:
     assert isinstance(expected, dict), label
-    _assert_exact_keys(expected, {"outcome", "directive"} | ({"reason"} & set(expected)), label)
+    allowed_keys = {"outcome", "directive"}
+    if expected.get("outcome") in {"rejected", "unknown"}:
+        allowed_keys.add("reason")
+    if expected.get("outcome") == "rejected":
+        allowed_keys.add("internal_reason")
+    _assert_exact_keys(expected, allowed_keys, label)
     outcome = expected["outcome"]
     directive = expected["directive"]
     assert outcome in {"directive", "rejected", "unknown"}, label
@@ -62,6 +81,11 @@ def _assert_heuristic_expected_contract(expected: object, label: str) -> None:
     else:
         assert directive is None, label
         assert isinstance(expected.get("reason"), str), label
+        if outcome == "rejected":
+            assert expected["reason"] in _PUBLIC_REASONS, label
+            assert isinstance(expected.get("internal_reason"), str), label
+        else:
+            assert expected["reason"] in _UNKNOWN_REASONS, label
 
 
 def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> None:
@@ -82,8 +106,17 @@ def _assert_behavior_fixture_schema(path: Path, fixture: dict[str, object]) -> N
         return
 
     if kind == "validator":
-        _assert_exact_keys(fixture, {"name", "kind", "raw_output", "expected"}, label)
+        expected_keys = {"name", "kind", "raw_output", "expected"}
+        if fixture["name"] in _SHARED_VALIDATOR_FIXTURES:
+            expected_keys.add("public_expected")
+        _assert_exact_keys(fixture, expected_keys, label)
         _assert_validation_expected_contract(fixture["expected"], label)
+        if fixture["name"] in _SHARED_VALIDATOR_FIXTURES:
+            public_expected = fixture["public_expected"]
+            assert public_expected == {
+                "result_kind": "rejected",
+                "reason": "invalid_candidate",
+            }, label
         return
 
 
@@ -113,7 +146,17 @@ def _serialize_heuristic_result(message: str) -> dict[str, object]:
         serialized = {
             "outcome": result["outcome"],
             "directive": None,
-            "reason": result["reason"],
+            "reason": {
+                "ordinary_non_directive": "non_directive",
+                "question_form": "non_directive",
+                "quoted_reported": "non_directive",
+                "multi_sentence": "non_directive",
+                "incomplete_directive": "incomplete",
+                "compound_directive": "multiple_directives",
+                "unsupported_input": "multiple_directives",
+                "malformed_directive": "invalid_candidate",
+                "semantic_uncertainty": "semantic_uncertainty",
+            }[result["reason"]],
         }
 
     # Enforce the validation boundary: only validated directive output may pass.
@@ -138,15 +181,34 @@ def _fixture_families(paths: list[Path]) -> set[str]:
     return families
 
 
+def _assert_shared_validator_result(fixture: dict[str, object]) -> None:
+    fallback_output = fixture["raw_output"]
+    assert isinstance(fallback_output, str)
+    drafter = DirectiveDrafter(
+        fallback=lambda _: fallback_output,
+        fallback_source="contract-fallback",
+    )
+    result = drafter.draft_directive("Could we maybe use uv later")
+    assert result.source == "contract-fallback"
+    assert isinstance(result.result, RejectedDirective)
+    assert result.result.reason == fixture["public_expected"]["reason"]
+
+
+@pytest.mark.contract
 def test_preprocessor_conformance_fixtures() -> None:
     paths = _behavior_fixture_paths()
-    assert _fixture_families(paths) >= _REQUIRED_FIXTURE_FAMILIES
-
+    contract_paths = []
     for path in paths:
         fixture = _load_fixture(path)
-        if path.name.startswith("public-api-"):
-            continue
+        is_heuristic = fixture.get("kind", "heuristic") == "heuristic"
+        is_shared_validator = fixture["name"] in _SHARED_VALIDATOR_FIXTURES
+        if is_heuristic or is_shared_validator:
+            contract_paths.append(path)
 
+    assert _fixture_families(contract_paths) >= _REQUIRED_FIXTURE_FAMILIES
+
+    for path in contract_paths:
+        fixture = _load_fixture(path)
         _assert_behavior_fixture_schema(path, fixture)
 
         fixture_name = fixture.get("name", path.name)
@@ -162,20 +224,41 @@ def test_preprocessor_conformance_fixtures() -> None:
             first = _serialize_heuristic_result(input_text)
             second = _serialize_heuristic_result(input_text)
             assert first == second, fixture_name
-            assert first == expected, fixture_name
+            portable_expected = dict(expected)
+            portable_expected.pop("internal_reason", None)
+            assert first == portable_expected, fixture_name
             continue
 
-        assert "raw_output" in fixture, fixture_name
-        raw_output = fixture["raw_output"]
-
         if kind == "validator":
-            expected = fixture.get("expected")
-            _assert_validation_expected_contract(expected, fixture_name)
-            # Deterministic replay check.
-            first = classify_drafter_output(raw_output)
-            second = classify_drafter_output(raw_output)
-            assert first == second, fixture_name
-            assert first == expected, fixture_name
+            _assert_shared_validator_result(fixture)
             continue
 
         raise AssertionError(f"Unsupported preprocessor fixture kind: {kind}")
+
+
+def test_python_provider_validator_fixtures() -> None:
+    for path in _behavior_fixture_paths():
+        fixture = _load_fixture(path)
+        if fixture.get("kind", "heuristic") != "validator":
+            continue
+        if fixture["name"] in _SHARED_VALIDATOR_FIXTURES:
+            continue
+        _assert_behavior_fixture_schema(path, fixture)
+        raw_output = fixture["raw_output"]
+        expected = fixture["expected"]
+        first = classify_drafter_output(raw_output)
+        second = classify_drafter_output(raw_output)
+        assert first == second, fixture["name"]
+        assert first == expected, fixture["name"]
+
+
+def test_python_heuristic_internal_reasons_match_fixture_diagnostics() -> None:
+    for path in _behavior_fixture_paths():
+        fixture = _load_fixture(path)
+        expected = fixture.get("expected", {})
+        if fixture.get("kind", "heuristic") != "heuristic":
+            continue
+        if expected.get("outcome") != "rejected":
+            continue
+        result = preprocess_heuristic(fixture["input"])
+        assert result["reason"] == expected["internal_reason"], fixture["name"]

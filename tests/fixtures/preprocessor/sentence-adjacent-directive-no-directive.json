@@ -4,6 +4,7 @@
   "expected": {
     "outcome": "rejected",
     "directive": null,
-    "reason": "multi_sentence"
+    "reason": "non_directive",
+    "internal_reason": "multi_sentence"
   }
 }

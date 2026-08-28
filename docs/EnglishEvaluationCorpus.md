@@ -71,6 +71,13 @@ verify that the referenced fixture exists, has the same input, and agrees on
 outcome and canonical directive where applicable. The corpus does not mirror
 every fixture and does not become a second conformance source.
 
+The shared fixture fields are the public outcome and reason vocabulary. A
+heuristic rejection fixture may also carry `internal_reason` for the Python
+reference implementation, but ports consume `reason` and do not need to
+reproduce that diagnostic taxonomy. Contract-marked tests identify the shared
+fixture families; Python-only tests may exercise private preprocessing and
+normalization entry points.
+
 ## Promotion workflow
 
 1. Add a new behavior as `EVALUATION`.

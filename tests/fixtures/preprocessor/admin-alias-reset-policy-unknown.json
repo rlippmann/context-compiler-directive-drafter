@@ -4,6 +4,7 @@
   "expected": {
     "outcome": "rejected",
     "directive": null,
-    "reason": "malformed_directive"
+    "reason": "invalid_candidate",
+    "internal_reason": "malformed_directive"
   }
 }

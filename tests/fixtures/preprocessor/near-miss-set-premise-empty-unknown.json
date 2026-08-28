@@ -4,6 +4,7 @@
   "expected": {
     "outcome": "rejected",
     "directive": null,
-    "reason": "incomplete_directive"
+    "reason": "incomplete",
+    "internal_reason": "incomplete_directive"
   }
 }

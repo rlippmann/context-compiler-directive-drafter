@@ -178,6 +178,23 @@ expectations or act as a conformance authority. JSONL records include the
 actual path, path agreement, fallback invocation count, and raw fallback
 response; semantic scoring and routing mismatches are reported separately.
 
+### Conformance layers
+
+The checked-in contract fixtures use the existing `pytest.mark.contract` and
+fixture model. `high-level-drafting-v1.json` defines shared API concepts and
+observable drafting behavior for compatible ports, including the
+`DirectiveDrafter`, result variants, fallback routing, source metadata, and
+public rejection reasons. `public-api-v1.json` defines Python package
+mechanics such as root exports, reflection-visible signatures, descriptors,
+and Python exception behavior; those details are not requirements for other
+languages.
+
+Heuristic fixture inputs and portable expected outcomes are shared behavior.
+Private Python entry points and detailed internal diagnostic reasons are
+Python implementation coverage. The English evaluation corpus remains
+evaluation-only except for cases explicitly linked to promoted heuristic
+fixtures.
+
 ## Public API
 
 Public interface:

@@ -4,6 +4,7 @@
   "expected": {
     "outcome": "rejected",
     "directive": null,
-    "reason": "question_form"
+    "reason": "non_directive",
+    "internal_reason": "question_form"
   }
 }
