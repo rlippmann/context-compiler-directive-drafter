@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TextIO, cast
 
-from context_compiler.grammar import CanonicalDirective
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter import (
     DirectiveDrafter,
@@ -108,6 +108,31 @@ def _failure(category: str, reason: str) -> tuple[str, str]:
     return category, reason
 
 
+def _directives_are_evaluation_equivalent(actual: str, expected: str) -> bool:
+    if actual == expected:
+        return True
+
+    actual_directive = decompose_directive(actual)
+    expected_directive = decompose_directive(expected)
+    if not isinstance(actual_directive, CanonicalDirective) or not isinstance(
+        expected_directive, CanonicalDirective
+    ):
+        return False
+    if actual_directive.kind is not expected_directive.kind:
+        return False
+    if actual_directive.operands.keys() != expected_directive.operands.keys():
+        return False
+
+    def without_articles(value: str) -> str:
+        return " ".join(word for word in value.split() if word.lower() not in {"a", "an", "the"})
+
+    return all(
+        without_articles(actual_directive.operands[name])
+        == without_articles(expected_directive.operands[name])
+        for name in actual_directive.operands
+    )
+
+
 def _score_content(
     case: CorpusCase,
     actual_outcome: str,
@@ -134,7 +159,7 @@ def _score_content(
         if (
             preferred_directive is not None
             and actual_outcome == "directive"
-            and actual_directive != preferred_directive
+            and not _directives_are_evaluation_equivalent(actual_directive, preferred_directive)
         ):
             return _failure(
                 "wrong_directive",
@@ -147,7 +172,7 @@ def _score_content(
     if expected_outcome == "directive":
         if actual_outcome != "directive":
             return _failure("missed_directive", f"expected directive; got {actual_outcome}")
-        if actual_directive != expected_directive:
+        if not _directives_are_evaluation_equivalent(actual_directive, expected_directive):
             return _failure(
                 "wrong_directive",
                 f"expected {expected_directive!r}; got {actual_directive!r}",

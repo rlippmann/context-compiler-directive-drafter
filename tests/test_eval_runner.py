@@ -145,6 +145,44 @@ def test_invalid_candidate_preserves_raw_model_text() -> None:
     assert records[0]["actual_outcome"] == "rejected"
 
 
+def test_article_only_directive_difference_is_semantically_equivalent() -> None:
+    case = _case(
+        expected_directive="use the weekly quiz instead of the old quiz",
+        fallback_expectation={
+            "preferred_outcome": "directive",
+            "preferred_directive": "use the weekly quiz instead of the old quiz",
+            "acceptable_outcomes": ["directive", "unknown"],
+        },
+    )
+
+    record = score_case(
+        case,
+        DraftResult(source="fallback", result=_canonical("use weekly quiz instead of old quiz")),
+        fallback_invoked=True,
+    )
+
+    assert record["semantic_passed"] is True
+
+
+def test_meaningful_directive_difference_is_not_equivalent() -> None:
+    case = _case(
+        expected_directive="use the weekly quiz instead of the old quiz",
+        fallback_expectation={
+            "preferred_outcome": "directive",
+            "preferred_directive": "use the weekly quiz instead of the old quiz",
+            "acceptable_outcomes": ["directive", "unknown"],
+        },
+    )
+
+    record = score_case(
+        case,
+        DraftResult(source="fallback", result=_canonical("use weekly quiz")),
+        fallback_invoked=True,
+    )
+
+    assert record["failure_category"] == "wrong_directive"
+
+
 def test_semantic_pass_with_path_mismatch_is_reported_separately() -> None:
     case = _case(
         classification="EVALUATION",
