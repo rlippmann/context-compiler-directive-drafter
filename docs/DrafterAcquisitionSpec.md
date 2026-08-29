@@ -15,6 +15,13 @@ validation.
 The host application owns any confirmation workflow before submitting a drafted
 directive to core.
 
+Because a drafted directive is a non-authoritative candidate for later
+host or human review, acquisition does not require the confidence needed for
+an authoritative state mutation. The drafter may propose a plausible single
+candidate when the user's meaning is naturally representable in compiler
+state. This does not permit guessing, compound proposals, or bypassing the
+existing uncertainty and host-approval boundaries.
+
 ## 1. Ownership Boundary
 
 The drafter owns:
@@ -79,10 +86,20 @@ Heuristic implementation details do not form part of the public result
 contract.
 
 Failure to recognize canonical syntax or a bounded rewrite is not sufficient by
-itself to return `rejected`. Preference, evaluative, factual, or otherwise
-directive-adjacent language remains `unknown` unless a separate deterministic
-boundary establishes that it is confidently non-directive. The heuristic does
-not interpret such language into directives as part of this distinction.
+itself to return `rejected`. Natural-language acquisition should prefer a
+policy candidate when the user's meaning can naturally be represented as
+`use` or `prohibit` without materially changing it. Declarative wording does
+not prevent policy acquisition. Conversely, premise is residual: use it when
+the information is governing context that cannot naturally be represented as a
+policy without distorting the user's meaning. Neither `bare fact -> premise`
+nor `bare fact -> no directive` is a general rule.
+
+The drafter should not select `set premise` merely because an input is
+declarative, factual, or non-imperative. It should also preserve the ownership
+and uncertainty boundaries: third-party statements do not automatically become
+the user's policy, tentative language may remain unresolved, and mixed,
+malformed, incomplete, or multiple-directive input must not be reduced by
+guessing.
 
 The host application is responsible for:
 
@@ -106,10 +123,67 @@ drafter:
 
 - may preserve one apparent atomic user mutation
 - may propose a narrower canonical directive
+- should prefer `use` or `prohibit` whenever they naturally preserve the
+  user's meaning
+- should use `set premise` or `change premise to` only for governing context
+  that would be unnatural or distorting as a policy
 - must not add extra mutations beyond that atomic change
 - must not silently replace user intent with a different operation
+- must preserve the user's payload, polarity, and scope as faithfully as
+  possible, including temporal or situational qualifiers
+- must not paraphrase, substitute synonyms, generalize scope, invent
+  alternatives, or silently change semantic nouns
 - must abstain when more than one canonical directive is plausible
 - must leave contradiction and lifecycle validation to core after drafting
+
+Policy-first examples:
+
+```text
+I have a Nord Stage 4
+-> use a Nord Stage 4
+
+We need a simple recipe
+-> use a simple recipe
+
+I need oat milk today
+-> use oat milk today
+
+I want bamboo towels
+-> use bamboo towels
+
+I would rather avoid shellfish
+-> prohibit shellfish
+```
+
+Premise-residual examples:
+
+```text
+The intended audience is senior management
+-> set premise intended audience is senior management
+
+User is a minor
+-> set premise user is a minor
+
+We need HIPAA compliance
+-> set premise need HIPAA compliance
+
+The deployment environment is offline
+-> set premise deployment environment is offline
+```
+
+Preference, requirement, and constraint wording does not need to be
+imperative to become policy when it is user-owned and naturally representable
+as one `use` or `prohibit` operation. This includes ordinary forms such as
+want, prefer, like, need, require, must have, dislike, hate, need to avoid,
+cannot have, and do not want; these are semantic examples, not an exhaustive
+lexical alias grammar. Preserve qualifiers such as `today`, `for this trip`,
+or `for this project` rather than broadening them into a standing policy.
+
+Bare facts, observations, evaluations, external rules, and third-party
+conditions do not automatically become premise or policy. Select premise only
+when the information functions as governing context and cannot naturally be
+represented by `use` or `prohibit`; otherwise leave unresolved or reject it
+according to the existing acquisition boundaries.
 
 These rules preserve the authority split:
 
