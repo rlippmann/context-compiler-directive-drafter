@@ -122,15 +122,17 @@ When narrowing non-canonical input into one canonical directive candidate, the
 drafter:
 
 - may preserve one apparent atomic user mutation
-- may propose a narrower canonical directive
+- may apply a specifically authorized narrowing rule only when this
+  acquisition contract defines a safe reduction to one atomic directive
 - should prefer `use` or `prohibit` whenever they naturally preserve the
   user's meaning
 - should use `set premise` or `change premise to` only for governing context
   that would be unnatural or distorting as a policy
 - must not add extra mutations beyond that atomic change
 - must not silently replace user intent with a different operation
-- must preserve the user's payload, polarity, and scope as faithfully as
-  possible, including temporal or situational qualifiers
+- must preserve the user's payload, polarity, and scope as the default,
+  including temporal or situational qualifiers; narrowing is not a general
+  fallback for making an input canonical
 - must not paraphrase, substitute synonyms, generalize scope, invent
   alternatives, or silently change semantic nouns
 - must abstain when more than one canonical directive is plausible
@@ -261,7 +263,13 @@ A drafter may use context to propose a candidate canonical directive such as:
 use Linux
 ```
 
-Proposed narrowing constraints:
+This is a specifically authorized structural narrowing rule for this
+replacement case. It permits retaining the clearly surviving atomic policy
+when the replacement relation cannot be safely completed or preserved; it is
+not a general license to discard meaningful operands, qualifiers, polarity, or
+scope.
+
+Constraints for this authorized narrowing:
 
 - the result must remain a single atomic mutation
 - the result must not imply removal of another item
@@ -304,7 +312,8 @@ Current ownership:
 For non-canonical input, the drafter may:
 
 - suggest a canonical rewrite
-- suggest a narrower canonical directive candidate
+- under a specifically authorized acquisition rule, suggest a narrower
+  canonical directive candidate
 - ask the user for clarification
 - return no directive and treat the message as ordinary conversation
 
