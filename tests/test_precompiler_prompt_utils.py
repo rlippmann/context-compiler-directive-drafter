@@ -104,7 +104,10 @@ def test_get_converter_prompt_includes_positive_acquisition_examples() -> None:
     assert "User: I prefer concise replies." in positive_examples
     assert "User: I prefer morning appointments." in positive_examples
     assert "User: I can't have peanuts." in positive_examples
-    assert "User: The project deadline is Friday." in positive_examples
+    assert "User: I have a Nord Stage 4." in positive_examples
+    assert "User: We need a simple recipe." in positive_examples
+    assert "User: I need oat milk today." in positive_examples
+    assert "User: The intended audience is senior management." in positive_examples
     assert "User: change premise to formal tone" in positive_examples
 
 
@@ -118,7 +121,10 @@ def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() ->
         "Output: use concise replies",
         "Output: use morning appointments",
         "Output: prohibit peanuts",
-        "Output: set premise project deadline is Friday",
+        "Output: use a Nord Stage 4",
+        "Output: use a simple recipe",
+        "Output: use oat milk today",
+        "Output: set premise intended audience is senior management",
         "Output: change premise to formal tone",
     ):
         assert expected_output in positive_examples
@@ -134,7 +140,18 @@ def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
     assert "preserve the operation\n  explicitly selected by the user" in prompt
     assert "`I prefer\n  concise replies` becomes `use concise replies`" in prompt
     assert "`I can't have peanuts`\n  becomes `prohibit peanuts`" in prompt
-    assert "the project deadline is Friday`" in prompt
+    assert "the intended\n  audience is senior management`" in prompt
+    assert (
+        "arbitrary\n  facts, observations, evaluations, external rules, or "
+        "third-party conditions" in prompt
+    )
+    assert "every explicit\n  operand, qualifier, polarity, and scope" in prompt
+    assert "A positive requirement that naturally maps to `use` must remain positive" in prompt
+    assert "Clear user-owned `need`, `require`, and `must have` statements" in prompt
+    assert "Another person's preference, constraint, capability, or condition" in prompt
+    assert "do not extract only the directive-looking fragment" in prompt
+    assert "Do not reinterpret a comparison, explanation, lookup, or analysis as a" in prompt
+    assert "`maybe`, `perhaps`, `might`" in prompt
     assert "make replies concise from now on" not in prompt
     assert "change the standing premise to formal tone" not in prompt
     assert "Output: set premise concise replies" not in prompt
