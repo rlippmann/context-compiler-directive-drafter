@@ -295,7 +295,6 @@ def test_heuristic_rejects_directives_with_incomplete_trailing_prepositions() ->
     for message in [
         "prohibit forwarding messages to",
         "prohibit films with",
-        "use guidance for",
     ]:
         assert preprocess_heuristic(message) == {
             "outcome": "rejected",
@@ -304,11 +303,13 @@ def test_heuristic_rejects_directives_with_incomplete_trailing_prepositions() ->
         }
 
 
-def test_heuristic_does_not_match_preposition_substrings_in_payloads() -> None:
-    _assert_directive_result(
-        preprocess_heuristic("use the unscented version"),
+def test_heuristic_preserves_legitimate_preposition_final_payloads() -> None:
+    for message in [
         "use the unscented version",
-    )
+        "use the framework I asked for",
+        "use the person I spoke to",
+    ]:
+        _assert_directive_result(preprocess_heuristic(message), message.lower())
 
 
 def test_heuristic_rejects_admin_near_miss_aliases() -> None:

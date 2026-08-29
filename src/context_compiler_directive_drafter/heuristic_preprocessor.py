@@ -63,9 +63,7 @@ _QUOTED_REPORTING_PATTERN = re.compile(
     r'["\'`].+["\'`][.!]?\s*$',
     re.IGNORECASE,
 )
-_INCOMPLETE_TRAILING_PREPOSITION_PATTERN = re.compile(
-    r"\b(?:instead\s+of|to|with|from|for|of|in|on|at|by|without|before|after)\s*$"
-)
+_INCOMPLETE_PROHIBIT_PATTERN = re.compile(r"^prohibit\s+\S(?:.*\S)?\s+(?:to|with)$")
 _SET_PREMISE_TO_PATTERN = re.compile(r"^set premise to (?P<payload>\S(?:.*\S)?)$")
 _CHANGE_PREMISE_MISSING_TO_PATTERN = re.compile(
     r"^change premise (?!to(?:\s|$))(?P<payload>\S(?:.*\S)?)$"
@@ -131,10 +129,7 @@ def _is_incomplete_directive(message: str) -> bool:
         or message.startswith("use instead of ")
     ):
         return True
-    return bool(
-        _contains_directive_cue(message)
-        and _INCOMPLETE_TRAILING_PREPOSITION_PATTERN.search(message)
-    )
+    return bool(_INCOMPLETE_PROHIBIT_PATTERN.fullmatch(message))
 
 
 def _normalized_for_match(message: str) -> str:
