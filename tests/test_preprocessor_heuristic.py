@@ -171,6 +171,8 @@ def test_heuristic_rejects_multi_segment_or_mixed_prose_inputs() -> None:
     cases = [
         "use docker because this repo already has Docker",
         "clear state then continue",
+        "Use trains and find the cheapest route",
+        "Use the blue towels and tell me which cycle to wash them on",
     ]
     for message in cases:
         assert preprocess_heuristic(message) == {
