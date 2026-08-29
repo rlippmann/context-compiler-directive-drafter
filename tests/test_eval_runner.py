@@ -207,6 +207,30 @@ def test_article_normalization_preserves_vitamin_identifier() -> None:
     assert record["failure_category"] == "wrong_directive"
 
 
+def test_article_normalization_preserves_capitalized_the_who() -> None:
+    case = _case(expected_directive="use The Who")
+
+    record = score_case(
+        case,
+        DraftResult(source="fallback", result=_canonical("use Who")),
+        fallback_invoked=True,
+    )
+
+    assert record["failure_category"] == "wrong_directive"
+
+
+def test_article_normalization_preserves_capitalized_the_thing() -> None:
+    case = _case(expected_directive="use The Thing")
+
+    record = score_case(
+        case,
+        DraftResult(source="fallback", result=_canonical("use Thing")),
+        fallback_invoked=True,
+    )
+
+    assert record["failure_category"] == "wrong_directive"
+
+
 def test_semantic_pass_with_path_mismatch_is_reported_separately() -> None:
     case = _case(
         classification="EVALUATION",
