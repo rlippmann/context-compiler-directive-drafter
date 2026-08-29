@@ -58,10 +58,13 @@ _META_PREFIX_PATTERN = re.compile(
 _PUNCTUATION_TRIM_PATTERN = re.compile(r"[.!]+\s*$")
 _SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<!\d)[.!?](?!\d)(?:[\"')\]]+)?\s+(?=[A-Za-z])")
 _QUOTED_REPORTING_PATTERN = re.compile(
-    r"^\s*(?:the\s+(?:doc|docs?|documentation)|\w+)\s+"
-    r"(?:literally\s+)?(?:say|says?|said|wrote|quoted)\s*:?\s*"
+    r"^\s*.+?\s+(?:literally\s+)?(?:say|says?|said|wrote|quoted|told)\b"
+    r"(?:\s+\w+)?\s*[:,]?\s*"
     r'["\'`].+["\'`][.!]?\s*$',
     re.IGNORECASE,
+)
+_INCOMPLETE_TRAILING_PREPOSITION_PATTERN = re.compile(
+    r"\b(?:instead\s+of|to|with|from|for|of|in|on|at|by|without|before|after)\s*$"
 )
 _SET_PREMISE_TO_PATTERN = re.compile(r"^set premise to (?P<payload>\S(?:.*\S)?)$")
 _CHANGE_PREMISE_MISSING_TO_PATTERN = re.compile(
@@ -113,7 +116,7 @@ def _has_multiple_directive_starts(message: str) -> bool:
 
 
 def _is_incomplete_directive(message: str) -> bool:
-    return (
+    if (
         message
         in {
             "use",
@@ -126,6 +129,11 @@ def _is_incomplete_directive(message: str) -> bool:
         }
         or message.endswith(" instead of")
         or message.startswith("use instead of ")
+    ):
+        return True
+    return bool(
+        _contains_directive_cue(message)
+        and _INCOMPLETE_TRAILING_PREPOSITION_PATTERN.search(message)
     )
 
 
