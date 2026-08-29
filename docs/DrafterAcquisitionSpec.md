@@ -180,10 +180,14 @@ lexical alias grammar. Preserve qualifiers such as `today`, `for this trip`,
 or `for this project` rather than broadening them into a standing policy.
 
 Bare facts, observations, evaluations, external rules, and third-party
-conditions do not automatically become premise or policy. Select premise only
-when the information functions as governing context and cannot naturally be
-represented by `use` or `prohibit`; otherwise leave unresolved or reject it
-according to the existing acquisition boundaries.
+conditions do not determine their acquisition outcome from grammatical form
+alone. Natural-language input may remain `unknown` at the deterministic
+heuristic stage so fallback can interpret its semantic role. Fallback may
+propose `use` or `prohibit` when policy naturally preserves the meaning, use
+premise when the information functions as governing context that cannot
+naturally be represented as policy, or return no directive when neither
+interpretation is justified. Existing multiple-directive, malformed,
+third-party, tentative, and host-approval boundaries remain in force.
 
 These rules preserve the authority split:
 
