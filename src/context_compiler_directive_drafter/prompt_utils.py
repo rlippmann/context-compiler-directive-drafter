@@ -26,10 +26,18 @@ _PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
   persistent, behavioral, stylistic, or user-specific. For example, `I prefer
   concise replies` becomes `use concise replies`, and `I can't have peanuts`
   becomes `prohibit peanuts`.
-- Use premise for contextual or factual background that is not naturally a
-  policy choice, such as `the project deadline is Friday`.
+- Use premise only for governing context that cannot naturally be represented
+  as policy without distorting the user's meaning, such as `the intended
+  audience is senior management`. Do not use premise merely for arbitrary
+  facts, observations, evaluations, external rules, or third-party conditions.
 - Do not infer `set premise` or `change premise` casually from natural-language
   preferences. `change premise` should be uncommon.
+- Declarative statements about user-owned wants, preferences, needs,
+  requirements, constraints, or equipment may establish policy when `use` or
+  `prohibit` naturally preserves their meaning.
+- Clear user-owned `need`, `require`, and `must have` statements should
+  normally become `use` or `prohibit` when that preserves their meaning;
+  ownership and semantic role still matter.
 - Declarative requirements, preferences, and constraints may establish policy;
   imperative wording or explicit persistence language is not required.
 - If the input is already a valid canonical directive, preserve the operation
@@ -68,6 +76,8 @@ _PROMPT_SUFFIX = f"""Your task:
 - If the message clearly establishes one state change that can be represented
   by a canonical directive, produce exactly one candidate directive in
   canonical form.
+- This is a non-authoritative draft: propose a plausible single candidate when
+  the meaning is naturally representable, but do not guess unsupported intent.
 - Otherwise output exactly `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
 
 Output contract:
@@ -84,20 +94,43 @@ Conversion rules:
 - Only encode information explicitly present in the user request.
 - Prefer a policy operation when it faithfully represents a user preference,
   requirement, constraint, or requested replacement.
-- Create the smallest valid directive payload necessary to represent the request.
-- Preserve the user's wording for payload text when possible.
+- Create the smallest valid directive payload that preserves every explicit
+  operand, qualifier, polarity, and scope in the request.
+- Preserve the user's semantic nouns and wording as faithfully as possible.
+- Do not paraphrase, substitute synonyms, invent alternatives, generalize
+  scope, drop meaningful qualifiers, or change the operation merely to make
+  the output canonical.
+- A positive requirement that naturally maps to `use` must remain positive;
+  do not invent an antonym, opposite property, or unstated alternative to
+  express it as `prohibit`.
+- For replacement or prohibition requests, preserve all stated operands and
+  the requested operation; narrowing is exceptional and allowed only when a
+  specific acquisition rule authorizes it.
 - Do not guess missing intent, omitted items, hidden context, or unstated replacements.
 - Do not infer semantic intent from directive payload contents.
 - Do not require imperative wording or explicit persistence language when a
   declarative preference, requirement, or constraint clearly establishes policy.
 - Use premise only for contextual or factual background that is not naturally
-  expressible as policy; do not use it merely for persistent or stylistic behavior.
+  expressible as policy; do not use it merely for persistent or stylistic
+  behavior, or for arbitrary facts, observations, evaluations, external rules,
+  or third-party conditions.
+- Another person's preference, constraint, capability, or condition does not
+  automatically become the user's policy.
 - Preserve the operation in an already valid canonical directive, even if another
   operation might seem semantically preferable.
 - Do not invent directives from ordinary conversation.
 - If the input is ordinary conversation, quoted or reported directive text,
   directive discussion, or a mixed request you cannot safely reduce to one
-  directive, output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+  directive, do not extract only the directive-looking fragment; output
+  `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+- Do not reinterpret a comparison, explanation, lookup, or analysis as a
+  replacement. Use `instead of` only when the input actually expresses
+  replacement, such as switching or replacing one item with another.
+- Treat `maybe`, `perhaps`, `might`, and similarly tentative or evaluative
+  wording as unresolved when they do not clearly establish a user-owned
+  policy. Do not promote a tentative suggestion merely because its payload
+  could be rendered canonically; this does not override clear `like`, `want`,
+  `need`, `hate`, or `would rather` preferences.
 
 When to output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
 - Ordinary conversation, questions, explanations, or comments.
@@ -146,9 +179,24 @@ _POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
         operand_values=("peanuts",),
     ),
     _AcquisitionExample(
+        kind=DirectiveKind.USE_ITEM,
+        user_input="I have a Nord Stage 4.",
+        operand_values=("a Nord Stage 4",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.USE_ITEM,
+        user_input="We need a simple recipe.",
+        operand_values=("a simple recipe",),
+    ),
+    _AcquisitionExample(
+        kind=DirectiveKind.USE_ITEM,
+        user_input="I need oat milk today.",
+        operand_values=("oat milk today",),
+    ),
+    _AcquisitionExample(
         kind=DirectiveKind.SET_PREMISE,
-        user_input="The project deadline is Friday.",
-        operand_values=("project deadline is Friday",),
+        user_input="The intended audience is senior management.",
+        operand_values=("intended audience is senior management",),
     ),
     _AcquisitionExample(
         kind=DirectiveKind.CHANGE_PREMISE,
