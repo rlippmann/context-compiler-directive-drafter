@@ -124,7 +124,15 @@ def _directives_are_evaluation_equivalent(actual: str, expected: str) -> bool:
         return False
 
     def without_articles(value: str) -> str:
-        return " ".join(word for word in value.split() if word.lower() not in {"a", "an", "the"})
+        words = value.split()
+        normalized: list[str] = []
+        for index, word in enumerate(words):
+            preceding = [item.lower() for item in words[max(0, index - 2) : index]]
+            is_phrase_start = index == 0 or preceding == ["instead", "of"]
+            if is_phrase_start and word.lower() in {"a", "an", "the"}:
+                continue
+            normalized.append(word)
+        return " ".join(normalized)
 
     return all(
         without_articles(actual_directive.operands[name])

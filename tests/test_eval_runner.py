@@ -183,6 +183,30 @@ def test_meaningful_directive_difference_is_not_equivalent() -> None:
     assert record["failure_category"] == "wrong_directive"
 
 
+def test_article_normalization_preserves_plan_identifier() -> None:
+    case = _case(expected_directive="use plan A")
+
+    record = score_case(
+        case,
+        DraftResult(source="fallback", result=_canonical("use plan")),
+        fallback_invoked=True,
+    )
+
+    assert record["failure_category"] == "wrong_directive"
+
+
+def test_article_normalization_preserves_vitamin_identifier() -> None:
+    case = _case(expected_directive="use vitamin A")
+
+    record = score_case(
+        case,
+        DraftResult(source="fallback", result=_canonical("use vitamin")),
+        fallback_invoked=True,
+    )
+
+    assert record["failure_category"] == "wrong_directive"
+
+
 def test_semantic_pass_with_path_mismatch_is_reported_separately() -> None:
     case = _case(
         classification="EVALUATION",
