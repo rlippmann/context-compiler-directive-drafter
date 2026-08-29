@@ -140,6 +140,20 @@ def test_heuristic_rejects_meta_reporting_or_example_prefixes() -> None:
         }
 
 
+def test_heuristic_rejects_reported_directive_with_multiword_subject() -> None:
+    for message in [
+        'The recipe says "prohibit peanuts".',
+        'The style guide says "set premise concise replies".',
+        'The itinerary says "use trains".',
+        'The tutor wrote, "use the textbook before searching online".',
+    ]:
+        assert preprocess_heuristic(message) == {
+            "outcome": "rejected",
+            "directive": None,
+            "reason": "quoted_reported",
+        }
+
+
 def test_heuristic_rejects_reported_quoted_directives_structurally() -> None:
     cases = [
         'The docs say: "clear state".',
@@ -275,6 +289,26 @@ def test_heuristic_rejects_incomplete_or_ambiguous_replacement_syntax() -> None:
             "directive": None,
             "reason": reason,
         }
+
+
+def test_heuristic_rejects_directives_with_incomplete_trailing_prepositions() -> None:
+    for message in [
+        "prohibit forwarding messages to",
+        "prohibit films with",
+        "use guidance for",
+    ]:
+        assert preprocess_heuristic(message) == {
+            "outcome": "rejected",
+            "directive": None,
+            "reason": "incomplete_directive",
+        }
+
+
+def test_heuristic_does_not_match_preposition_substrings_in_payloads() -> None:
+    _assert_directive_result(
+        preprocess_heuristic("use the unscented version"),
+        "use the unscented version",
+    )
 
 
 def test_heuristic_rejects_admin_near_miss_aliases() -> None:

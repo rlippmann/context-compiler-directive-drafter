@@ -68,6 +68,10 @@ def test_fallback_callback_defaults_to_none() -> None:
         ("thanks for the help today", "non_directive"),
         ("use docker?", "non_directive"),
         ('he said "use docker".', "non_directive"),
+        ('The recipe says "prohibit peanuts".', "non_directive"),
+        ('The style guide says "set premise concise replies".', "non_directive"),
+        ("prohibit forwarding messages to", "incomplete"),
+        ("prohibit films with", "incomplete"),
         ("use podman instead of", "incomplete"),
         ("change premise to", "incomplete"),
         ("remove policy", "incomplete"),
@@ -222,6 +226,29 @@ def test_fallback_is_not_used_when_heuristic_returns_no_directive() -> None:
         source="heuristic",
         result=RejectedDirective(reason="non_directive"),
     )
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    "user_input",
+    [
+        'The recipe says "prohibit peanuts".',
+        'The itinerary says "use trains".',
+        "prohibit forwarding messages to",
+        "prohibit films with",
+    ],
+)
+def test_terminal_heuristic_boundaries_do_not_invoke_fallback(user_input: str) -> None:
+    calls: list[str] = []
+
+    def fallback(input_text: str, prompt: str) -> str:
+        calls.append(input_text)
+        return "use docker"
+
+    result = DirectiveDrafter(fallback=fallback).draft_directive(user_input)
+
+    assert result.source == "heuristic"
+    assert isinstance(result.result, RejectedDirective)
     assert calls == []
 
 
