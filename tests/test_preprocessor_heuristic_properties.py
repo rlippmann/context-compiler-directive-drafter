@@ -150,17 +150,27 @@ def test_heuristic_rewrites_adopted_aliases_to_one_candidate(item: str) -> None:
 @given(ITEM, ITEM)
 def test_heuristic_repairs_deterministic_replacement_syntax(new_item: str, old_item: str) -> None:
     assume(new_item != old_item)
-    cases = [
-        (f"use {new_item} instead {old_item}", f"use {new_item} instead of {old_item}"),
+    cases = []
+    if old_item != "of":
+        cases.append(
+            (f"use {new_item} instead {old_item}", f"use {new_item} instead of {old_item}")
+        )
+    cases.append(
         (
             f"use {new_item} in stead of {old_item}",
             f"use {new_item} instead of {old_item}",
-        ),
-    ]
+        )
+    )
     for message, expected in cases:
         result = preprocess_heuristic(message)
         assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
         assert result["directive"].text == expected
+
+
+def test_heuristic_accepts_canonical_replacement_with_of_operand() -> None:
+    result = preprocess_heuristic("use a instead of of")
+    assert result["outcome"] == DRAFT_OUTCOME_DIRECTIVE
+    assert result["directive"].text == "use a instead of of"
 
 
 @given(ITEM, ITEM)
