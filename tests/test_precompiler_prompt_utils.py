@@ -145,13 +145,19 @@ def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
         "arbitrary\n  facts, observations, evaluations, external rules, or "
         "third-party conditions" in prompt
     )
+    assert "This applies to the user's own policy, not to another person's preference" in prompt
+    assert "`would be better`, `is easier`, or" in prompt
     assert "every explicit\n  operand, qualifier, polarity, and scope" in prompt
+    assert "If one canonical directive cannot preserve the" in prompt
     assert "A positive requirement that naturally maps to `use` must remain positive" in prompt
     assert "Clear user-owned `need`, `require`, and `must have` statements" in prompt
+    assert "Use a bounded rewrite when one clear natural-language request" in prompt
     assert "Another person's preference, constraint, capability, or condition" in prompt
     assert "do not extract only the directive-looking fragment" in prompt
+    assert "Do not combine independent payloads joined by `and`" in prompt
     assert "Do not reinterpret a comparison, explanation, lookup, or analysis as a" in prompt
     assert "`maybe`, `perhaps`, `might`" in prompt
+    assert "Do not resolve an unstated referent such as `that`, `it`, or `the other one`" in prompt
     assert "make replies concise from now on" not in prompt
     assert "change the standing premise to formal tone" not in prompt
     assert "Output: set premise concise replies" not in prompt

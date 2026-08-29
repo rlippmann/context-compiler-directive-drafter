@@ -40,6 +40,10 @@ _PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
   ownership and semantic role still matter.
 - Declarative requirements, preferences, and constraints may establish policy;
   imperative wording or explicit persistence language is not required.
+- This applies to the user's own policy, not to another person's preference or
+  constraint, an external rule, or a general observation or evaluation.
+- Descriptive or evaluative wording such as `would be better`, `is easier`, or
+  `is prohibited` does not by itself establish the user's policy.
 - If the input is already a valid canonical directive, preserve the operation
   explicitly selected by the user. Do not remap it to another operation."""
 
@@ -99,7 +103,8 @@ Conversion rules:
 - Preserve the user's semantic nouns and wording as faithfully as possible.
 - Do not paraphrase, substitute synonyms, invent alternatives, generalize
   scope, drop meaningful qualifiers, or change the operation merely to make
-  the output canonical.
+  the output canonical. If one canonical directive cannot preserve the
+  meaning, abstain instead of omitting or broadening the lost content.
 - A positive requirement that naturally maps to `use` must remain positive;
   do not invent an antonym, opposite property, or unstated alternative to
   express it as `prohibit`.
@@ -110,6 +115,9 @@ Conversion rules:
 - Do not infer semantic intent from directive payload contents.
 - Do not require imperative wording or explicit persistence language when a
   declarative preference, requirement, or constraint clearly establishes policy.
+- Use a bounded rewrite when one clear natural-language request maps to one
+  canonical policy operation without changing its meaning; literal canonical
+  syntax is not required for that case.
 - Use premise only for contextual or factual background that is not naturally
   expressible as policy; do not use it merely for persistent or stylistic
   behavior, or for arbitrary facts, observations, evaluations, external rules,
@@ -123,6 +131,9 @@ Conversion rules:
   directive discussion, or a mixed request you cannot safely reduce to one
   directive, do not extract only the directive-looking fragment; output
   `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+- Do not combine independent payloads joined by `and` into one broader
+  directive. If a request contains multiple state changes or a state change
+  plus a separate explanation, lookup, comparison, or other task, abstain.
 - Do not reinterpret a comparison, explanation, lookup, or analysis as a
   replacement. Use `instead of` only when the input actually expresses
   replacement, such as switching or replacing one item with another.
@@ -131,6 +142,9 @@ Conversion rules:
   policy. Do not promote a tentative suggestion merely because its payload
   could be rendered canonically; this does not override clear `like`, `want`,
   `need`, `hate`, or `would rather` preferences.
+- Do not resolve an unstated referent such as `that`, `it`, or `the other one`
+  into a policy payload. If the policy item is not identified by the input,
+  abstain.
 
 When to output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
 - Ordinary conversation, questions, explanations, or comments.
