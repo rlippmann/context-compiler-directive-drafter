@@ -1,12 +1,16 @@
 import io
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
+import pytest
 from context_compiler.grammar import decompose_directive
 
 from context_compiler_directive_drafter import DraftResult, RejectedDirective
+from evals.runners import directive_drafter_en as runner_module
 from evals.runners.directive_drafter_en import (
     build_parser,
+    create_ollama_structured_fallback,
     load_corpus,
     print_report,
     run_cases,
@@ -143,6 +147,44 @@ def test_invalid_candidate_preserves_raw_model_text() -> None:
     assert records[0]["failure_category"] == "invalid_candidate"
     assert records[0]["raw_fallback_response"] == "not a canonical directive"
     assert records[0]["actual_outcome"] == "rejected"
+
+
+def test_structured_ollama_fallback_maps_only_valid_envelopes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    responses = [
+        '{"classification":"directive","output":"use docker"}',
+        '{"classification":"rejected","output":null}',
+        '{"classification":"directive","output":null}',
+        "use docker",
+    ]
+    calls: list[dict[str, object]] = []
+
+    class FakeCompletions:
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            calls.append(kwargs)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=responses.pop(0)))]
+            )
+
+    class FakeClient:
+        def __init__(self, **_: object) -> None:
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setattr(runner_module, "_load_openai_clients", lambda: (FakeClient, FakeClient))
+    fallback = create_ollama_structured_fallback(
+        "test-model", api_key="ollama", base_url="http://localhost/v1"
+    )
+
+    assert fallback("input", "prompt") == "use docker"
+    assert fallback("input", "prompt") is None
+    assert fallback("input", "prompt") == runner_module._INVALID_STRUCTURED_OUTPUT
+    assert fallback("input", "prompt") == runner_module._INVALID_STRUCTURED_OUTPUT
+    assert all(call["model"] == "test-model" for call in calls)
+    assert all(
+        call["response_format"] == runner_module._OLLAMA_STRUCTURED_RESPONSE_FORMAT
+        for call in calls
+    )
 
 
 def test_article_only_directive_difference_is_semantically_equivalent() -> None:
