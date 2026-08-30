@@ -154,6 +154,47 @@ When to output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
 - Inputs containing multiple directive requests.
 - Quoted, cited, reported, example, or discussed directive text rather than a direct request."""
 
+_STRUCTURED_PROMPT_SUFFIX = """Your task:
+- Read one user message.
+- Classify it as `directive` only when it clearly establishes one atomic state
+  change that can be represented by a canonical directive.
+- If it is a directive, put exactly one canonical directive candidate in
+  `output`.
+- Otherwise classify it as `rejected` and set `output` to null.
+
+Conversion rules:
+- This is a non-authoritative draft. Propose a plausible single candidate when
+  the meaning is naturally representable, but do not guess unsupported intent.
+- Prefer a policy operation when it faithfully represents a user preference,
+  requirement, constraint, or requested replacement.
+- Preserve every explicit operand, qualifier, polarity, modifier, and scope;
+  preserve semantic nouns and wording as faithfully as possible.
+- Do not paraphrase, substitute synonyms, invent alternatives, generalize
+  scope, drop meaningful qualifiers, change operations, or lose replacement
+  operands. If one canonical directive cannot preserve the meaning, reject it.
+- A positive requirement that naturally maps to `use` remains positive; do not
+  invent an antonym or unstated alternative for `prohibit`.
+- Do not infer missing intent, unstated replacements, or unresolved referents.
+- Clear user-owned preferences, wants, needs, requirements, and constraints may
+  become policy; third-party preferences or constraints do not become the
+  user's policy automatically.
+- Use premise only for governing context that cannot naturally be represented
+  as policy. It is not a catch-all for facts, observations, evaluations,
+  external rules, or third-party conditions.
+- Use bounded natural-language rewrites when one clear policy candidate exists.
+- Do not extract a directive fragment from mixed intent, combine independent
+  payloads, or reinterpret comparison, explanation, lookup, or analysis as
+  replacement. Preserve clear replacement semantics.
+- Treat tentative language as unresolved when it does not clearly establish
+  user-owned policy. Reject incomplete payloads and unresolved deictic terms.
+- Preserve the operation of an already valid canonical directive.
+
+Reject ordinary conversation, questions, directive discussion, quoted or
+reported directive text, multiple state changes, mixed requests that cannot be
+represented faithfully as one directive, and any request whose meaning would
+be lost by canonicalization."""
+
+
 _DIRECTIVE_KIND_TO_CATEGORY: dict[DirectiveKind, str] = {
     DirectiveKind.SET_PREMISE: "Premise",
     DirectiveKind.CHANGE_PREMISE: "Premise",
@@ -301,3 +342,37 @@ def _get_converter_prompt() -> str:
     """Return the shared converter system prompt with metadata-derived grammar facts."""
 
     return _build_converter_prompt()
+
+
+@lru_cache(maxsize=1)
+def _build_structured_converter_prompt() -> str:
+    sections = [
+        "You are a directive converter that drafts candidate",
+        "Context Compiler directives from user requests.",
+        "",
+        "Context Compiler directives are compact canonical instructions that propose",
+        "persistent compiler state changes. Your output is a draft candidate only.",
+        "It is not an approval, not an execution result, and not an authoritative",
+        "state change.",
+        "",
+        _DIRECTIVE_CATEGORY_LINES,
+        "",
+        _render_canonical_forms(),
+        "",
+        _PREMISE_POLICY_GUIDANCE,
+        "",
+        _STRUCTURED_PROMPT_SUFFIX,
+        "",
+        _render_positive_acquisition_examples(),
+        "",
+        "Contrastive examples:",
+        "- Ordinary conversation, questions, quoted or reported directives, and",
+        "  unresolved mixed intent: classification `rejected`, output null.",
+    ]
+    return "\n".join(sections).strip()
+
+
+def _get_structured_converter_prompt() -> str:
+    """Return the evaluation-only prompt for structured provider output."""
+
+    return _build_structured_converter_prompt()

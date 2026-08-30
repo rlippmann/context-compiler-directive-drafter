@@ -28,6 +28,7 @@ from context_compiler_directive_drafter.openai_fallback import (
     _client_kwargs,
     _load_openai_clients,
 )
+from context_compiler_directive_drafter.prompt_utils import _get_structured_converter_prompt
 
 DraftFallback = Callable[[str, str], str | None]
 
@@ -66,12 +67,13 @@ def create_ollama_structured_fallback(
     """Create an evaluation-only Ollama fallback using a structural JSON envelope."""
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
+    structured_prompt = _get_structured_converter_prompt()
 
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str, _prompt: str) -> str | None:
         response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": prompt},
+                {"role": "system", "content": structured_prompt},
                 {"role": "user", "content": user_input},
             ],
             response_format=_OLLAMA_STRUCTURED_RESPONSE_FORMAT,

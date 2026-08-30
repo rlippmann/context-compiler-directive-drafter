@@ -207,3 +207,14 @@ def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> N
     assert first == second
     assert first is second
     assert calls == 1
+
+
+def test_structured_converter_prompt_replaces_free_text_transport_contract() -> None:
+    prompt = prompt_module._get_structured_converter_prompt()
+
+    assert "Classify it as `directive`" in prompt
+    assert "classify it as `rejected` and set `output` to null" in prompt
+    assert "output exactly `<NO_DIRECTIVE>`" not in prompt
+    assert "Do not add quotes, labels, markdown, JSON, or extra text." not in prompt
+    assert "Canonical directive forms:" in prompt
+    assert "Output: use podman instead of docker" in prompt
