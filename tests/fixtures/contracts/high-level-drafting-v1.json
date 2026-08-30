@@ -59,8 +59,8 @@
             "async_fallback",
             "async_fallback_source"
           ],
-          "fallback_arguments": ["user_input", "prompt"],
-          "async_fallback_arguments": ["user_input", "prompt"],
+          "fallback_arguments": ["user_input"],
+          "async_fallback_arguments": ["user_input"],
           "default_source": "fallback"
         },
         "members": {
@@ -431,10 +431,6 @@
               }
             }
           }
-        },
-        {
-          "kind": "directive_drafter_prompt_consistency",
-          "user_input": "Could we maybe use uv later"
         }
       ]
     }

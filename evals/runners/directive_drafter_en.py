@@ -24,78 +24,15 @@ from context_compiler_directive_drafter import (
     create_openai_fallback,
 )
 from context_compiler_directive_drafter.drafter import DraftResult
-from context_compiler_directive_drafter.openai_fallback import (
-    _client_kwargs,
-    _load_openai_clients,
-)
-from context_compiler_directive_drafter.prompt_utils import _get_structured_converter_prompt
 
-DraftFallback = Callable[[str, str], str | None]
+DraftFallback = Callable[[str], str | None]
 
 DEFAULT_CORPUS_PATH = (
     Path(__file__).resolve().parents[1] / "corpus" / "english" / "directive-drafter-en.jsonl"
 )
 DEFAULT_RESULTS_PATH = Path("eval-results/directive-drafter-en.jsonl")
-_INVALID_STRUCTURED_OUTPUT = "<INVALID_STRUCTURED_OUTPUT>"
-_OLLAMA_STRUCTURED_RESPONSE_FORMAT = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "directive_drafter_result",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "classification": {"type": "string", "enum": ["directive", "rejected"]},
-                "output": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-            },
-            "required": ["classification", "output"],
-            "additionalProperties": False,
-        },
-    },
-}
-
 CorpusCase = dict[str, object]
 ResultRecord = dict[str, object]
-
-
-def create_ollama_structured_fallback(
-    model: str,
-    *,
-    api_key: str | None = None,
-    base_url: str | None = None,
-) -> DraftFallback:
-    """Create an evaluation-only Ollama fallback using a structural JSON envelope."""
-    openai_client, _ = _load_openai_clients()
-    client = openai_client(**_client_kwargs(api_key, base_url))
-    structured_prompt = _get_structured_converter_prompt()
-
-    def fallback(user_input: str, _prompt: str) -> str | None:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": structured_prompt},
-                {"role": "user", "content": user_input},
-            ],
-            response_format=_OLLAMA_STRUCTURED_RESPONSE_FORMAT,
-        )
-        content = response.choices[0].message.content
-        if not isinstance(content, str):
-            return _INVALID_STRUCTURED_OUTPUT
-        try:
-            envelope = json.loads(content)
-        except json.JSONDecodeError:
-            return _INVALID_STRUCTURED_OUTPUT
-        if not isinstance(envelope, dict) or set(envelope) != {"classification", "output"}:
-            return _INVALID_STRUCTURED_OUTPUT
-        classification = envelope["classification"]
-        output = envelope["output"]
-        if classification == "directive" and isinstance(output, str):
-            return output
-        if classification == "rejected" and output is None:
-            return None
-        return _INVALID_STRUCTURED_OUTPUT
-
-    return fallback
 
 
 @dataclass
@@ -106,9 +43,9 @@ class FallbackObserver:
     raw_responses: list[str | None] = field(default_factory=list)
 
     def wrap(self, fallback: DraftFallback) -> DraftFallback:
-        def observed(user_input: str, prompt: str) -> str | None:
+        def observed(user_input: str) -> str | None:
             self.invocation_count += 1
-            response = fallback(user_input, prompt)
+            response = fallback(user_input)
             self.raw_responses.append(response)
             return response
 
@@ -533,16 +470,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     api_key = args.api_key if args.api_key is not None else os.environ.get("OPENAI_API_KEY")
     try:
-        if args.structured_output:
-            fallback = create_ollama_structured_fallback(
-                model=args.model, api_key=api_key, base_url=args.base_url
-            )
-        else:
-            fallback = create_openai_fallback(
-                model=args.model,
-                api_key=api_key,
-                base_url=args.base_url,
-            )
+        fallback = create_openai_fallback(
+            model=args.model,
+            api_key=api_key,
+            base_url=args.base_url,
+            structured_output=args.structured_output,
+        )
     except RuntimeError as error:
         print(str(error), file=sys.stderr)
         return 2

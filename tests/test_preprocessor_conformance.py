@@ -185,7 +185,7 @@ def _assert_shared_validator_result(fixture: dict[str, object]) -> None:
     fallback_output = fixture["raw_output"]
     assert isinstance(fallback_output, str)
     drafter = DirectiveDrafter(
-        fallback=lambda _, __: fallback_output,
+        fallback=lambda _: fallback_output,
         fallback_source="contract-fallback",
     )
     result = drafter.draft_directive("Could we maybe use uv later")

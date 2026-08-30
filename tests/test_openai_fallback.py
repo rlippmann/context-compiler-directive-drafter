@@ -13,7 +13,12 @@ from context_compiler_directive_drafter import (
     create_openai_fallback,
 )
 from context_compiler_directive_drafter import openai_fallback as adapter
+from context_compiler_directive_drafter._prompts import (
+    _get_converter_prompt,
+    _get_structured_converter_prompt,
+)
 from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 
 
 class _FakeResponse:
@@ -65,7 +70,7 @@ def _patch_clients(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(adapter, "_load_openai_clients", lambda: (_FakeOpenAI, _FakeAsyncOpenAI))
 
 
-def test_sync_fallback_forwards_configuration_request_and_prompt(
+def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prompt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
@@ -76,7 +81,7 @@ def test_sync_fallback_forwards_configuration_request_and_prompt(
         request_kwargs={"temperature": 0, "timeout": 12},
     )
 
-    assert fallback("Use Docker unchanged", "converter instructions") == "use docker"
+    assert fallback("Use Docker unchanged") == "use docker"
     client = _FakeOpenAI.instances[0]
     assert client.init_kwargs == {
         "api_key": "test-key",
@@ -88,7 +93,7 @@ def test_sync_fallback_forwards_configuration_request_and_prompt(
             "timeout": 12,
             "model": "compatible-model",
             "messages": [
-                {"role": "system", "content": "converter instructions"},
+                {"role": "system", "content": _get_converter_prompt()},
                 {"role": "user", "content": "Use Docker unchanged"},
             ],
         }
@@ -101,7 +106,7 @@ def test_sync_fallback_omits_unset_client_configuration(
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
 
-    assert fallback("input", "prompt") == "use docker"
+    assert fallback("input") == "use docker"
     assert _FakeOpenAI.instances[0].init_kwargs == {}
 
 
@@ -114,7 +119,7 @@ def test_sync_fallback_normalizes_no_directive_sentinel(
         f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL} \n"
     )
 
-    assert fallback("input", "prompt") is None
+    assert fallback("input") is None
 
 
 def test_sync_fallback_preserves_canonical_and_invalid_text(
@@ -125,10 +130,65 @@ def test_sync_fallback_preserves_canonical_and_invalid_text(
     completions = _FakeOpenAI.instances[0].chat.completions
 
     completions.response = _FakeResponse("use docker")
-    assert fallback("input", "prompt") == "use docker"
+    assert fallback("input") == "use docker"
 
     completions.response = _FakeResponse("not a directive")
-    assert fallback("input", "prompt") == "not a directive"
+    assert fallback("input") == "not a directive"
+
+
+def test_sync_structured_fallback_selects_prompt_and_parses_envelope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model", structured_output=True)
+    client = _FakeOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse(
+        '{"classification":"directive","output":"use docker"}'
+    )
+
+    assert fallback("input") == "use docker"
+    call = client.chat.completions.calls[0]
+    assert call["messages"][0] == {
+        "role": "system",
+        "content": _get_structured_converter_prompt(),
+    }
+    assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "not json",
+        '{"classification":"directive","output":null}',
+        '{"classification":"rejected","output":"use docker"}',
+        '{"classification":"rejected","output":null,"extra":false}',
+    ],
+)
+def test_sync_structured_fallback_rejects_invalid_envelopes(
+    monkeypatch: pytest.MonkeyPatch, content: str
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model", structured_output=True)
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(content)
+
+    with pytest.raises(InvalidFallbackResponseError):
+        fallback("input")
+
+
+def test_drafter_maps_invalid_structured_response_to_invalid_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model", structured_output=True)
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse("not json")
+    drafter = DirectiveDrafter(fallback=fallback, fallback_source="openai-compatible")
+
+    result = drafter.draft_directive("Could we maybe use uv later")
+
+    assert result == DraftResult(
+        source="openai-compatible",
+        result=RejectedDirective(reason="invalid_candidate"),
+    )
 
 
 def test_async_fallback_forwards_configuration_and_returns_raw_text(
@@ -142,7 +202,7 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
         request_kwargs={"temperature": 0.2},
     )
 
-    assert asyncio.run(fallback("original input", "async prompt")) == "use podman"
+    assert asyncio.run(fallback("original input")) == "use podman"
     client = _FakeAsyncOpenAI.instances[0]
     assert client.init_kwargs == {
         "api_key": "test-key",
@@ -151,7 +211,7 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
     assert client.chat.completions.calls[0]["model"] == "compatible-model"
     assert client.chat.completions.calls[0]["temperature"] == 0.2
     assert client.chat.completions.calls[0]["messages"] == [
-        {"role": "system", "content": "async prompt"},
+        {"role": "system", "content": _get_converter_prompt()},
         {"role": "user", "content": "original input"},
     ]
 
@@ -165,7 +225,24 @@ def test_async_fallback_normalizes_no_directive_sentinel(
         f"\n{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
     )
 
-    assert asyncio.run(fallback("input", "prompt")) is None
+    assert asyncio.run(fallback("input")) is None
+
+
+def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_async_openai_fallback(model="compatible-model", structured_output=True)
+    client = _FakeAsyncOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse('{"classification":"rejected","output":null}')
+
+    assert asyncio.run(fallback("input")) is None
+    call = client.chat.completions.calls[0]
+    assert call["messages"][0] == {
+        "role": "system",
+        "content": _get_structured_converter_prompt(),
+    }
+    assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
 
 
 def test_missing_optional_dependency_has_actionable_error(

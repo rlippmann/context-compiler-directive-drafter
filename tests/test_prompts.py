@@ -2,9 +2,9 @@ from types import MappingProxyType
 
 from context_compiler.grammar import CanonicalDirective, DirectiveKind, get_directive_metadata
 
-from context_compiler_directive_drafter import prompt_utils as prompt_module
+from context_compiler_directive_drafter import _prompts as prompt_module
+from context_compiler_directive_drafter._prompts import _get_converter_prompt
 from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
-from context_compiler_directive_drafter.prompt_utils import _get_converter_prompt
 
 PREPROCESSOR_NO_DIRECTIVE_SENTINEL = _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 get_converter_prompt = _get_converter_prompt
