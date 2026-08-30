@@ -218,3 +218,4 @@ def test_structured_converter_prompt_replaces_free_text_transport_contract() -> 
     assert "Do not add quotes, labels, markdown, JSON, or extra text." not in prompt
     assert "Canonical directive forms:" in prompt
     assert "Output: use podman instead of docker" in prompt
+    assert "`provide`, `keep`, `avoid`, `replace`, or `switch`" in prompt

@@ -182,6 +182,9 @@ Conversion rules:
   as policy. It is not a catch-all for facts, observations, evaluations,
   external rules, or third-party conditions.
 - Use bounded natural-language rewrites when one clear policy candidate exists.
+- Do not reject a clear bounded request merely because it uses ordinary wording
+  such as `provide`, `keep`, `avoid`, `replace`, or `switch`; when it maps
+  faithfully to one policy operation, draft that candidate.
 - Do not extract a directive fragment from mixed intent, combine independent
   payloads, or reinterpret comparison, explanation, lookup, or analysis as
   replacement. Preserve clear replacement semantics.
