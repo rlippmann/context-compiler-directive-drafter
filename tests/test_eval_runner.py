@@ -185,6 +185,9 @@ def test_structured_ollama_fallback_maps_only_valid_envelopes(
         call["response_format"] == runner_module._OLLAMA_STRUCTURED_RESPONSE_FORMAT
         for call in calls
     )
+    assert calls[0]["messages"][0]["content"] != "prompt"
+    assert "output exactly `<NO_DIRECTIVE>`" not in calls[0]["messages"][0]["content"]
+    assert "classification `rejected`" in calls[0]["messages"][0]["content"]
 
 
 def test_article_only_directive_difference_is_semantically_equivalent() -> None:
