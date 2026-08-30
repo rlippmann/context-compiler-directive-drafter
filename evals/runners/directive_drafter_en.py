@@ -444,11 +444,6 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_CORPUS_PATH,
         help="Corpus JSONL path override for local evaluation data.",
     )
-    parser.add_argument(
-        "--structured-output",
-        action="store_true",
-        help="Request the evaluation-only JSON Schema fallback envelope.",
-    )
     return parser
 
 
@@ -474,7 +469,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             model=args.model,
             api_key=api_key,
             base_url=args.base_url,
-            structured_output=args.structured_output,
         )
     except RuntimeError as error:
         print(str(error), file=sys.stderr)

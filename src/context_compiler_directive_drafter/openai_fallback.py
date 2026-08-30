@@ -62,6 +62,7 @@ def _request_kwargs(
     response_format: object | None = None,
 ) -> dict[str, object]:
     kwargs = dict(request_kwargs or {})
+    kwargs.pop("response_format", None)
     kwargs["model"] = model
     kwargs["messages"] = [
         {"role": "system", "content": prompt},
@@ -70,6 +71,23 @@ def _request_kwargs(
     if response_format is not None:
         kwargs["response_format"] = response_format
     return kwargs
+
+
+def _resolve_structured_output_capability(client: Any, model: str) -> bool:
+    """Resolve structured-output support once from provider model metadata."""
+
+    models = getattr(client, "models", None)
+    retrieve = getattr(models, "retrieve", None)
+    if retrieve is None:
+        return False
+    metadata = retrieve(model)
+    capabilities = getattr(metadata, "capabilities", None)
+    if not isinstance(capabilities, Mapping):
+        return False
+    return any(
+        capabilities.get(name) is True
+        for name in ("structured_outputs", "structured_output", "json_schema")
+    )
 
 
 def _response_text(response: Any) -> str | None:
@@ -108,11 +126,11 @@ def create_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
-    structured_output: bool = False,
 ) -> _DraftFallback:
     """Create a synchronous OpenAI-compatible Directive Drafter fallback."""
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
+    structured_output = _resolve_structured_output_capability(client, model)
     if structured_output:
         prompt = _get_structured_converter_prompt()
         response_format = _STRUCTURED_RESPONSE_FORMAT
@@ -137,11 +155,12 @@ def create_async_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
-    structured_output: bool = False,
 ) -> _AsyncDraftFallback:
     """Create an asynchronous OpenAI-compatible Directive Drafter fallback."""
-    _, async_openai_client = _load_openai_clients()
+    openai_client, async_openai_client = _load_openai_clients()
+    capability_client = openai_client(**_client_kwargs(api_key, base_url))
     client = async_openai_client(**_client_kwargs(api_key, base_url))
+    structured_output = _resolve_structured_output_capability(capability_client, model)
     if structured_output:
         prompt = _get_structured_converter_prompt()
         response_format = _STRUCTURED_RESPONSE_FORMAT

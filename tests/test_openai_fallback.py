@@ -44,9 +44,15 @@ class _FakeAsyncCompletions(_FakeCompletions):
 
 class _FakeOpenAI:
     instances: list["_FakeOpenAI"] = []
+    structured_output_supported = False
 
     def __init__(self, **kwargs: str) -> None:
         self.init_kwargs = kwargs
+        self.models = SimpleNamespace(
+            retrieve=lambda model: SimpleNamespace(
+                capabilities={"structured_outputs": self.structured_output_supported}
+            )
+        )
         self.chat = SimpleNamespace(completions=_FakeCompletions(_FakeResponse("use docker")))
         self.instances.append(self)
 
@@ -64,10 +70,15 @@ class _FakeAsyncOpenAI:
 def _reset_fake_clients() -> None:
     _FakeOpenAI.instances.clear()
     _FakeAsyncOpenAI.instances.clear()
+    _FakeOpenAI.structured_output_supported = False
 
 
 def _patch_clients(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(adapter, "_load_openai_clients", lambda: (_FakeOpenAI, _FakeAsyncOpenAI))
+
+
+def _enable_structured_output() -> None:
+    _FakeOpenAI.structured_output_supported = True
 
 
 def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prompt(
@@ -78,7 +89,11 @@ def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prom
         model="compatible-model",
         api_key="test-key",
         base_url="https://provider.example/v1",
-        request_kwargs={"temperature": 0, "timeout": 12},
+        request_kwargs={
+            "temperature": 0,
+            "timeout": 12,
+            "response_format": {"type": "json_object"},
+        },
     )
 
     assert fallback("Use Docker unchanged") == "use docker"
@@ -108,6 +123,16 @@ def test_sync_fallback_omits_unset_client_configuration(
 
     assert fallback("input") == "use docker"
     assert _FakeOpenAI.instances[0].init_kwargs == {}
+
+
+def test_structured_capability_resolution_defaults_to_free_text_without_metadata() -> None:
+    assert adapter._resolve_structured_output_capability(SimpleNamespace(), "model") is False
+    assert (
+        adapter._resolve_structured_output_capability(
+            SimpleNamespace(models=SimpleNamespace(retrieve=lambda model: object())), "model"
+        )
+        is False
+    )
 
 
 def test_sync_fallback_normalizes_no_directive_sentinel(
@@ -140,7 +165,8 @@ def test_sync_structured_fallback_selects_prompt_and_parses_envelope(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    fallback = create_openai_fallback(model="compatible-model", structured_output=True)
+    _enable_structured_output()
+    fallback = create_openai_fallback(model="compatible-model")
     client = _FakeOpenAI.instances[0]
     client.chat.completions.response = _FakeResponse(
         '{"classification":"directive","output":"use docker"}'
@@ -168,8 +194,21 @@ def test_sync_structured_fallback_rejects_invalid_envelopes(
     monkeypatch: pytest.MonkeyPatch, content: str
 ) -> None:
     _patch_clients(monkeypatch)
-    fallback = create_openai_fallback(model="compatible-model", structured_output=True)
+    _enable_structured_output()
+    fallback = create_openai_fallback(model="compatible-model")
     _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(content)
+
+    with pytest.raises(InvalidFallbackResponseError):
+        fallback("input")
+
+
+def test_sync_structured_fallback_rejects_non_text_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    _enable_structured_output()
+    fallback = create_openai_fallback(model="compatible-model")
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(None)
 
     with pytest.raises(InvalidFallbackResponseError):
         fallback("input")
@@ -179,7 +218,8 @@ def test_drafter_maps_invalid_structured_response_to_invalid_candidate(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    fallback = create_openai_fallback(model="compatible-model", structured_output=True)
+    _enable_structured_output()
+    fallback = create_openai_fallback(model="compatible-model")
     _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse("not json")
     drafter = DirectiveDrafter(fallback=fallback, fallback_source="openai-compatible")
 
@@ -232,7 +272,8 @@ def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    fallback = create_async_openai_fallback(model="compatible-model", structured_output=True)
+    _enable_structured_output()
+    fallback = create_async_openai_fallback(model="compatible-model")
     client = _FakeAsyncOpenAI.instances[0]
     client.chat.completions.response = _FakeResponse('{"classification":"rejected","output":null}')
 
@@ -243,6 +284,23 @@ def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
         "content": _get_structured_converter_prompt(),
     }
     assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
+
+
+def test_async_drafter_maps_invalid_structured_response_to_invalid_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    _enable_structured_output()
+    fallback = create_async_openai_fallback(model="compatible-model")
+    _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse("not json")
+    drafter = DirectiveDrafter(async_fallback=fallback, async_fallback_source="openai-compatible")
+
+    result = asyncio.run(drafter.async_draft_directive("Could we maybe use uv later"))
+
+    assert result == DraftResult(
+        source="openai-compatible",
+        result=RejectedDirective(reason="invalid_candidate"),
+    )
 
 
 def test_missing_optional_dependency_has_actionable_error(
