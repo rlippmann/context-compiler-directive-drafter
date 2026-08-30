@@ -320,6 +320,12 @@
               "kind": "KEYWORD_ONLY",
               "has_default": true,
               "default": null
+            },
+            {
+              "name": "structured_output",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": false
             }
           ]
         }
@@ -351,6 +357,12 @@
               "kind": "KEYWORD_ONLY",
               "has_default": true,
               "default": null
+            },
+            {
+              "name": "structured_output",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": false
             }
           ]
         }

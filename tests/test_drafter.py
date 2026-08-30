@@ -94,7 +94,7 @@ def test_terminal_heuristic_results_use_public_rejection_taxonomy(
 def test_semantic_uncertainty_is_the_only_fallback_eligible_result() -> None:
     calls: list[str] = []
 
-    def fallback(user_input: str, prompt: str) -> str:
+    def fallback(user_input: str) -> str:
         calls.append(user_input)
         return "use docker"
 
@@ -106,7 +106,7 @@ def test_semantic_uncertainty_is_the_only_fallback_eligible_result() -> None:
 
 def test_provider_no_directive_sentinel_maps_to_public_terminal_reason() -> None:
     result = DirectiveDrafter(
-        fallback=lambda _, __: f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}  "
+        fallback=lambda _: f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}  "
     ).draft_directive("Could we maybe use uv later")
 
     assert result == DraftResult(
@@ -128,7 +128,7 @@ def test_unrecognized_internal_terminal_reason_is_not_silently_published(
 
 
 def test_fallback_callback_can_be_configured_at_construction() -> None:
-    def fallback(_: str, __: str) -> str | None:
+    def fallback(_: str) -> str | None:
         return "use docker"
 
     drafter = DirectiveDrafter(fallback=fallback, fallback_source="llm")
@@ -137,10 +137,10 @@ def test_fallback_callback_can_be_configured_at_construction() -> None:
 
 
 def test_fallback_callback_can_be_updated_after_construction() -> None:
-    def first(_: str, __: str) -> str | None:
+    def first(_: str) -> str | None:
         return "use docker"
 
-    def second(_: str, __: str) -> str | None:
+    def second(_: str) -> str | None:
         return "set premise concise replies"
 
     drafter = DirectiveDrafter(fallback=first, fallback_source="llm:first")
@@ -155,7 +155,7 @@ def test_fallback_callback_can_be_updated_after_construction() -> None:
 
 
 def test_fallback_callback_can_be_cleared_after_construction() -> None:
-    def fallback(_: str, __: str) -> str | None:
+    def fallback(_: str) -> str | None:
         return "use docker"
 
     drafter = DirectiveDrafter(fallback=fallback, fallback_source="llm")
@@ -170,7 +170,7 @@ def test_fallback_callback_can_be_cleared_after_construction() -> None:
 
 
 def test_async_fallback_callback_can_be_configured_at_construction() -> None:
-    async def async_fallback(_: str, __: str) -> str | None:
+    async def async_fallback(_: str) -> str | None:
         return "use docker"
 
     drafter = DirectiveDrafter(async_fallback=async_fallback, async_fallback_source="llm")
@@ -179,10 +179,10 @@ def test_async_fallback_callback_can_be_configured_at_construction() -> None:
 
 
 def test_async_fallback_callback_can_be_updated_after_construction() -> None:
-    async def first(_: str, __: str) -> str | None:
+    async def first(_: str) -> str | None:
         return "use docker"
 
-    async def second(_: str, __: str) -> str | None:
+    async def second(_: str) -> str | None:
         return "set premise concise replies"
 
     drafter = DirectiveDrafter(async_fallback=first, async_fallback_source="llm:first")
@@ -197,7 +197,7 @@ def test_async_fallback_callback_can_be_updated_after_construction() -> None:
 
 
 def test_async_fallback_callback_can_be_cleared_after_construction() -> None:
-    async def async_fallback(_: str, __: str) -> str | None:
+    async def async_fallback(_: str) -> str | None:
         return "use docker"
 
     drafter = DirectiveDrafter(async_fallback=async_fallback, async_fallback_source="llm")
@@ -214,7 +214,7 @@ def test_async_fallback_callback_can_be_cleared_after_construction() -> None:
 def test_fallback_is_not_used_when_heuristic_returns_no_directive() -> None:
     calls: list[str] = []
 
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str) -> str | None:
         calls.append(user_input)
         return "use docker"
 
@@ -241,7 +241,7 @@ def test_fallback_is_not_used_when_heuristic_returns_no_directive() -> None:
 def test_terminal_heuristic_boundaries_do_not_invoke_fallback(user_input: str) -> None:
     calls: list[str] = []
 
-    def fallback(input_text: str, prompt: str) -> str:
+    def fallback(input_text: str) -> str:
         calls.append(input_text)
         return "use docker"
 
@@ -265,7 +265,7 @@ def test_fallback_is_used_when_heuristic_abstains_with_unknown(
             "reason": "semantic_uncertainty",
         }
 
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str) -> str | None:
         calls.append(f"fallback:{user_input}")
         return "use docker"
 
@@ -283,7 +283,7 @@ def test_fallback_is_used_when_heuristic_abstains_with_unknown(
 def test_fallback_is_not_used_when_heuristic_produces_a_directive() -> None:
     calls: list[str] = []
 
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str) -> str | None:
         calls.append(user_input)
         return "use docker"
 
@@ -318,26 +318,9 @@ def test_heuristic_canonical_directive_is_preserved_without_fallback(
     )
 
 
-def test_fallback_receives_drafter_constructed_prompt(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def fallback(user_input: str, prompt: str) -> str | None:
-        assert user_input == "please make replies concise"
-        assert prompt == "converter instructions"
-        return "set premise concise replies"
-
-    monkeypatch.setattr(drafter_module, "_get_converter_prompt", lambda: "converter instructions")
-    drafter = DirectiveDrafter(fallback=fallback, fallback_source="llm")
-
-    result = drafter.draft_directive("please make replies concise")
-
-    assert result == DraftResult(source="llm", result=_canonical("set premise concise replies"))
-
-
 def test_fallback_canonical_directive_receives_the_same_validation_path() -> None:
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str) -> str | None:
         assert user_input == "please make replies concise"
-        assert prompt.strip()
         return "set premise concise replies"
 
     drafter = DirectiveDrafter(fallback=fallback, fallback_source="llm")
@@ -383,7 +366,7 @@ def test_drafting_does_not_require_engine_state_to_return_a_directive() -> None:
 
 
 def test_none_fallback_output_returns_no_directive_from_drafter() -> None:
-    drafter = DirectiveDrafter(fallback=lambda _, __: None, fallback_source="llm")
+    drafter = DirectiveDrafter(fallback=lambda _: None, fallback_source="llm")
 
     result = drafter.draft_directive("ordinary text")
 
@@ -391,7 +374,7 @@ def test_none_fallback_output_returns_no_directive_from_drafter() -> None:
 
 
 def test_invalid_fallback_text_returns_unknown_from_drafter() -> None:
-    drafter = DirectiveDrafter(fallback=lambda _, __: "please use docker", fallback_source="llm")
+    drafter = DirectiveDrafter(fallback=lambda _: "please use docker", fallback_source="llm")
 
     result = drafter.draft_directive("directive-like but unresolved")
 
@@ -402,7 +385,7 @@ def test_invalid_fallback_text_returns_unknown_from_drafter() -> None:
 
 
 def test_valid_fallback_directive_is_validated_before_returning() -> None:
-    drafter = DirectiveDrafter(fallback=lambda _, __: "use docker", fallback_source="llm")
+    drafter = DirectiveDrafter(fallback=lambda _: "use docker", fallback_source="llm")
 
     result = drafter.draft_directive("Could we maybe use uv later")
 
@@ -422,7 +405,7 @@ def test_heuristic_attempt_happens_before_fallback_callback(
             "reason": "semantic_uncertainty",
         }
 
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str) -> str | None:
         calls.append(f"fallback:{user_input}")
         return None
 
@@ -441,7 +424,7 @@ def test_heuristic_attempt_happens_before_fallback_callback(
 def test_fallback_callback_is_skipped_when_heuristic_returns_valid_result() -> None:
     calls: list[str] = []
 
-    def fallback(user_input: str, prompt: str) -> str | None:
+    def fallback(user_input: str) -> str | None:
         calls.append(user_input)
         return "use docker"
 
@@ -456,7 +439,7 @@ def test_fallback_callback_is_skipped_when_heuristic_returns_valid_result() -> N
 def test_async_heuristic_canonical_directive_skips_fallback() -> None:
     calls: list[str] = []
 
-    async def async_fallback(user_input: str, prompt: str) -> str | None:
+    async def async_fallback(user_input: str) -> str | None:
         calls.append(user_input)
         return "use docker"
 
@@ -474,7 +457,7 @@ def test_async_heuristic_canonical_directive_skips_fallback() -> None:
 def test_async_no_directive_does_not_invoke_async_fallback() -> None:
     calls: list[str] = []
 
-    async def async_fallback(user_input: str, prompt: str) -> str | None:
+    async def async_fallback(user_input: str) -> str | None:
         calls.append(user_input)
         return "use docker"
 
@@ -502,7 +485,7 @@ def test_async_unknown_directive_invokes_async_fallback(
             "reason": "semantic_uncertainty",
         }
 
-    async def async_fallback(user_input: str, prompt: str) -> str | None:
+    async def async_fallback(user_input: str) -> str | None:
         calls.append(f"fallback:{user_input}")
         return "use docker"
 
@@ -530,9 +513,8 @@ def test_missing_async_fallback_preserves_heuristic_only_behavior() -> None:
 
 
 def test_async_fallback_canonical_directive_receives_the_same_validation_path() -> None:
-    async def async_fallback(user_input: str, prompt: str) -> str | None:
+    async def async_fallback(user_input: str) -> str | None:
         assert user_input == "please make replies concise"
-        assert prompt.strip()
         return "set premise concise replies"
 
     drafter = DirectiveDrafter(async_fallback=async_fallback, async_fallback_source="llm")
@@ -543,7 +525,7 @@ def test_async_fallback_canonical_directive_receives_the_same_validation_path() 
 
 
 def test_async_none_fallback_output_returns_no_directive_from_drafter() -> None:
-    async def async_fallback(_: str, __: str) -> str | None:
+    async def async_fallback(_: str) -> str | None:
         return None
 
     drafter = DirectiveDrafter(async_fallback=async_fallback, async_fallback_source="llm")
@@ -554,7 +536,7 @@ def test_async_none_fallback_output_returns_no_directive_from_drafter() -> None:
 
 
 def test_async_invalid_fallback_text_returns_unknown_from_drafter() -> None:
-    async def async_fallback(_: str, __: str) -> str | None:
+    async def async_fallback(_: str) -> str | None:
         return "please use docker"
 
     drafter = DirectiveDrafter(async_fallback=async_fallback, async_fallback_source="llm")

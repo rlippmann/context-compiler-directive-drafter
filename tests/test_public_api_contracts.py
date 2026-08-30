@@ -282,14 +282,6 @@ def _assert_directive_drafter_fallback_routing_probe_schema(
     _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
 
 
-def _assert_directive_drafter_prompt_consistency_probe_schema(
-    probe: dict[str, object], label: str
-) -> None:
-    _assert_exact_keys(probe, {"kind", "user_input"}, label)
-    assert probe["kind"] == "directive_drafter_prompt_consistency", label
-    assert isinstance(probe["user_input"], str), label
-
-
 def _assert_directive_drafter_api_probe_schema(probe: dict[str, object], label: str) -> None:
     _assert_exact_keys(
         probe,
@@ -430,8 +422,8 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
             "async_fallback_source",
         ]
         assert constructor["default_source"] == "fallback"
-        assert constructor["fallback_arguments"] == ["user_input", "prompt"]
-        assert constructor["async_fallback_arguments"] == ["user_input", "prompt"]
+        assert constructor["fallback_arguments"] == ["user_input"]
+        assert constructor["async_fallback_arguments"] == ["user_input"]
         api_probes = api_contract["api_probes"]
         assert isinstance(api_probes, list) and api_probes
         for index, probe in enumerate(api_probes):
@@ -476,11 +468,6 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
                 continue
             if probe.get("kind") == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe_schema(
-                    probe, f"{label}.behavior_probes[{index}]"
-                )
-                continue
-            if probe.get("kind") == "directive_drafter_prompt_consistency":
-                _assert_directive_drafter_prompt_consistency_probe_schema(
                     probe, f"{label}.behavior_probes[{index}]"
                 )
                 continue
@@ -535,11 +522,6 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
                     probe, f"{label}.behavior_probes[{index}]"
                 )
                 continue
-            if probe.get("kind") == "directive_drafter_prompt_consistency":
-                _assert_directive_drafter_prompt_consistency_probe_schema(
-                    probe, f"{label}.behavior_probes[{index}]"
-                )
-                continue
             raise AssertionError(f"Unsupported behavior probe for {label}: {probe!r}")
 
 
@@ -560,12 +542,12 @@ def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, 
 def _assert_directive_drafter_fallback_routing_probe(
     exported: object, probe: dict[str, object]
 ) -> None:
-    calls: list[tuple[str, str]] = []
+    calls: list[str] = []
 
     if probe["mode"] == "sync":
 
-        def fallback(user_input: str, prompt: str) -> str | None:
-            calls.append((user_input, prompt))
+        def fallback(user_input: str) -> str | None:
+            calls.append(user_input)
             return {
                 "canonical": "use docker",
                 "none": None,
@@ -577,8 +559,8 @@ def _assert_directive_drafter_fallback_routing_probe(
         result = drafter.draft_directive(probe["user_input"])
     else:
 
-        async def fallback(user_input: str, prompt: str) -> str | None:
-            calls.append((user_input, prompt))
+        async def fallback(user_input: str) -> str | None:
+            calls.append(user_input)
             return {
                 "canonical": "use docker",
                 "none": None,
@@ -594,8 +576,7 @@ def _assert_directive_drafter_fallback_routing_probe(
 
     assert len(calls) == probe["expect_fallback_calls"]
     if calls:
-        assert calls[0][0] == probe["user_input"]
-        assert calls[0][1].strip()
+        assert calls[0] == probe["user_input"]
     assert result.source == probe["expect_source"]
     if probe["heuristic_result"] == "canonical":
         assert result.source == "heuristic"
@@ -609,39 +590,13 @@ def _assert_directive_drafter_fallback_routing_probe(
     _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
-def _assert_directive_drafter_prompt_consistency_probe(
-    exported: object, probe: dict[str, object]
-) -> None:
-    prompts: list[str] = []
-
-    def sync_fallback(_: str, prompt: str) -> str | None:
-        prompts.append(prompt)
-        return "use docker"
-
-    async def async_fallback(_: str, prompt: str) -> str | None:
-        prompts.append(prompt)
-        return "use docker"
-
-    user_input = probe["user_input"]
-    sync_drafter = exported(fallback=sync_fallback)
-    async_drafter = exported(async_fallback=async_fallback)
-    sync_drafter.draft_directive(user_input)
-    asyncio.run(async_drafter.async_draft_directive(user_input))
-
-    assert len(prompts) == 2
-    assert all(prompt.strip() for prompt in prompts)
-    assert prompts[0] == prompts[1]
-
-
 def _assert_directive_drafter_api_probe(exported: object, probe: dict[str, object]) -> None:
     if probe["mode"] == "sync":
 
-        def first_fallback(_: str, prompt: str) -> str:
-            assert prompt.strip()
+        def first_fallback(_: str) -> str:
             return "use docker"
 
-        def second_fallback(_: str, prompt: str) -> str:
-            assert prompt.strip()
+        def second_fallback(_: str) -> str:
             return "set premise concise replies"
 
         drafter = exported(fallback=first_fallback)
@@ -667,12 +622,10 @@ def _assert_directive_drafter_api_probe(exported: object, probe: dict[str, objec
         assert drafter.draft_directive("Could we maybe use uv later").source == "heuristic"
         return
 
-    async def first_fallback(_: str, prompt: str) -> str:
-        assert prompt.strip()
+    async def first_fallback(_: str) -> str:
         return "use docker"
 
-    async def second_fallback(_: str, prompt: str) -> str:
-        assert prompt.strip()
+    async def second_fallback(_: str) -> str:
         return "set premise concise replies"
 
     drafter = exported(async_fallback=first_fallback)
@@ -775,9 +728,6 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
             if probe["kind"] == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe(exported, probe)
                 continue
-            if probe["kind"] == "directive_drafter_prompt_consistency":
-                _assert_directive_drafter_prompt_consistency_probe(exported, probe)
-                continue
             raise AssertionError(f"Unsupported behavior probe for {name}: {probe!r}")
         return
 
@@ -812,9 +762,6 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
                 continue
             if probe["kind"] == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe(exported, probe)
-                continue
-            if probe["kind"] == "directive_drafter_prompt_consistency":
-                _assert_directive_drafter_prompt_consistency_probe(exported, probe)
                 continue
             raise AssertionError(f"Unsupported behavior probe for {name}: {probe!r}")
         raise AssertionError(f"Unsupported class behavior probe for {name}: {probe!r}")
