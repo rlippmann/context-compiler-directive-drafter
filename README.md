@@ -127,6 +127,13 @@ fallback = create_openai_fallback(
 drafter = DirectiveDrafter(fallback=fallback, fallback_source="openai")
 ```
 
+The asynchronous factory performs the same construction-time probe and must
+be awaited:
+
+```python
+fallback = await create_async_openai_fallback(model="gpt-4o-mini")
+```
+
 OpenAI-compatible providers use the same helper with a custom endpoint, for
 example an Ollama server:
 
@@ -138,9 +145,11 @@ fallback = create_openai_fallback(
 )
 ```
 
-The helper selects the package-owned converter prompt and sends it with the
-original user input. It translates the provider-level `<NO_DIRECTIVE>`
-abstention sentinel to
+The helper probes structured-output support once while it is constructed,
+then selects the package-owned converter prompt and transport mode for all
+callback calls. Structured mode owns the JSON Schema response envelope;
+unsupported providers use free-text mode, which translates the provider-level
+`<NO_DIRECTIVE>` abstention sentinel to
 the generic fallback callback contract's Python `None` value. Other model text
 is returned unchanged. The Drafter remains responsible for parsing, validation,
 and result shaping.

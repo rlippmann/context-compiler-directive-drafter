@@ -27,42 +27,49 @@ class _FakeResponse:
 
 
 class _FakeCompletions:
-    def __init__(self, response: _FakeResponse) -> None:
+    def __init__(self, response: _FakeResponse, structured_probe_error: Exception | None) -> None:
         self.response = response
+        self.structured_probe_error = structured_probe_error
         self.calls: list[dict[str, object]] = []
 
     def create(self, **kwargs: object) -> _FakeResponse:
         self.calls.append(kwargs)
+        if "response_format" in kwargs and self.structured_probe_error is not None:
+            raise self.structured_probe_error
         return self.response
 
 
 class _FakeAsyncCompletions(_FakeCompletions):
     async def create(self, **kwargs: object) -> _FakeResponse:
         self.calls.append(kwargs)
+        if "response_format" in kwargs and self.structured_probe_error is not None:
+            raise self.structured_probe_error
         return self.response
 
 
 class _FakeOpenAI:
     instances: list["_FakeOpenAI"] = []
-    structured_output_supported = False
+    structured_probe_error: Exception | None = RuntimeError("response_format is not supported")
 
     def __init__(self, **kwargs: str) -> None:
         self.init_kwargs = kwargs
-        self.models = SimpleNamespace(
-            retrieve=lambda model: SimpleNamespace(
-                capabilities={"structured_outputs": self.structured_output_supported}
-            )
+        self.chat = SimpleNamespace(
+            completions=_FakeCompletions(_FakeResponse("use docker"), self.structured_probe_error)
         )
-        self.chat = SimpleNamespace(completions=_FakeCompletions(_FakeResponse("use docker")))
         self.instances.append(self)
 
 
 class _FakeAsyncOpenAI:
     instances: list["_FakeAsyncOpenAI"] = []
+    structured_probe_error: Exception | None = RuntimeError("response_format is not supported")
 
     def __init__(self, **kwargs: str) -> None:
         self.init_kwargs = kwargs
-        self.chat = SimpleNamespace(completions=_FakeAsyncCompletions(_FakeResponse("use podman")))
+        self.chat = SimpleNamespace(
+            completions=_FakeAsyncCompletions(
+                _FakeResponse("use podman"), self.structured_probe_error
+            )
+        )
         self.instances.append(self)
 
 
@@ -70,7 +77,8 @@ class _FakeAsyncOpenAI:
 def _reset_fake_clients() -> None:
     _FakeOpenAI.instances.clear()
     _FakeAsyncOpenAI.instances.clear()
-    _FakeOpenAI.structured_output_supported = False
+    _FakeOpenAI.structured_probe_error = RuntimeError("response_format is not supported")
+    _FakeAsyncOpenAI.structured_probe_error = RuntimeError("response_format is not supported")
 
 
 def _patch_clients(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -78,7 +86,8 @@ def _patch_clients(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _enable_structured_output() -> None:
-    _FakeOpenAI.structured_output_supported = True
+    _FakeOpenAI.structured_probe_error = None
+    _FakeAsyncOpenAI.structured_probe_error = None
 
 
 def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prompt(
@@ -102,7 +111,7 @@ def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prom
         "api_key": "test-key",
         "base_url": "https://provider.example/v1",
     }
-    assert client.chat.completions.calls == [
+    assert client.chat.completions.calls[-1:] == [
         {
             "temperature": 0,
             "timeout": 12,
@@ -125,14 +134,25 @@ def test_sync_fallback_omits_unset_client_configuration(
     assert _FakeOpenAI.instances[0].init_kwargs == {}
 
 
-def test_structured_capability_resolution_defaults_to_free_text_without_metadata() -> None:
-    assert adapter._resolve_structured_output_capability(SimpleNamespace(), "model") is False
-    assert (
-        adapter._resolve_structured_output_capability(
-            SimpleNamespace(models=SimpleNamespace(retrieve=lambda model: object())), "model"
-        )
-        is False
-    )
+def test_sync_probe_downgrades_only_clear_unsupported_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(model="compatible-model")
+    client = _FakeOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse("use docker")
+    client.chat.completions.structured_probe_error = None
+
+    assert fallback("input") == "use docker"
+    assert "response_format" not in client.chat.completions.calls[-1]
+
+
+def test_sync_probe_propagates_unknown_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_clients(monkeypatch)
+    _FakeOpenAI.structured_probe_error = RuntimeError("connection failed")
+
+    with pytest.raises(RuntimeError, match="connection failed"):
+        create_openai_fallback(model="compatible-model")
 
 
 def test_sync_fallback_normalizes_no_directive_sentinel(
@@ -173,7 +193,7 @@ def test_sync_structured_fallback_selects_prompt_and_parses_envelope(
     )
 
     assert fallback("input") == "use docker"
-    call = client.chat.completions.calls[0]
+    call = client.chat.completions.calls[-1]
     assert call["messages"][0] == {
         "role": "system",
         "content": _get_structured_converter_prompt(),
@@ -235,11 +255,13 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    fallback = create_async_openai_fallback(
-        model="compatible-model",
-        api_key="test-key",
-        base_url="http://localhost:11434/v1",
-        request_kwargs={"temperature": 0.2},
+    fallback = asyncio.run(
+        create_async_openai_fallback(
+            model="compatible-model",
+            api_key="test-key",
+            base_url="http://localhost:11434/v1",
+            request_kwargs={"temperature": 0.2},
+        )
     )
 
     assert asyncio.run(fallback("original input")) == "use podman"
@@ -248,9 +270,9 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
         "api_key": "test-key",
         "base_url": "http://localhost:11434/v1",
     }
-    assert client.chat.completions.calls[0]["model"] == "compatible-model"
-    assert client.chat.completions.calls[0]["temperature"] == 0.2
-    assert client.chat.completions.calls[0]["messages"] == [
+    assert client.chat.completions.calls[-1]["model"] == "compatible-model"
+    assert client.chat.completions.calls[-1]["temperature"] == 0.2
+    assert client.chat.completions.calls[-1]["messages"] == [
         {"role": "system", "content": _get_converter_prompt()},
         {"role": "user", "content": "original input"},
     ]
@@ -260,7 +282,7 @@ def test_async_fallback_normalizes_no_directive_sentinel(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
-    fallback = create_async_openai_fallback(model="compatible-model")
+    fallback = asyncio.run(create_async_openai_fallback(model="compatible-model"))
     _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse(
         f"\n{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
     )
@@ -268,17 +290,38 @@ def test_async_fallback_normalizes_no_directive_sentinel(
     assert asyncio.run(fallback("input")) is None
 
 
+def test_async_probe_downgrades_only_clear_unsupported_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = asyncio.run(create_async_openai_fallback(model="compatible-model"))
+    client = _FakeAsyncOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse("use podman")
+    client.chat.completions.structured_probe_error = None
+
+    assert asyncio.run(fallback("input")) == "use podman"
+    assert "response_format" not in client.chat.completions.calls[-1]
+
+
+def test_async_probe_propagates_unknown_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_clients(monkeypatch)
+    _FakeAsyncOpenAI.structured_probe_error = RuntimeError("connection failed")
+
+    with pytest.raises(RuntimeError, match="connection failed"):
+        asyncio.run(create_async_openai_fallback(model="compatible-model"))
+
+
 def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _patch_clients(monkeypatch)
     _enable_structured_output()
-    fallback = create_async_openai_fallback(model="compatible-model")
+    fallback = asyncio.run(create_async_openai_fallback(model="compatible-model"))
     client = _FakeAsyncOpenAI.instances[0]
     client.chat.completions.response = _FakeResponse('{"classification":"rejected","output":null}')
 
     assert asyncio.run(fallback("input")) is None
-    call = client.chat.completions.calls[0]
+    call = client.chat.completions.calls[-1]
     assert call["messages"][0] == {
         "role": "system",
         "content": _get_structured_converter_prompt(),
@@ -291,7 +334,7 @@ def test_async_drafter_maps_invalid_structured_response_to_invalid_candidate(
 ) -> None:
     _patch_clients(monkeypatch)
     _enable_structured_output()
-    fallback = create_async_openai_fallback(model="compatible-model")
+    fallback = asyncio.run(create_async_openai_fallback(model="compatible-model"))
     _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse("not json")
     drafter = DirectiveDrafter(async_fallback=fallback, async_fallback_source="openai-compatible")
 
