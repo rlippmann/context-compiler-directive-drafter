@@ -81,14 +81,7 @@ def test_get_converter_prompt_keeps_grammar_inventory_out_of_behavior_examples()
     prompt = get_converter_prompt()
     behavior_examples = _behavior_examples_section(prompt)
 
-    for inventory_example in (
-        "`prohibit <item>`",
-        "`remove policy <item>`",
-        "`clear premise`",
-        "`reset policies`",
-        "`clear state`",
-        "`use <new item> instead of <old item>`",
-    ):
+    for inventory_example in _expected_prompt_forms():
         assert inventory_example not in behavior_examples
 
 
@@ -126,7 +119,10 @@ def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
     assert "preserve the complete semantic payload" in prompt
     assert "Remove only acquisition framing" in prompt
     assert "If one canonical directive cannot preserve the" in prompt
-    assert "A positive requirement that naturally maps to `use` must remain positive" in prompt
+    assert (
+        f"A positive requirement that naturally maps to {prompt_module._USE_OPERATION} "
+        "must remain positive"
+    ) in prompt
     assert "Clear user-owned `need`, `require`, and `must have` statements" in prompt
     assert "Use a bounded rewrite when one clear natural-language request" in prompt
     assert "Another person's preference, constraint, capability, or condition" in prompt
