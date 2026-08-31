@@ -27,15 +27,25 @@ class _FakeResponse:
 
 
 class _FakeCompletions:
-    def __init__(self, response: _FakeResponse, structured_probe_error: Exception | None) -> None:
+    def __init__(
+        self,
+        response: _FakeResponse,
+        structured_probe_error: Exception | None,
+        structured_probe_response: _FakeResponse,
+    ) -> None:
         self.response = response
         self.structured_probe_error = structured_probe_error
+        self.structured_probe_response = structured_probe_response
+        self.probe_consumed = False
         self.calls: list[dict[str, object]] = []
 
     def create(self, **kwargs: object) -> _FakeResponse:
         self.calls.append(kwargs)
         if "response_format" in kwargs and self.structured_probe_error is not None:
             raise self.structured_probe_error
+        if "response_format" in kwargs and not self.probe_consumed:
+            self.probe_consumed = True
+            return self.structured_probe_response
         return self.response
 
 
@@ -44,17 +54,25 @@ class _FakeAsyncCompletions(_FakeCompletions):
         self.calls.append(kwargs)
         if "response_format" in kwargs and self.structured_probe_error is not None:
             raise self.structured_probe_error
+        if "response_format" in kwargs and not self.probe_consumed:
+            self.probe_consumed = True
+            return self.structured_probe_response
         return self.response
 
 
 class _FakeOpenAI:
     instances: list["_FakeOpenAI"] = []
     structured_probe_error: Exception | None = RuntimeError("response_format is not supported")
+    structured_probe_response = _FakeResponse('{"ok":true}')
 
     def __init__(self, **kwargs: str) -> None:
         self.init_kwargs = kwargs
         self.chat = SimpleNamespace(
-            completions=_FakeCompletions(_FakeResponse("use docker"), self.structured_probe_error)
+            completions=_FakeCompletions(
+                _FakeResponse("use docker"),
+                self.structured_probe_error,
+                self.structured_probe_response,
+            )
         )
         self.instances.append(self)
 
@@ -62,12 +80,15 @@ class _FakeOpenAI:
 class _FakeAsyncOpenAI:
     instances: list["_FakeAsyncOpenAI"] = []
     structured_probe_error: Exception | None = RuntimeError("response_format is not supported")
+    structured_probe_response = _FakeResponse('{"ok":true}')
 
     def __init__(self, **kwargs: str) -> None:
         self.init_kwargs = kwargs
         self.chat = SimpleNamespace(
             completions=_FakeAsyncCompletions(
-                _FakeResponse("use podman"), self.structured_probe_error
+                _FakeResponse("use podman"),
+                self.structured_probe_error,
+                self.structured_probe_response,
             )
         )
         self.instances.append(self)
@@ -79,6 +100,8 @@ def _reset_fake_clients() -> None:
     _FakeAsyncOpenAI.instances.clear()
     _FakeOpenAI.structured_probe_error = RuntimeError("response_format is not supported")
     _FakeAsyncOpenAI.structured_probe_error = RuntimeError("response_format is not supported")
+    _FakeOpenAI.structured_probe_response = _FakeResponse('{"ok":true}')
+    _FakeAsyncOpenAI.structured_probe_response = _FakeResponse('{"ok":true}')
 
 
 def _patch_clients(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -142,6 +165,34 @@ def test_sync_probe_downgrades_only_clear_unsupported_error(
     client = _FakeOpenAI.instances[0]
     client.chat.completions.response = _FakeResponse("use docker")
     client.chat.completions.structured_probe_error = None
+
+    assert fallback("input") == "use docker"
+    assert "response_format" not in client.chat.completions.calls[-1]
+
+
+def test_sync_probe_downgrades_successful_but_nonconforming_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    _enable_structured_output()
+    _FakeOpenAI.structured_probe_response = _FakeResponse("ordinary text")
+    fallback = create_openai_fallback(model="compatible-model")
+    client = _FakeOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse("use docker")
+
+    assert fallback("input") == "use docker"
+    assert "response_format" not in client.chat.completions.calls[-1]
+
+
+def test_sync_probe_downgrades_successful_non_text_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    _enable_structured_output()
+    _FakeOpenAI.structured_probe_response = _FakeResponse(None)
+    fallback = create_openai_fallback(model="compatible-model")
+    client = _FakeOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse("use docker")
 
     assert fallback("input") == "use docker"
     assert "response_format" not in client.chat.completions.calls[-1]
@@ -298,6 +349,20 @@ def test_async_probe_downgrades_only_clear_unsupported_error(
     client = _FakeAsyncOpenAI.instances[0]
     client.chat.completions.response = _FakeResponse("use podman")
     client.chat.completions.structured_probe_error = None
+
+    assert asyncio.run(fallback("input")) == "use podman"
+    assert "response_format" not in client.chat.completions.calls[-1]
+
+
+def test_async_probe_downgrades_successful_but_nonconforming_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    _enable_structured_output()
+    _FakeAsyncOpenAI.structured_probe_response = _FakeResponse("ordinary text")
+    fallback = asyncio.run(create_async_openai_fallback(model="compatible-model"))
+    client = _FakeAsyncOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse("use podman")
 
     assert asyncio.run(fallback("input")) == "use podman"
     assert "response_format" not in client.chat.completions.calls[-1]
