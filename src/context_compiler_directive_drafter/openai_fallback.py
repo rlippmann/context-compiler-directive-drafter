@@ -32,6 +32,19 @@ _STRUCTURED_RESPONSE_FORMAT = {
         },
     },
 }
+_PROBE_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "structured_output_probe",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {"ok": {"type": "boolean"}},
+            "required": ["ok"],
+            "additionalProperties": False,
+        },
+    },
+}
 
 
 def _load_openai_clients() -> tuple[type[Any], type[Any]]:
@@ -89,10 +102,10 @@ def _probe_request_kwargs(model: str) -> dict[str, object]:
     return {
         "model": model,
         "messages": [
-            {"role": "system", "content": "Return a structured response."},
+            {"role": "system", "content": 'Return exactly {"ok":true}.'},
             {"role": "user", "content": "Probe structured-output support."},
         ],
-        "response_format": _STRUCTURED_RESPONSE_FORMAT,
+        "response_format": _PROBE_RESPONSE_FORMAT,
     }
 
 
@@ -117,22 +130,33 @@ def _is_unsupported_structured_output_error(error: Exception) -> bool:
 
 def _probe_structured_output(client: Any, model: str) -> bool:
     try:
-        client.chat.completions.create(**_probe_request_kwargs(model))
+        response = client.chat.completions.create(**_probe_request_kwargs(model))
     except Exception as error:
         if _is_unsupported_structured_output_error(error):
             return False
         raise
-    return True
+    return _probe_response_conforms(response)
 
 
 async def _probe_structured_output_async(client: Any, model: str) -> bool:
     try:
-        await client.chat.completions.create(**_probe_request_kwargs(model))
+        response = await client.chat.completions.create(**_probe_request_kwargs(model))
     except Exception as error:
         if _is_unsupported_structured_output_error(error):
             return False
         raise
-    return True
+    return _probe_response_conforms(response)
+
+
+def _probe_response_conforms(response: Any) -> bool:
+    content = _response_text(response)
+    if not isinstance(content, str):
+        return False
+    try:
+        envelope = json.loads(content)
+    except json.JSONDecodeError:
+        return False
+    return isinstance(envelope, dict) and envelope == {"ok": True}
 
 
 def _response_text(response: Any) -> str | None:
