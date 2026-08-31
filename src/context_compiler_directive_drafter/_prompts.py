@@ -100,6 +100,10 @@ Conversion rules:
   requirement, constraint, or requested replacement.
 - Create the smallest valid directive payload that preserves every explicit
   operand, qualifier, polarity, and scope in the request.
+- If you select a directive operation, preserve the complete semantic payload
+  exactly, including all qualifiers and scope. Remove only acquisition framing
+  required to express the canonical operation; never drop or generalize the
+  remaining source text.
 - Preserve the user's semantic nouns and wording as faithfully as possible.
 - Do not paraphrase, substitute synonyms, invent alternatives, generalize
   scope, drop meaningful qualifiers, or change the operation merely to make
@@ -169,6 +173,10 @@ Conversion rules:
   requirement, constraint, or requested replacement.
 - Preserve every explicit operand, qualifier, polarity, modifier, and scope;
   preserve semantic nouns and wording as faithfully as possible.
+- If you select a directive operation, preserve the complete semantic payload
+  exactly, including all qualifiers and scope. Remove only acquisition framing
+  required to express the canonical operation; never drop or generalize the
+  remaining source text.
 - Do not paraphrase, substitute synonyms, invent alternatives, generalize
   scope, drop meaningful qualifiers, change operations, or lose replacement
   operands. If one canonical directive cannot preserve the meaning, reject it.
