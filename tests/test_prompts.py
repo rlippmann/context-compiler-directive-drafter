@@ -148,6 +148,8 @@ def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
     assert "This applies to the user's own policy, not to another person's preference" in prompt
     assert "`would be better`, `is easier`, or" in prompt
     assert "every explicit\n  operand, qualifier, polarity, and scope" in prompt
+    assert "preserve the complete semantic payload" in prompt
+    assert "Remove only acquisition framing" in prompt
     assert "If one canonical directive cannot preserve the" in prompt
     assert "A positive requirement that naturally maps to `use` must remain positive" in prompt
     assert "Clear user-owned `need`, `require`, and `must have` statements" in prompt
@@ -219,3 +221,5 @@ def test_structured_converter_prompt_replaces_free_text_transport_contract() -> 
     assert "Canonical directive forms:" in prompt
     assert "Output: use podman instead of docker" in prompt
     assert "`provide`, `keep`, `avoid`, `replace`, or `switch`" in prompt
+    assert "preserve the complete semantic payload" in prompt
+    assert "Remove only acquisition framing" in prompt
