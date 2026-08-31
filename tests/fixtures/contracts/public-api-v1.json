@@ -327,7 +327,7 @@
       "create_async_openai_fallback": {
         "kind": "callable",
         "signature": {
-          "is_async": false,
+          "is_async": true,
           "params": [
             {
               "name": "model",

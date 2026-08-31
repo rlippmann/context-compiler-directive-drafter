@@ -1,7 +1,7 @@
 """OpenAI-compatible fallback callback factories."""
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from importlib import import_module
 from typing import Any, cast
 
@@ -73,21 +73,66 @@ def _request_kwargs(
     return kwargs
 
 
-def _resolve_structured_output_capability(client: Any, model: str) -> bool:
-    """Resolve structured-output support once from provider model metadata."""
+def _select_transport(
+    structured_output: bool,
+) -> tuple[str, object | None, Callable[[Any], str | None]]:
+    if structured_output:
+        return (
+            _get_structured_converter_prompt(),
+            _STRUCTURED_RESPONSE_FORMAT,
+            _structured_response_text,
+        )
+    return _get_converter_prompt(), None, _normalize_response_text
 
-    models = getattr(client, "models", None)
-    retrieve = getattr(models, "retrieve", None)
-    if retrieve is None:
-        return False
-    metadata = retrieve(model)
-    capabilities = getattr(metadata, "capabilities", None)
-    if not isinstance(capabilities, Mapping):
-        return False
-    return any(
-        capabilities.get(name) is True
-        for name in ("structured_outputs", "structured_output", "json_schema")
+
+def _probe_request_kwargs(model: str) -> dict[str, object]:
+    return {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "Return a structured response."},
+            {"role": "user", "content": "Probe structured-output support."},
+        ],
+        "response_format": _STRUCTURED_RESPONSE_FORMAT,
+    }
+
+
+def _is_unsupported_structured_output_error(error: Exception) -> bool:
+    message = str(error).lower()
+    mentions_format = any(
+        term in message for term in ("response_format", "json schema", "structured output")
     )
+    indicates_unsupported = any(
+        term in message
+        for term in (
+            "not supported",
+            "unsupported",
+            "does not support",
+            "unrecognized",
+            "unknown parameter",
+            "invalid parameter",
+        )
+    )
+    return mentions_format and indicates_unsupported
+
+
+def _probe_structured_output(client: Any, model: str) -> bool:
+    try:
+        client.chat.completions.create(**_probe_request_kwargs(model))
+    except Exception as error:
+        if _is_unsupported_structured_output_error(error):
+            return False
+        raise
+    return True
+
+
+async def _probe_structured_output_async(client: Any, model: str) -> bool:
+    try:
+        await client.chat.completions.create(**_probe_request_kwargs(model))
+    except Exception as error:
+        if _is_unsupported_structured_output_error(error):
+            return False
+        raise
+    return True
 
 
 def _response_text(response: Any) -> str | None:
@@ -130,15 +175,8 @@ def create_openai_fallback(
     """Create a synchronous OpenAI-compatible Directive Drafter fallback."""
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
-    structured_output = _resolve_structured_output_capability(client, model)
-    if structured_output:
-        prompt = _get_structured_converter_prompt()
-        response_format = _STRUCTURED_RESPONSE_FORMAT
-        parse_response = _structured_response_text
-    else:
-        prompt = _get_converter_prompt()
-        response_format = None
-        parse_response = _normalize_response_text
+    structured_output = _probe_structured_output(client, model)
+    prompt, response_format, parse_response = _select_transport(structured_output)
 
     def fallback(user_input: str) -> str | None:
         response = client.chat.completions.create(
@@ -149,7 +187,7 @@ def create_openai_fallback(
     return fallback
 
 
-def create_async_openai_fallback(
+async def create_async_openai_fallback(
     model: str,
     *,
     api_key: str | None = None,
@@ -157,18 +195,10 @@ def create_async_openai_fallback(
     request_kwargs: Mapping[str, object] | None = None,
 ) -> _AsyncDraftFallback:
     """Create an asynchronous OpenAI-compatible Directive Drafter fallback."""
-    openai_client, async_openai_client = _load_openai_clients()
-    capability_client = openai_client(**_client_kwargs(api_key, base_url))
+    _, async_openai_client = _load_openai_clients()
     client = async_openai_client(**_client_kwargs(api_key, base_url))
-    structured_output = _resolve_structured_output_capability(capability_client, model)
-    if structured_output:
-        prompt = _get_structured_converter_prompt()
-        response_format = _STRUCTURED_RESPONSE_FORMAT
-        parse_response = _structured_response_text
-    else:
-        prompt = _get_converter_prompt()
-        response_format = None
-        parse_response = _normalize_response_text
+    structured_output = await _probe_structured_output_async(client, model)
+    prompt, response_format, parse_response = _select_transport(structured_output)
 
     async def fallback(user_input: str) -> str | None:
         response = await client.chat.completions.create(
