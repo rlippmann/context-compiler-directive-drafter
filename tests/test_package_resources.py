@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from context_compiler.grammar import CanonicalDirective, get_directive_metadata
+
 from context_compiler_directive_drafter._prompts import _get_converter_prompt
 
 get_converter_prompt = _get_converter_prompt
@@ -39,11 +41,18 @@ def test_packaged_converter_prompt_is_static_and_context_free() -> None:
 
 def test_packaged_converter_prompt_mentions_directive_categories_and_examples() -> None:
     prompt = get_converter_prompt()
+    replacement = next(
+        metadata for metadata in get_directive_metadata() if metadata.kind.value == "replace_use"
+    )
+    replacement_form = CanonicalDirective(
+        kind=replacement.kind,
+        operands={name: f"<{name.replace('_', ' ')}>" for name in replacement.operand_names},
+    ).text
 
     assert "Premise directives" in prompt
     assert "Policy directives" in prompt
     assert "Administrative directives" in prompt
-    assert "`use <new item> instead of <old item>`" in prompt
+    assert f"`{replacement_form}`" in prompt
     assert "Examples of user requests that may be drafted as directives:" in prompt
 
 

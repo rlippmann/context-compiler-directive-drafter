@@ -13,28 +13,76 @@ from context_compiler.grammar import (
 
 from .constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
 
+
+def _placeholder(name: str) -> str:
+    return f"<{name.replace('_', ' ')}>"
+
+
+def _sample_operand(name: str) -> str:
+    return f"sample {name.replace('_', ' ')}"
+
+
+def _render_canonical_form(metadata: DirectiveMetadata) -> str:
+    sample_operands = MappingProxyType(
+        {name: _sample_operand(name) for name in metadata.operand_names}
+    )
+    rendered = CanonicalDirective(kind=metadata.kind, operands=sample_operands).text
+    for name, sample in sample_operands.items():
+        rendered = rendered.replace(sample, _placeholder(name))
+    return rendered
+
+
+def _canonical_form(kind: DirectiveKind) -> str:
+    metadata = next(metadata for metadata in get_directive_metadata() if metadata.kind is kind)
+    return _render_canonical_form(metadata)
+
+
+def _canonical_operation(kind: DirectiveKind) -> str:
+    metadata = next(metadata for metadata in get_directive_metadata() if metadata.kind is kind)
+    canonical_form = _render_canonical_form(metadata)
+    if not metadata.operand_names:
+        return canonical_form
+    operation = canonical_form.removesuffix(f" {_placeholder(metadata.operand_names[0])}")
+    if kind in {DirectiveKind.SET_PREMISE, DirectiveKind.CHANGE_PREMISE}:
+        operation = operation.removesuffix(" to")
+    return operation
+
+
+def _render_directive(kind: DirectiveKind, operand_values: tuple[str, ...]) -> str:
+    metadata = next(metadata for metadata in get_directive_metadata() if metadata.kind is kind)
+    operands = MappingProxyType(dict(zip(metadata.operand_names, operand_values, strict=True)))
+    return CanonicalDirective(kind=kind, operands=operands).text
+
+
+_USE_OPERATION = f"`{_canonical_operation(DirectiveKind.USE_ITEM)}`"
+_PROHIBIT_OPERATION = f"`{_canonical_operation(DirectiveKind.PROHIBIT_ITEM)}`"
+_SET_PREMISE_OPERATION = f"`{_canonical_operation(DirectiveKind.SET_PREMISE)}`"
+_CHANGE_PREMISE_OPERATION = f"`{_canonical_operation(DirectiveKind.CHANGE_PREMISE)}`"
+
 _DIRECTIVE_CATEGORY_LINES = """Directive categories:
 - Premise directives record contextual or background state that is not naturally
   represented as a policy choice.
 - Policy directives manage named policy items.
 - Administrative directives change compiler-managed state."""
 
-_PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
-- Prefer policy when the user's state can be faithfully represented as `use`,
-  `prohibit`, removal, replacement, or another policy operation.
+_PREMISE_POLICY_GUIDANCE = (
+    f"""What premise vs policy means:
+- Prefer policy when the user's state can be faithfully represented as {_USE_OPERATION},
+  {_PROHIBIT_OPERATION}, removal, replacement, or another policy operation.
 - User-facing preferences and constraints are policies even when they are
   persistent, behavioral, stylistic, or user-specific.
 - Use premise only for governing context that cannot naturally be represented
   as policy without distorting the user's meaning, such as `the intended
   audience is senior management`. Do not use premise merely for arbitrary
   facts, observations, evaluations, external rules, or third-party conditions.
-- Do not infer `set premise` or `change premise` casually from natural-language
-  preferences. `change premise` should be uncommon.
+- Do not infer {_SET_PREMISE_OPERATION} or {_CHANGE_PREMISE_OPERATION} casually from natural-"""
+    f"""language
+  preferences. {_CHANGE_PREMISE_OPERATION} should be uncommon.
 - Declarative statements about user-owned wants, preferences, needs,
-  requirements, constraints, or equipment may establish policy when `use` or
-  `prohibit` naturally preserves their meaning.
+  requirements, constraints, or equipment may establish policy when {_USE_OPERATION} or
+  {_PROHIBIT_OPERATION} naturally preserves their meaning.
 - Clear user-owned `need`, `require`, and `must have` statements should
-  normally become `use` or `prohibit` when that preserves their meaning;
+  normally become {_USE_OPERATION} or {_PROHIBIT_OPERATION} when that preserves their meaning;
   ownership and semantic role still matter.
 - Declarative requirements, preferences, and constraints may establish policy;
   imperative wording or explicit persistence language is not required.
@@ -44,6 +92,7 @@ _PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
   `is prohibited` does not by itself establish the user's policy.
 - If the input is already a valid canonical directive, preserve the operation
   explicitly selected by the user. Do not remap it to another operation."""
+)
 
 
 @dataclass(frozen=True)
@@ -77,6 +126,10 @@ _SCOPE_PAYLOAD_CONTRASTS: tuple[_ScopePayloadContrast, ...] = (
 )
 
 
+_USE_DOCKER = _render_directive(DirectiveKind.USE_ITEM, ("docker",))
+_PROHIBIT_PEANUTS = _render_directive(DirectiveKind.PROHIBIT_ITEM, ("peanuts",))
+_USE_ALMONDS = _render_directive(DirectiveKind.USE_ITEM, ("almonds",))
+
 _BEHAVIOR_EXAMPLES = f"""Examples of ordinary conversation that must not become directives:
 User: can you help with lunch?
         Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
@@ -88,13 +141,13 @@ User: What does clear state do?
 Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
 Examples of directive discussion or unresolved multi-directive input where you must not guess:
-User: use docker?
+User: {_USE_DOCKER}?
 Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
-User: He said "use docker".
+User: He said "{_USE_DOCKER}".
 Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
 
-User: prohibit peanuts and use almonds
+User: {_PROHIBIT_PEANUTS} and {_USE_ALMONDS}
 Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}"""
 
 _PROMPT_SUFFIX = f"""Your task:
@@ -131,9 +184,9 @@ Conversion rules:
   scope, drop meaningful qualifiers, or change the operation merely to make
   the output canonical. If one canonical directive cannot preserve the
   meaning, abstain instead of omitting or broadening the lost content.
-- A positive requirement that naturally maps to `use` must remain positive;
+- A positive requirement that naturally maps to {_USE_OPERATION} must remain positive;
   do not invent an antonym, opposite property, or unstated alternative to
-  express it as `prohibit`.
+  express it as {_PROHIBIT_OPERATION}.
 - For replacement or prohibition requests, preserve all stated operands and
   the requested operation; narrowing is exceptional and allowed only when a
   specific acquisition rule authorizes it.
@@ -180,7 +233,7 @@ When to output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
 - Inputs containing multiple directive requests.
 - Quoted, cited, reported, example, or discussed directive text rather than a direct request."""
 
-_STRUCTURED_PROMPT_SUFFIX = """Your task:
+_STRUCTURED_PROMPT_SUFFIX = f"""Your task:
 - Read one user message.
 - Classify it as `directive` only when it clearly establishes one atomic state
   change that can be represented by a canonical directive.
@@ -202,8 +255,8 @@ Conversion rules:
 - Do not paraphrase, substitute synonyms, invent alternatives, generalize
   scope, drop meaningful qualifiers, change operations, or lose replacement
   operands. If one canonical directive cannot preserve the meaning, reject it.
-- A positive requirement that naturally maps to `use` remains positive; do not
-  invent an antonym or unstated alternative for `prohibit`.
+- A positive requirement that naturally maps to {_USE_OPERATION} remains positive; do not
+  invent an antonym or unstated alternative for {_PROHIBIT_OPERATION}.
 - Do not infer missing intent, unstated replacements, or unresolved referents.
 - Clear user-owned preferences, wants, needs, requirements, and constraints may
   become policy; third-party preferences or constraints do not become the
@@ -292,15 +345,6 @@ _POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
         operand_values=("formal tone",),
     ),
 )
-
-
-def _placeholder(name: str) -> str:
-    return f"<{name.replace('_', ' ')}>"
-
-
-def _render_canonical_form(metadata: DirectiveMetadata) -> str:
-    operands = MappingProxyType({name: _placeholder(name) for name in metadata.operand_names})
-    return CanonicalDirective(kind=metadata.kind, operands=operands).text
 
 
 def _render_canonical_forms() -> str:
