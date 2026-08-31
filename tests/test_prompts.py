@@ -138,8 +138,6 @@ def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
     assert "contextual or factual background" in prompt
     assert "Declarative requirements, preferences, and constraints may establish policy" in prompt
     assert "preserve the operation\n  explicitly selected by the user" in prompt
-    assert "`I prefer\n  concise replies` becomes `use concise replies`" in prompt
-    assert "`I can't have peanuts`\n  becomes `prohibit peanuts`" in prompt
     assert "the intended\n  audience is senior management`" in prompt
     assert (
         "arbitrary\n  facts, observations, evaluations, external rules, or "
@@ -177,6 +175,36 @@ def test_get_converter_prompt_positive_outputs_use_core_canonical_serialization(
         )
         expected_output = CanonicalDirective(kind=example.kind, operands=operands).text
         assert f"Output: {expected_output}" in positive_examples
+
+
+def test_scope_payload_contrasts_use_core_canonical_serialization() -> None:
+    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
+
+    for prompt in (get_converter_prompt(), prompt_module._get_structured_converter_prompt()):
+        for example in prompt_module._SCOPE_PAYLOAD_CONTRASTS:
+            metadata = metadata_by_kind[example.kind]
+            correct = CanonicalDirective(
+                kind=example.kind,
+                operands=MappingProxyType(
+                    dict(zip(metadata.operand_names, example.operand_values, strict=True))
+                ),
+            ).text
+            truncated = CanonicalDirective(
+                kind=example.kind,
+                operands=MappingProxyType(
+                    dict(
+                        zip(
+                            metadata.operand_names,
+                            example.truncated_operand_values,
+                            strict=True,
+                        )
+                    )
+                ),
+            ).text
+
+            assert f"Source: {example.user_input}" in prompt
+            assert f"Correct candidate: {correct}" in prompt
+            assert f"Do not truncate it to: {truncated}" in prompt
 
 
 def test_get_converter_prompt_preserves_behavioral_examples() -> None:

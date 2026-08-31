@@ -23,9 +23,7 @@ _PREMISE_POLICY_GUIDANCE = """What premise vs policy means:
 - Prefer policy when the user's state can be faithfully represented as `use`,
   `prohibit`, removal, replacement, or another policy operation.
 - User-facing preferences and constraints are policies even when they are
-  persistent, behavioral, stylistic, or user-specific. For example, `I prefer
-  concise replies` becomes `use concise replies`, and `I can't have peanuts`
-  becomes `prohibit peanuts`.
+  persistent, behavioral, stylistic, or user-specific.
 - Use premise only for governing context that cannot naturally be represented
   as policy without distorting the user's meaning, such as `the intended
   audience is senior management`. Do not use premise merely for arbitrary
@@ -53,6 +51,30 @@ class _AcquisitionExample:
     kind: DirectiveKind
     user_input: str
     operand_values: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _ScopePayloadContrast:
+    kind: DirectiveKind
+    user_input: str
+    operand_values: tuple[str, ...]
+    truncated_operand_values: tuple[str, ...]
+
+
+_SCOPE_PAYLOAD_CONTRASTS: tuple[_ScopePayloadContrast, ...] = (
+    _ScopePayloadContrast(
+        kind=DirectiveKind.USE_ITEM,
+        user_input="Oat milk is required for this recipe",
+        operand_values=("oat milk for this recipe",),
+        truncated_operand_values=("oat milk",),
+    ),
+    _ScopePayloadContrast(
+        kind=DirectiveKind.PROHIBIT_ITEM,
+        user_input="Scented candles are prohibited in this building",
+        operand_values=("scented candles in this building",),
+        truncated_operand_values=("scented candles",),
+    ),
+)
 
 
 _BEHAVIOR_EXAMPLES = f"""Examples of ordinary conversation that must not become directives:
@@ -276,28 +298,16 @@ def _placeholder(name: str) -> str:
     return f"<{name.replace('_', ' ')}>"
 
 
-def _format_canonical_form(
-    kind: DirectiveKind, canonical_start: str, operand_names: tuple[str, ...]
-) -> str:
-    if not operand_names:
-        return canonical_start
-
-    if kind is DirectiveKind.REPLACE_USE and operand_names == ("new_item", "old_item"):
-        return f"{canonical_start} {_placeholder('new_item')} instead of {_placeholder('old_item')}"
-
-    operands = " ".join(_placeholder(name) for name in operand_names)
-    return f"{canonical_start} {operands}"
+def _render_canonical_form(metadata: DirectiveMetadata) -> str:
+    operands = MappingProxyType({name: _placeholder(name) for name in metadata.operand_names})
+    return CanonicalDirective(kind=metadata.kind, operands=operands).text
 
 
 def _render_canonical_forms() -> str:
     lines = ["Canonical directive forms:"]
     for metadata in get_directive_metadata():
         category = _DIRECTIVE_KIND_TO_CATEGORY[metadata.kind]
-        canonical_form = _format_canonical_form(
-            metadata.kind,
-            metadata.canonical_start,
-            metadata.operand_names,
-        )
+        canonical_form = _render_canonical_form(metadata)
         lines.append(f"- `{canonical_form}` ({category})")
     return "\n".join(lines)
 
@@ -315,6 +325,24 @@ def _render_positive_acquisition_examples() -> str:
             ]
         )
         lines.append("")
+    return "\n".join(lines[:-1])
+
+
+def _render_scope_payload_contrasts() -> str:
+    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
+    lines = ["Scope and payload contrast examples:"]
+    for example in _SCOPE_PAYLOAD_CONTRASTS:
+        metadata = metadata_by_kind[example.kind]
+        correct = _render_example_output(metadata, example.operand_values)
+        truncated = _render_example_output(metadata, example.truncated_operand_values)
+        lines.extend(
+            [
+                f"Source: {example.user_input}",
+                f"Correct candidate: {correct}",
+                f"Do not truncate it to: {truncated}",
+                "",
+            ]
+        )
     return "\n".join(lines[:-1])
 
 
@@ -341,6 +369,8 @@ def _build_converter_prompt() -> str:
         _PREMISE_POLICY_GUIDANCE,
         "",
         _PROMPT_SUFFIX,
+        "",
+        _render_scope_payload_contrasts(),
         "",
         _render_positive_acquisition_examples(),
         "",
@@ -373,6 +403,8 @@ def _build_structured_converter_prompt() -> str:
         _PREMISE_POLICY_GUIDANCE,
         "",
         _STRUCTURED_PROMPT_SUFFIX,
+        "",
+        _render_scope_payload_contrasts(),
         "",
         _render_positive_acquisition_examples(),
         "",
