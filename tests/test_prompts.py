@@ -1,6 +1,6 @@
 from types import MappingProxyType
 
-from context_compiler.grammar import CanonicalDirective, DirectiveKind, get_directive_metadata
+from context_compiler.grammar import CanonicalDirective, get_directive_metadata
 
 from context_compiler_directive_drafter import _prompts as prompt_module
 from context_compiler_directive_drafter._prompts import _get_converter_prompt
@@ -13,14 +13,11 @@ get_converter_prompt = _get_converter_prompt
 def _expected_prompt_forms() -> list[str]:
     forms: list[str] = []
     for metadata in get_directive_metadata():
-        if metadata.kind is DirectiveKind.REPLACE_USE:
-            form = "`use <new item> instead of <old item>`"
-        elif metadata.operand_names:
-            operands = " ".join(f"<{name.replace('_', ' ')}>" for name in metadata.operand_names)
-            form = f"`{metadata.canonical_start} {operands}`"
-        else:
-            form = f"`{metadata.canonical_start}`"
-        forms.append(form)
+        operands = MappingProxyType(
+            {name: f"<{name.replace('_', ' ')}>" for name in metadata.operand_names}
+        )
+        form = CanonicalDirective(kind=metadata.kind, operands=operands).text
+        forms.append(f"`{form}`")
     return forms
 
 
