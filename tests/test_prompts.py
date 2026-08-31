@@ -95,36 +95,16 @@ def test_get_converter_prompt_keeps_grammar_inventory_out_of_behavior_examples()
 def test_get_converter_prompt_includes_positive_acquisition_examples() -> None:
     prompt = get_converter_prompt()
     positive_examples = _positive_acquisition_examples_section(prompt)
+    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
 
-    assert "User: please use docker" in positive_examples
-    assert "User: switch from docker to podman" in positive_examples
-    assert "User: I prefer concise replies." in positive_examples
-    assert "User: I prefer morning appointments." in positive_examples
-    assert "User: I can't have peanuts." in positive_examples
-    assert "User: I have a Nord Stage 4." in positive_examples
-    assert "User: We need a simple recipe." in positive_examples
-    assert "User: I need oat milk today." in positive_examples
-    assert "User: The intended audience is senior management." in positive_examples
-    assert "User: change premise to formal tone" in positive_examples
-
-
-def test_get_converter_prompt_positive_example_outputs_are_metadata_derived() -> None:
-    prompt = get_converter_prompt()
-    positive_examples = _positive_acquisition_examples_section(prompt)
-
-    for expected_output in (
-        "Output: use docker",
-        "Output: use podman instead of docker",
-        "Output: use concise replies",
-        "Output: use morning appointments",
-        "Output: prohibit peanuts",
-        "Output: use a Nord Stage 4",
-        "Output: use a simple recipe",
-        "Output: use oat milk today",
-        "Output: set premise intended audience is senior management",
-        "Output: change premise to formal tone",
-    ):
-        assert expected_output in positive_examples
+    for example in prompt_module._POSITIVE_ACQUISITION_EXAMPLES:
+        metadata = metadata_by_kind[example.kind]
+        operands = MappingProxyType(
+            dict(zip(metadata.operand_names, example.operand_values, strict=True))
+        )
+        expected_output = CanonicalDirective(kind=example.kind, operands=operands).text
+        assert f"User: {example.user_input}" in positive_examples
+        assert f"Output: {expected_output}" in positive_examples
 
 
 def test_get_converter_prompt_teaches_policy_first_premise_boundary() -> None:
