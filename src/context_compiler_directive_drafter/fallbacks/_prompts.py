@@ -11,7 +11,7 @@ from context_compiler.grammar import (
     get_directive_metadata,
 )
 
-from .constants import NO_DIRECTIVE
+from ..constants import NO_DIRECTIVE
 
 
 def _placeholder(name: str) -> str:

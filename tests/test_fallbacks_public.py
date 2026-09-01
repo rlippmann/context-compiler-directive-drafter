@@ -1,7 +1,7 @@
-from context_compiler_directive_drafter import _prompts
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 from context_compiler_directive_drafter.fallbacks import (
     NO_DIRECTIVE,
+    _prompts,
     get_converter_prompt,
     get_structured_converter_prompt,
     get_structured_output_schema,
