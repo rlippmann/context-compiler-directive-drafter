@@ -1,0 +1,40 @@
+{
+  "id": "fallback-integration-capability-v1",
+  "kind": "api-capability-contract",
+  "module": "context_compiler_directive_drafter.fallbacks",
+  "capability": "native-fallback-integration",
+  "members": {
+    "get_converter_prompt": {
+      "kind": "prompt_provider",
+      "prompt_mode": "free_text",
+      "required_substrings": [
+        "canonical directive",
+        "non-authoritative draft",
+        "Output contract"
+      ]
+    },
+    "get_structured_converter_prompt": {
+      "kind": "prompt_provider",
+      "prompt_mode": "structured",
+      "required_substrings": [
+        "classification",
+        "directive",
+        "rejected",
+        "output"
+      ]
+    },
+    "get_structured_output_schema": {
+      "kind": "structured_schema_provider",
+      "required_keys": ["type", "properties", "required", "additionalProperties"],
+      "required_properties": ["classification", "output"],
+      "classification_values": ["directive", "rejected"]
+    },
+    "NO_DIRECTIVE": {
+      "kind": "abstention_sentinel",
+      "value": "<NO_DIRECTIVE>"
+    },
+    "InvalidFallbackResponseError": {
+      "kind": "invalid_response_signal"
+    }
+  }
+}
