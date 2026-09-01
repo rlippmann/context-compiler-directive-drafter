@@ -17,6 +17,7 @@ from context_compiler_directive_drafter.drafter import (
 
 _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
 _REQUIRED_CONTRACT_FILES = {
+    "fallback-integration-v1.json",
     "high-level-drafting-v1.json",
     "public-api-v1.json",
 }
@@ -788,7 +789,44 @@ def _assert_member_specs_schema(members: dict[str, object], label: str) -> None:
         assert isinstance(export_name, str), f"{label}.members"
         assert isinstance(export_contract, dict), export_name
         kind = export_contract["kind"]
-        assert kind in {"callable", "constant", "type_alias", "type", "class"}, export_name
+        assert kind in {
+            "callable",
+            "constant",
+            "type_alias",
+            "type",
+            "class",
+            "prompt_provider",
+            "structured_schema_provider",
+            "abstention_sentinel",
+            "invalid_response_signal",
+        }, export_name
+        if kind == "prompt_provider":
+            _assert_exact_keys(
+                export_contract,
+                {"kind", "prompt_mode", "required_substrings"},
+                export_name,
+            )
+            assert export_contract["prompt_mode"] in {"free_text", "structured"}
+            assert isinstance(export_contract["required_substrings"], list)
+            assert all(isinstance(item, str) for item in export_contract["required_substrings"])
+            continue
+        if kind == "structured_schema_provider":
+            _assert_exact_keys(
+                export_contract,
+                {"kind", "required_keys", "required_properties", "classification_values"},
+                export_name,
+            )
+            for key in {"required_keys", "required_properties", "classification_values"}:
+                assert isinstance(export_contract[key], list)
+                assert all(isinstance(item, str) for item in export_contract[key])
+            continue
+        if kind == "abstention_sentinel":
+            _assert_exact_keys(export_contract, {"kind", "value"}, export_name)
+            assert isinstance(export_contract["value"], str)
+            continue
+        if kind == "invalid_response_signal":
+            _assert_exact_keys(export_contract, {"kind"}, export_name)
+            continue
         if kind == "callable":
             _assert_callable_spec_schema(export_contract, export_name)
             continue
@@ -931,6 +969,28 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
         for name, spec in members.items():
             exported = getattr(module, name)
             kind = spec["kind"]
+            if kind == "prompt_provider":
+                prompt = exported()
+                assert isinstance(prompt, str), name
+                for substring in spec["required_substrings"]:
+                    assert substring in prompt, name
+                continue
+            if kind == "structured_schema_provider":
+                schema = exported()
+                assert isinstance(schema, dict), name
+                assert set(schema) >= set(spec["required_keys"]), name
+                assert set(schema["properties"]) >= set(spec["required_properties"]), name
+                assert (
+                    schema["properties"]["classification"]["enum"] == spec["classification_values"]
+                ), name
+                continue
+            if kind == "abstention_sentinel":
+                assert exported == spec["value"], name
+                continue
+            if kind == "invalid_response_signal":
+                assert inspect.isclass(exported), name
+                assert issubclass(exported, RuntimeError), name
+                continue
             _assert_export_kind(name, exported, kind)
             if kind == "callable":
                 _assert_callable_contract(name, exported, spec, tmp_path)
