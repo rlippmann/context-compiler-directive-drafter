@@ -32,16 +32,9 @@ def _render_canonical_form(metadata: DirectiveMetadata) -> str:
     return rendered
 
 
-def _canonical_form(kind: DirectiveKind) -> str:
-    metadata = next(metadata for metadata in get_directive_metadata() if metadata.kind is kind)
-    return _render_canonical_form(metadata)
-
-
 def _canonical_operation(kind: DirectiveKind) -> str:
     metadata = next(metadata for metadata in get_directive_metadata() if metadata.kind is kind)
     canonical_form = _render_canonical_form(metadata)
-    if not metadata.operand_names:
-        return canonical_form
     operation = canonical_form.removesuffix(f" {_placeholder(metadata.operand_names[0])}")
     if kind in {DirectiveKind.SET_PREMISE, DirectiveKind.CHANGE_PREMISE}:
         operation = operation.removesuffix(" to")
