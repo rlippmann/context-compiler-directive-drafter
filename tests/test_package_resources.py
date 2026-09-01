@@ -2,9 +2,7 @@ from pathlib import Path
 
 from context_compiler.grammar import CanonicalDirective, get_directive_metadata
 
-from context_compiler_directive_drafter._prompts import _get_converter_prompt
-
-get_converter_prompt = _get_converter_prompt
+from context_compiler_directive_drafter._prompts import get_converter_prompt
 
 _PACKAGE = "context_compiler_directive_drafter"
 _RESOURCE_PATHS = [

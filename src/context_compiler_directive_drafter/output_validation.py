@@ -11,7 +11,7 @@ from context_compiler.grammar import CanonicalDirective, decompose_directive
 from .constants import (
     _DRAFT_OUTCOME_DIRECTIVE,
     _DRAFT_OUTCOME_REJECTED,
-    _PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
+    NO_DIRECTIVE,
     _OutputClassification,
 )
 
@@ -73,7 +73,7 @@ def _validate_text_output(raw_output: str) -> _PreprocessorValidationResult:
     if not stripped:
         return _invalid()
 
-    if stripped.upper() == _PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+    if stripped.upper() == NO_DIRECTIVE:
         return _rejected()
 
     parsed = _parse_canonical_directive(stripped)

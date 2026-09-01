@@ -2,7 +2,7 @@
 
 from typing import Final, Literal
 
-_PREPROCESSOR_NO_DIRECTIVE_SENTINEL: Final = "<NO_DIRECTIVE>"
+NO_DIRECTIVE: Final = "<NO_DIRECTIVE>"
 
 _DRAFT_OUTCOME_DIRECTIVE: Final = "directive"
 _DRAFT_OUTCOME_REJECTED: Final = "rejected"
