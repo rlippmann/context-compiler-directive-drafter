@@ -6,6 +6,7 @@ from context_compiler_directive_drafter.fallbacks import (
     get_structured_converter_prompt,
     get_structured_output_schema,
 )
+from context_compiler_directive_drafter.fallbacks.openai import create_openai_fallback
 
 
 def test_public_fallback_prompts_reuse_package_prompt_sources() -> None:
@@ -33,3 +34,7 @@ def test_public_fallback_schema_is_structural_and_defensive() -> None:
 def test_public_fallback_sentinel_and_invalid_response_error_are_available() -> None:
     assert NO_DIRECTIVE == "<NO_DIRECTIVE>"
     assert issubclass(InvalidFallbackResponseError, RuntimeError)
+
+
+def test_openai_factory_is_available_under_fallback_namespace() -> None:
+    assert create_openai_fallback.__name__ == "create_openai_fallback"
