@@ -11,7 +11,10 @@ from context_compiler_directive_drafter.drafter import (
     _AsyncDraftFallback,
     _DraftFallback,
 )
-from context_compiler_directive_drafter.fallbacks import get_structured_output_schema
+from context_compiler_directive_drafter.fallbacks import (
+    get_structured_output_schema,
+    parse_structured_response,
+)
 from context_compiler_directive_drafter.fallbacks.prompts import (
     get_converter_prompt,
     get_structured_converter_prompt,
@@ -167,19 +170,7 @@ def _structured_response_text(response: Any) -> str | None:
     content = _response_text(response)
     if not isinstance(content, str):
         raise InvalidFallbackResponseError("structured fallback response content is not text")
-    try:
-        envelope = json.loads(content)
-    except json.JSONDecodeError as exc:
-        raise InvalidFallbackResponseError("structured fallback response is not JSON") from exc
-    if not isinstance(envelope, dict) or set(envelope) != {"classification", "output"}:
-        raise InvalidFallbackResponseError("structured fallback response has an invalid envelope")
-    classification = envelope["classification"]
-    output = envelope["output"]
-    if classification == "directive" and isinstance(output, str):
-        return output
-    if classification == "rejected" and output is None:
-        return None
-    raise InvalidFallbackResponseError("structured fallback response is inconsistent")
+    return parse_structured_response(content)
 
 
 def create_openai_fallback(

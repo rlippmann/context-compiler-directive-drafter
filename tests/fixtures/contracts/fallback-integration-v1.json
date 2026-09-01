@@ -35,6 +35,23 @@
     },
     "InvalidFallbackResponseError": {
       "kind": "invalid_response_signal"
+    },
+    "parse_structured_response": {
+      "kind": "structured_response_parser",
+      "probes": [
+        {
+          "input": "{\"classification\":\"rejected\",\"output\":null}",
+          "expect": "rejected"
+        },
+        {
+          "input": "{\"classification\":\"directive\",\"output\":null}",
+          "expect": "invalid"
+        },
+        {
+          "input": "not json",
+          "expect": "invalid"
+        }
+      ]
     }
   }
 }

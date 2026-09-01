@@ -1,9 +1,12 @@
+import pytest
+
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 from context_compiler_directive_drafter.fallbacks import (
     NO_DIRECTIVE,
     get_converter_prompt,
     get_structured_converter_prompt,
     get_structured_output_schema,
+    parse_structured_response,
     prompts,
 )
 from context_compiler_directive_drafter.fallbacks.openai import create_openai_fallback
@@ -34,6 +37,13 @@ def test_public_fallback_schema_is_structural_and_defensive() -> None:
 def test_public_fallback_sentinel_and_invalid_response_error_are_available() -> None:
     assert NO_DIRECTIVE == "<NO_DIRECTIVE>"
     assert issubclass(InvalidFallbackResponseError, RuntimeError)
+
+
+def test_structured_response_parser_distinguishes_rejection_from_invalid_output() -> None:
+    assert parse_structured_response('{"classification":"rejected","output":null}') is None
+
+    with pytest.raises(InvalidFallbackResponseError):
+        parse_structured_response('{"classification":"directive","output":null}')
 
 
 def test_openai_factory_is_available_under_fallback_namespace() -> None:

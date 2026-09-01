@@ -797,6 +797,7 @@ def _assert_member_specs_schema(members: dict[str, object], label: str) -> None:
             "class",
             "prompt_provider",
             "structured_schema_provider",
+            "structured_response_parser",
             "abstention_sentinel",
             "invalid_response_signal",
         }, export_name
@@ -826,6 +827,14 @@ def _assert_member_specs_schema(members: dict[str, object], label: str) -> None:
             continue
         if kind == "invalid_response_signal":
             _assert_exact_keys(export_contract, {"kind"}, export_name)
+            continue
+        if kind == "structured_response_parser":
+            _assert_exact_keys(export_contract, {"kind", "probes"}, export_name)
+            assert isinstance(export_contract["probes"], list) and export_contract["probes"]
+            for probe in export_contract["probes"]:
+                assert set(probe) == {"input", "expect"}
+                assert isinstance(probe["input"], str)
+                assert probe["expect"] in {"rejected", "invalid"}
             continue
         if kind == "callable":
             _assert_callable_spec_schema(export_contract, export_name)
@@ -990,6 +999,21 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
             if kind == "invalid_response_signal":
                 assert inspect.isclass(exported), name
                 assert issubclass(exported, RuntimeError), name
+                continue
+            if kind == "structured_response_parser":
+                for probe in spec["probes"]:
+                    try:
+                        result = exported(probe["input"])
+                    except Exception as error:
+                        assert probe["expect"] == "invalid", (name, probe, error)
+                        assert isinstance(error, module.InvalidFallbackResponseError), (
+                            name,
+                            probe,
+                            error,
+                        )
+                    else:
+                        assert probe["expect"] == "rejected", (name, probe, result)
+                        assert result is None
                 continue
             _assert_export_kind(name, exported, kind)
             if kind == "callable":
