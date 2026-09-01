@@ -12,7 +12,7 @@ from context_compiler_directive_drafter.drafter import (
     _DraftFallback,
 )
 from context_compiler_directive_drafter.fallbacks import get_structured_output_schema
-from context_compiler_directive_drafter.fallbacks._prompts import (
+from context_compiler_directive_drafter.fallbacks.prompts import (
     get_converter_prompt,
     get_structured_converter_prompt,
 )

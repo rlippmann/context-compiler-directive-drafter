@@ -1,17 +1,17 @@
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 from context_compiler_directive_drafter.fallbacks import (
     NO_DIRECTIVE,
-    _prompts,
     get_converter_prompt,
     get_structured_converter_prompt,
     get_structured_output_schema,
+    prompts,
 )
 from context_compiler_directive_drafter.fallbacks.openai import create_openai_fallback
 
 
 def test_public_fallback_prompts_reuse_package_prompt_sources() -> None:
-    assert get_converter_prompt is _prompts.get_converter_prompt
-    assert get_structured_converter_prompt is _prompts.get_structured_converter_prompt
+    assert get_converter_prompt is prompts.get_converter_prompt
+    assert get_structured_converter_prompt is prompts.get_structured_converter_prompt
 
 
 def test_public_fallback_schema_is_structural_and_defensive() -> None:

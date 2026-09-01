@@ -15,7 +15,7 @@ from context_compiler_directive_drafter import (
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 from context_compiler_directive_drafter.fallbacks import openai as adapter
-from context_compiler_directive_drafter.fallbacks._prompts import (
+from context_compiler_directive_drafter.fallbacks.prompts import (
     get_converter_prompt,
     get_structured_converter_prompt,
 )
