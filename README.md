@@ -216,8 +216,12 @@ response; semantic scoring and routing mismatches are reported separately.
 The checked-in contract fixtures use the existing `pytest.mark.contract` and
 fixture model. `high-level-drafting-v1.json` defines shared API concepts and
 observable drafting behavior for compatible ports, including the
-`DirectiveDrafter`, result variants, fallback routing, source metadata, and
-public rejection reasons. `public-api-v1.json` defines Python package
+`DirectiveDrafter`, result variants, fallback routing, source metadata, public
+rejection reasons, and the native fallback integration capabilities. The
+native integration contract requires equivalent access to the free-text and
+structured acquisition prompts, the Core-derived structured schema, the
+abstention sentinel, and malformed-response signaling; it does not require an
+OpenAI-specific factory. `public-api-v1.json` defines Python package
 mechanics such as root exports, reflection-visible signatures, descriptors,
 and Python exception behavior; those details are not requirements for other
 languages.
