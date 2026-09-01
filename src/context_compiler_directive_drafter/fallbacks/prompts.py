@@ -385,7 +385,9 @@ def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[st
 
 
 @lru_cache(maxsize=1)
-def _build_converter_prompt() -> str:
+def get_converter_prompt() -> str:
+    """Return the shared converter system prompt with metadata-derived grammar facts."""
+
     sections = [
         "You are a directive converter that drafts candidate",
         "Context Compiler directives from user requests.",
@@ -412,14 +414,10 @@ def _build_converter_prompt() -> str:
     return "\n".join(sections).strip()
 
 
-def get_converter_prompt() -> str:
-    """Return the shared converter system prompt with metadata-derived grammar facts."""
-
-    return _build_converter_prompt()
-
-
 @lru_cache(maxsize=1)
-def _build_structured_converter_prompt() -> str:
+def get_structured_converter_prompt() -> str:
+    """Return the structured-output acquisition prompt used by integrations."""
+
     sections = [
         "You are a directive converter that drafts candidate",
         "Context Compiler directives from user requests.",
@@ -446,9 +444,3 @@ def _build_structured_converter_prompt() -> str:
         "  unresolved mixed intent: classification `rejected`, output null.",
     ]
     return "\n".join(sections).strip()
-
-
-def get_structured_converter_prompt() -> str:
-    """Return the evaluation-only prompt for structured provider output."""
-
-    return _build_structured_converter_prompt()
