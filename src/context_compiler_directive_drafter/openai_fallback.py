@@ -15,21 +15,14 @@ from context_compiler_directive_drafter.drafter import (
     _AsyncDraftFallback,
     _DraftFallback,
 )
+from context_compiler_directive_drafter.fallbacks import get_structured_output_schema
 
 _STRUCTURED_RESPONSE_FORMAT = {
     "type": "json_schema",
     "json_schema": {
         "name": "directive_drafter_result",
         "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "classification": {"type": "string", "enum": ["directive", "rejected"]},
-                "output": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-            },
-            "required": ["classification", "output"],
-            "additionalProperties": False,
-        },
+        "schema": get_structured_output_schema(),
     },
 }
 _PROBE_RESPONSE_FORMAT = {
