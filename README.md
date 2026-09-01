@@ -115,10 +115,8 @@ Drafter:
 ```python
 import os
 
-from context_compiler_directive_drafter import (
-    DirectiveDrafter,
-    create_openai_fallback,
-)
+from context_compiler_directive_drafter import DirectiveDrafter
+from context_compiler_directive_drafter.fallbacks.openai import create_openai_fallback
 
 fallback = create_openai_fallback(
     model="gpt-4o-mini",
@@ -153,6 +151,29 @@ unsupported providers use free-text mode, which translates the provider-level
 the generic fallback callback contract's Python `None` value. Other model text
 is returned unchanged. The Drafter remains responsible for parsing, validation,
 and result shaping.
+
+### Native fallback integrations
+
+Hosts using a provider-specific client can implement the fallback callback
+directly while reusing the package-owned acquisition contract:
+
+```python
+from context_compiler_directive_drafter.fallbacks import (
+    InvalidFallbackResponseError,
+    NO_DIRECTIVE,
+    get_converter_prompt,
+    get_structured_converter_prompt,
+    get_structured_output_schema,
+)
+```
+
+Use `get_converter_prompt()` when the provider returns canonical directive text,
+or use `get_structured_converter_prompt()` with
+`get_structured_output_schema()` when it supports structured output. Return
+`None` for a valid provider rejection, and raise
+`InvalidFallbackResponseError` for a malformed or inconsistent structured
+response. The callback returns raw candidate text; the Drafter passes it through
+Core parsing and produces the non-authoritative result.
 
 ### Live English Corpus Runner
 
@@ -214,6 +235,8 @@ Public interface:
 - `RejectedDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
+- `context_compiler_directive_drafter.fallbacks`: Public prompt, structured-schema, abstention-sentinel, and invalid-response helpers for native fallback integrations.
+- `context_compiler_directive_drafter.fallbacks.openai`: Optional OpenAI-compatible fallback factories.
 
 ### Output Contract
 
