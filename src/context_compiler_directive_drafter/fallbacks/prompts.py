@@ -84,14 +84,14 @@ _PREMISE_POLICY_GUIDANCE = (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _AcquisitionExample:
     kind: DirectiveKind
     user_input: str
     operand_values: tuple[str, ...]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _ScopePayloadContrast:
     kind: DirectiveKind
     user_input: str
