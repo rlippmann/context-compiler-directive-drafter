@@ -14,10 +14,10 @@ from context_compiler_directive_drafter import (
 )
 from context_compiler_directive_drafter import openai_fallback as adapter
 from context_compiler_directive_drafter._prompts import (
-    _get_converter_prompt,
-    _get_structured_converter_prompt,
+    get_converter_prompt,
+    get_structured_converter_prompt,
 )
-from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 
 
@@ -140,7 +140,7 @@ def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prom
             "timeout": 12,
             "model": "compatible-model",
             "messages": [
-                {"role": "system", "content": _get_converter_prompt()},
+                {"role": "system", "content": get_converter_prompt()},
                 {"role": "user", "content": "Use Docker unchanged"},
             ],
         }
@@ -211,9 +211,7 @@ def test_sync_fallback_normalizes_no_directive_sentinel(
 ) -> None:
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
-    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(
-        f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL} \n"
-    )
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(f"  {NO_DIRECTIVE} \n")
 
     assert fallback("input") is None
 
@@ -247,7 +245,7 @@ def test_sync_structured_fallback_selects_prompt_and_parses_envelope(
     call = client.chat.completions.calls[-1]
     assert call["messages"][0] == {
         "role": "system",
-        "content": _get_structured_converter_prompt(),
+        "content": get_structured_converter_prompt(),
     }
     assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
 
@@ -324,7 +322,7 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
     assert client.chat.completions.calls[-1]["model"] == "compatible-model"
     assert client.chat.completions.calls[-1]["temperature"] == 0.2
     assert client.chat.completions.calls[-1]["messages"] == [
-        {"role": "system", "content": _get_converter_prompt()},
+        {"role": "system", "content": get_converter_prompt()},
         {"role": "user", "content": "original input"},
     ]
 
@@ -334,9 +332,7 @@ def test_async_fallback_normalizes_no_directive_sentinel(
 ) -> None:
     _patch_clients(monkeypatch)
     fallback = asyncio.run(create_async_openai_fallback(model="compatible-model"))
-    _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse(
-        f"\n{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}\n"
-    )
+    _FakeAsyncOpenAI.instances[0].chat.completions.response = _FakeResponse(f"\n{NO_DIRECTIVE}\n")
 
     assert asyncio.run(fallback("input")) is None
 
@@ -389,7 +385,7 @@ def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
     call = client.chat.completions.calls[-1]
     assert call["messages"][0] == {
         "role": "system",
-        "content": _get_structured_converter_prompt(),
+        "content": get_structured_converter_prompt(),
     }
     assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
 
@@ -468,9 +464,7 @@ def test_no_directive_sentinel_produces_drafter_no_directive(
 ) -> None:
     _patch_clients(monkeypatch)
     fallback = create_openai_fallback(model="compatible-model")
-    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(
-        _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
-    )
+    _FakeOpenAI.instances[0].chat.completions.response = _FakeResponse(NO_DIRECTIVE)
     drafter = DirectiveDrafter(
         fallback=fallback,
         fallback_source="openai-compatible",

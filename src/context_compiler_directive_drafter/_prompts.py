@@ -11,7 +11,7 @@ from context_compiler.grammar import (
     get_directive_metadata,
 )
 
-from .constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from .constants import NO_DIRECTIVE
 
 
 def _placeholder(name: str) -> str:
@@ -121,23 +121,23 @@ _USE_ALMONDS = _render_directive(DirectiveKind.USE_ITEM, ("almonds",))
 
 _BEHAVIOR_EXAMPLES = f"""Examples of ordinary conversation that must not become directives:
 User: can you help with lunch?
-        Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+        Output: {NO_DIRECTIVE}
 
 User: Docker seems popular in this repo.
-Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {NO_DIRECTIVE}
 
 User: What does clear state do?
-Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {NO_DIRECTIVE}
 
 Examples of directive discussion or unresolved multi-directive input where you must not guess:
 User: {_USE_DOCKER}?
-Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {NO_DIRECTIVE}
 
 User: He said "{_USE_DOCKER}".
-Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}
+Output: {NO_DIRECTIVE}
 
 User: {_PROHIBIT_PEANUTS} and {_USE_ALMONDS}
-Output: {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}"""
+Output: {NO_DIRECTIVE}"""
 
 _PROMPT_SUFFIX = f"""Your task:
 - Read one user message.
@@ -146,11 +146,11 @@ _PROMPT_SUFFIX = f"""Your task:
   canonical form.
 - This is a non-authoritative draft: propose a plausible single candidate when
   the meaning is naturally representable, but do not guess unsupported intent.
-- Otherwise output exactly `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+- Otherwise output exactly `{NO_DIRECTIVE}`.
 
 Output contract:
 - A single candidate directive line in canonical form, or
-- exactly `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`
+- exactly `{NO_DIRECTIVE}`
 
 Output rules:
 - Output exactly one line.
@@ -198,7 +198,7 @@ Conversion rules:
 - If the input is ordinary conversation, quoted or reported directive text,
   directive discussion, or a mixed request you cannot safely reduce to one
   directive, do not extract only the directive-looking fragment; output
-  `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`.
+  `{NO_DIRECTIVE}`.
 - Do not combine independent payloads joined by `and` into one broader
   directive. If a request contains multiple state changes or a state change
   plus a separate explanation, lookup, comparison, or other task, abstain.
@@ -214,7 +214,7 @@ Conversion rules:
   into a policy payload. If the policy item is not identified by the input,
   abstain.
 
-When to output `{_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}`:
+When to output `{NO_DIRECTIVE}`:
 - Ordinary conversation, questions, explanations, or comments.
 - Requests that do not ask to change compiler-managed behavior.
 - Questions or discussion about directives rather than a request to change behavior.
@@ -412,7 +412,7 @@ def _build_converter_prompt() -> str:
     return "\n".join(sections).strip()
 
 
-def _get_converter_prompt() -> str:
+def get_converter_prompt() -> str:
     """Return the shared converter system prompt with metadata-derived grammar facts."""
 
     return _build_converter_prompt()
@@ -448,7 +448,7 @@ def _build_structured_converter_prompt() -> str:
     return "\n".join(sections).strip()
 
 
-def _get_structured_converter_prompt() -> str:
+def get_structured_converter_prompt() -> str:
     """Return the evaluation-only prompt for structured provider output."""
 
     return _build_structured_converter_prompt()

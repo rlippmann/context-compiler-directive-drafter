@@ -7,7 +7,6 @@ from typing import cast
 from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter.constants import (
-    _PREPROCESSOR_NO_DIRECTIVE_SENTINEL,
     _REASON_COMPOUND_DIRECTIVE,
     _REASON_INCOMPLETE_DIRECTIVE,
     _REASON_MALFORMED_DIRECTIVE,
@@ -16,6 +15,7 @@ from context_compiler_directive_drafter.constants import (
     _REASON_QUESTION_FORM,
     _REASON_QUOTED_REPORTED,
     _REASON_UNSUPPORTED_INPUT,
+    NO_DIRECTIVE,
     REASON_INCOMPLETE,
     REASON_INVALID_CANDIDATE,
     REASON_MULTIPLE_DIRECTIVES,
@@ -243,7 +243,7 @@ def _draft_result_from_fallback_output(fallback_text: str | None, *, source: str
             result=RejectedDirective(reason=REASON_NON_DIRECTIVE),
         )
 
-    if fallback_text.strip().upper() == _PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+    if fallback_text.strip().upper() == NO_DIRECTIVE:
         return DraftResult(
             source=source,
             result=RejectedDirective(reason=REASON_NON_DIRECTIVE),

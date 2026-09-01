@@ -6,10 +6,10 @@ from importlib import import_module
 from typing import Any, cast
 
 from context_compiler_directive_drafter._prompts import (
-    _get_converter_prompt,
-    _get_structured_converter_prompt,
+    get_converter_prompt,
+    get_structured_converter_prompt,
 )
-from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.drafter import (
     InvalidFallbackResponseError,
     _AsyncDraftFallback,
@@ -84,11 +84,11 @@ def _select_transport(
 ) -> tuple[str, object | None, Callable[[Any], str | None]]:
     if structured_output:
         return (
-            _get_structured_converter_prompt(),
+            get_structured_converter_prompt(),
             _STRUCTURED_RESPONSE_FORMAT,
             _structured_response_text,
         )
-    return _get_converter_prompt(), None, _normalize_response_text
+    return get_converter_prompt(), None, _normalize_response_text
 
 
 def _probe_request_kwargs(model: str) -> dict[str, object]:
@@ -158,7 +158,7 @@ def _response_text(response: Any) -> str | None:
 
 def _normalize_response_text(response: Any) -> str | None:
     text = _response_text(response)
-    if text is not None and text.strip() == _PREPROCESSOR_NO_DIRECTIVE_SENTINEL:
+    if text is not None and text.strip() == NO_DIRECTIVE:
         return None
     return text
 

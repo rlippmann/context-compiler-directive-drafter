@@ -11,7 +11,7 @@ from context_compiler_directive_drafter import (
     UnknownDirective,
 )
 from context_compiler_directive_drafter import drafter as drafter_module
-from context_compiler_directive_drafter.constants import _PREPROCESSOR_NO_DIRECTIVE_SENTINEL
+from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 
 
 def _canonical(text: str):
@@ -105,9 +105,9 @@ def test_semantic_uncertainty_is_the_only_fallback_eligible_result() -> None:
 
 
 def test_provider_no_directive_sentinel_maps_to_public_terminal_reason() -> None:
-    result = DirectiveDrafter(
-        fallback=lambda _: f"  {_PREPROCESSOR_NO_DIRECTIVE_SENTINEL}  "
-    ).draft_directive("Could we maybe use uv later")
+    result = DirectiveDrafter(fallback=lambda _: f"  {NO_DIRECTIVE}  ").draft_directive(
+        "Could we maybe use uv later"
+    )
 
     assert result == DraftResult(
         source="fallback", result=RejectedDirective(reason="non_directive")

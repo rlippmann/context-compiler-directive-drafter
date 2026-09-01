@@ -10,8 +10,8 @@ from context_compiler_directive_drafter.fallbacks.openai import create_openai_fa
 
 
 def test_public_fallback_prompts_reuse_package_prompt_sources() -> None:
-    assert get_converter_prompt() == _prompts._get_converter_prompt()
-    assert get_structured_converter_prompt() == _prompts._get_structured_converter_prompt()
+    assert get_converter_prompt is _prompts.get_converter_prompt
+    assert get_structured_converter_prompt is _prompts.get_structured_converter_prompt
 
 
 def test_public_fallback_schema_is_structural_and_defensive() -> None:
