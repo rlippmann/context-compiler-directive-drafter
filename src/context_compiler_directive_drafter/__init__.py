@@ -13,7 +13,7 @@ from context_compiler_directive_drafter.drafter import (
     RejectedDirective,
     UnknownDirective,
 )
-from context_compiler_directive_drafter.openai_fallback import (
+from context_compiler_directive_drafter.fallbacks.openai import (
     create_async_openai_fallback,
     create_openai_fallback,
 )

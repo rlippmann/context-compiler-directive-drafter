@@ -12,13 +12,13 @@ from context_compiler_directive_drafter import (
     create_async_openai_fallback,
     create_openai_fallback,
 )
-from context_compiler_directive_drafter import openai_fallback as adapter
-from context_compiler_directive_drafter._prompts import (
+from context_compiler_directive_drafter.constants import NO_DIRECTIVE
+from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
+from context_compiler_directive_drafter.fallbacks import openai as adapter
+from context_compiler_directive_drafter.fallbacks._prompts import (
     get_converter_prompt,
     get_structured_converter_prompt,
 )
-from context_compiler_directive_drafter.constants import NO_DIRECTIVE
-from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 
 
 class _FakeResponse:
