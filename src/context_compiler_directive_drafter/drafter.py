@@ -29,14 +29,14 @@ from context_compiler_directive_drafter.heuristic_preprocessor import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class UnknownDirective:
     """Represent semantic uncertainty that may be sent to fallback."""
 
     reason: UnknownReason
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RejectedDirective:
     """Represent a terminal acquisition rejection."""
 
@@ -46,7 +46,7 @@ class RejectedDirective:
 _DraftResultType = CanonicalDirective | RejectedDirective | UnknownDirective
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class DraftResult:
     """Structured non-authoritative result for one high-level drafting pass.
 
@@ -66,6 +66,8 @@ _AsyncDraftFallback = Callable[[str], Awaitable[str | None]]
 class InvalidFallbackResponseError(RuntimeError):
     """Signal that a provider returned a malformed fallback response."""
 
+    __slots__ = ()
+
 
 class DirectiveDrafter:
     """High-level drafting API over the public helper functions.
@@ -75,6 +77,13 @@ class DirectiveDrafter:
     over compiler state. It proposes at most one canonical directive per call
     and leaves authoritative review and application to `context-compiler`.
     """
+
+    __slots__ = (
+        "_fallback",
+        "_fallback_source",
+        "_async_fallback",
+        "_async_fallback_source",
+    )
 
     def __init__(
         self,

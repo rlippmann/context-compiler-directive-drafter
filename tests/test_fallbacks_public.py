@@ -38,3 +38,22 @@ def test_public_fallback_sentinel_and_invalid_response_error_are_available() -> 
 
 def test_openai_factory_is_available_under_fallback_namespace() -> None:
     assert create_openai_fallback.__name__ == "create_openai_fallback"
+
+
+def test_fallback_value_records_use_slots() -> None:
+    from context_compiler_directive_drafter.drafter import (
+        DirectiveDrafter,
+        DraftResult,
+        RejectedDirective,
+        UnknownDirective,
+    )
+
+    assert DirectiveDrafter.__slots__ == (
+        "_fallback",
+        "_fallback_source",
+        "_async_fallback",
+        "_async_fallback_source",
+    )
+    assert hasattr(DraftResult, "__slots__")
+    assert hasattr(RejectedDirective, "__slots__")
+    assert hasattr(UnknownDirective, "__slots__")
