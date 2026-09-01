@@ -38,7 +38,7 @@ def _positive_acquisition_examples_section(prompt: str) -> str:
 
 
 def test_get_converter_prompt_returns_non_empty_static_text() -> None:
-    prompt_module._build_converter_prompt.cache_clear()
+    prompt_module.get_converter_prompt.cache_clear()
     prompt = get_converter_prompt()
 
     assert prompt
@@ -192,7 +192,7 @@ def test_get_converter_prompt_preserves_behavioral_examples() -> None:
 
 
 def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> None:
-    prompt_module._build_converter_prompt.cache_clear()
+    prompt_module.get_converter_prompt.cache_clear()
     calls = 0
     original = prompt_module._render_canonical_forms
 
