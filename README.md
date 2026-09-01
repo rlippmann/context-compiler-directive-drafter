@@ -129,6 +129,8 @@ The asynchronous factory performs the same construction-time probe and must
 be awaited:
 
 ```python
+from context_compiler_directive_drafter.fallbacks.openai import create_async_openai_fallback
+
 fallback = await create_async_openai_fallback(model="gpt-4o-mini")
 ```
 
