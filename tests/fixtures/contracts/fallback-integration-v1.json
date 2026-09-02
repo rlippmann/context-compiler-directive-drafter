@@ -3,6 +3,60 @@
   "kind": "api-capability-contract",
   "module": "context_compiler_directive_drafter.fallbacks",
   "capability": "native-fallback-integration",
+  "profiles": [
+    {
+      "name": "free_text",
+      "structured_output": false,
+      "allowed_directive_kinds": null,
+      "mode": "free_text",
+      "system_prompt_sha256": "a0af04f4d78a830bc5bde064d703fdb3ff32d81dd396fa3888d8334663ce2b9f",
+      "response_schema": null,
+      "abstention_sentinel": "<NO_DIRECTIVE>"
+    },
+    {
+      "name": "structured",
+      "structured_output": true,
+      "allowed_directive_kinds": null,
+      "mode": "structured",
+      "system_prompt_sha256": "3140083afff384ad40ae71f0105f31081eb25cfe8fc3dab9b1ca59af93807c1b",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "classification": {"type": "string", "enum": ["directive", "rejected"]},
+          "output": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+        },
+        "required": ["classification", "output"],
+        "additionalProperties": false
+      },
+      "abstention_sentinel": "<NO_DIRECTIVE>"
+    },
+    {
+      "name": "restricted_use_item",
+      "structured_output": false,
+      "allowed_directive_kinds": ["use_item"],
+      "mode": "free_text",
+      "system_prompt_sha256": "826dd086716994e476a289ceb3e4271a5d587dcb20a427f91997e26dd088163d",
+      "response_schema": null,
+      "abstention_sentinel": "<NO_DIRECTIVE>"
+    },
+    {
+      "name": "restricted_structured_use_item",
+      "structured_output": true,
+      "allowed_directive_kinds": ["use_item"],
+      "mode": "structured",
+      "system_prompt_sha256": "25a0b130173ff469929f9b69821c77d133027db31b8ab225ccd0b66ce763856d",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "classification": {"type": "string", "enum": ["directive", "rejected"]},
+          "output": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+        },
+        "required": ["classification", "output"],
+        "additionalProperties": false
+      },
+      "abstention_sentinel": "<NO_DIRECTIVE>"
+    }
+  ],
   "members": {
     "DraftFallback": {
       "kind": "type_alias"

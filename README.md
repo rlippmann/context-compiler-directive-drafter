@@ -225,11 +225,15 @@ fixture model. `high-level-drafting-v1.json` defines shared API concepts and
 observable drafting behavior for compatible ports, including the
 `DirectiveDrafter`, result variants, fallback routing, source metadata, public
 rejection reasons, and the native fallback integration capabilities. The
-native integration contract requires equivalent access to the free-text and
-structured fallback specification, the Core-derived structured schema, the
-abstention sentinel, and malformed-response signaling; it also requires
-fallback callbacks to receive original user input and return candidate text or
-no candidate. It does not require an OpenAI-specific factory. `public-api-v1.json` defines Python package
+native integration contract defines the exact rendered artifacts for each
+contractual fallback profile: the system prompt, structured schema when
+applicable, and abstention representation. Restricted-kind variants are
+rendered deterministically from the canonical rules. Provider adapters may wrap
+these artifacts in provider-specific transport, but must not rewrite them.
+Changes to a contractual artifact require a conformance/version change. The
+contract also requires fallback callbacks to receive original user input and
+return candidate text or no candidate. It does not require an OpenAI-specific
+factory. `public-api-v1.json` defines Python package
 mechanics such as root exports, reflection-visible signatures, descriptors,
 and Python exception behavior; those details are not requirements for other
 languages.

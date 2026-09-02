@@ -779,9 +779,35 @@ def _assert_contract_schema(path: Path, contract: dict[str, object]) -> None:
         return
 
     assert kind == "api-capability-contract", label
-    _assert_exact_keys(contract, {"id", "kind", "module", "capability", "members"}, label)
+    _assert_exact_keys(
+        contract,
+        {"id", "kind", "module", "capability", "members"}
+        | ({"profiles"} if "profiles" in contract else set()),
+        label,
+    )
     assert isinstance(contract["capability"], str), label
     assert isinstance(contract["members"], dict), label
+    if "profiles" in contract:
+        profiles = contract["profiles"]
+        assert isinstance(profiles, list) and profiles, label
+        for profile in profiles:
+            assert isinstance(profile, dict), label
+            assert set(profile) == {
+                "name",
+                "structured_output",
+                "allowed_directive_kinds",
+                "mode",
+                "system_prompt_sha256",
+                "response_schema",
+                "abstention_sentinel",
+            }, label
+            assert isinstance(profile["name"], str) and profile["name"], label
+            assert isinstance(profile["structured_output"], bool), label
+            allowed = profile["allowed_directive_kinds"]
+            assert allowed is None or isinstance(allowed, list), label
+            assert profile["mode"] in {"free_text", "structured"}, label
+            assert isinstance(profile["system_prompt_sha256"], str), label
+            assert profile["abstention_sentinel"] == "<NO_DIRECTIVE>", label
 
 
 def _assert_member_specs_schema(members: dict[str, object], label: str) -> None:

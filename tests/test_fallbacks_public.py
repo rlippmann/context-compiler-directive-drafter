@@ -1,4 +1,7 @@
+import hashlib
+import json
 from enum import Enum
+from pathlib import Path
 
 import pytest
 from context_compiler.grammar import DirectiveKind
@@ -46,6 +49,27 @@ def test_public_fallback_profile_rejects_unknown_directive_kind() -> None:
 
     with pytest.raises(ValueError, match="Unknown directive kinds"):
         get_fallback_profile(allowed_directive_kinds={UnknownKind.UNKNOWN})  # type: ignore[arg-type]
+
+
+def test_contractual_profiles_preserve_exact_rendered_artifacts() -> None:
+    fixture_path = Path(__file__).parent / "fixtures" / "contracts" / "fallback-integration-v1.json"
+    contract = json.loads(fixture_path.read_text(encoding="utf-8"))
+    kinds = {kind.value: kind for kind in DirectiveKind}
+
+    for expected in contract["profiles"]:
+        allowed = expected["allowed_directive_kinds"]
+        profile = get_fallback_profile(
+            structured_output=expected["structured_output"],
+            allowed_directive_kinds=None if allowed is None else {kinds[kind] for kind in allowed},
+        )
+
+        assert profile.mode == expected["mode"]
+        assert (
+            hashlib.sha256(profile.system_prompt.encode()).hexdigest()
+            == expected["system_prompt_sha256"]
+        )
+        assert profile.response_schema == expected["response_schema"]
+        assert profile.abstention_sentinel == expected["abstention_sentinel"]
 
 
 def test_public_callback_contract_preserves_original_input_and_none() -> None:
