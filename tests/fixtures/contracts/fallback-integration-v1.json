@@ -30,7 +30,7 @@
         "required": ["classification", "output"],
         "additionalProperties": false
       },
-      "abstention_sentinel": "<NO_DIRECTIVE>"
+      "abstention_sentinel": null
     },
     {
       "name": "restricted_use_item",
@@ -58,7 +58,7 @@
         "required": ["classification", "output"],
         "additionalProperties": false
       },
-      "abstention_sentinel": "<NO_DIRECTIVE>"
+      "abstention_sentinel": null
     }
   ],
   "members": {

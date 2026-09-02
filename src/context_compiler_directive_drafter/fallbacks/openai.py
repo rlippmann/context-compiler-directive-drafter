@@ -11,7 +11,6 @@ from typing import Any, cast
 
 from context_compiler.grammar import DirectiveKind
 
-from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.fallbacks import (
     AsyncDraftFallback,
     DraftFallback,
@@ -86,19 +85,24 @@ def _select_transport(
     structured_output: bool,
     allowed_directive_kinds: Collection[DirectiveKind] | None = None,
 ) -> tuple[str, object | None, Callable[[Any], str | None]]:
-    if structured_output:
+    profile = get_fallback_profile(
+        structured_output=structured_output,
+        allowed_directive_kinds=allowed_directive_kinds,
+    )
+    if profile.mode == "structured":
         return (
-            get_fallback_profile(
-                structured_output=True,
-                allowed_directive_kinds=allowed_directive_kinds,
-            ).system_prompt,
+            profile.system_prompt,
             _STRUCTURED_RESPONSE_FORMAT,
             _structured_response_text,
         )
+
+    def parse_response(response: Any) -> str | None:
+        return _normalize_response_text(response, profile.abstention_sentinel)
+
     return (
-        get_fallback_profile(allowed_directive_kinds=allowed_directive_kinds).system_prompt,
+        profile.system_prompt,
         None,
-        _normalize_response_text,
+        parse_response,
     )
 
 
@@ -167,9 +171,9 @@ def _response_text(response: Any) -> str | None:
     return cast(str | None, response.choices[0].message.content)
 
 
-def _normalize_response_text(response: Any) -> str | None:
+def _normalize_response_text(response: Any, abstention_sentinel: str | None) -> str | None:
     text = _response_text(response)
-    if text is not None and text.strip() == NO_DIRECTIVE:
+    if text is not None and abstention_sentinel is not None and text.strip() == abstention_sentinel:
         return None
     return text
 

@@ -25,7 +25,7 @@ class FallbackProfile:
     system_prompt: str
     mode: _FallbackMode
     response_schema: dict[str, Any] | None
-    abstention_sentinel: str
+    abstention_sentinel: str | None
 
 
 _STRUCTURED_OUTPUT_SCHEMA: dict[str, Any] = {
@@ -55,7 +55,8 @@ def get_fallback_profile(
 
     Returns:
         A provider-neutral profile containing the system prompt, mode,
-        structured schema when applicable, and the abstention sentinel.
+        structured schema when applicable, and the free-text abstention
+        sentinel when applicable.
 
     Raises:
         ValueError: If ``allowed_directive_kinds`` contains an unknown Core
@@ -80,5 +81,5 @@ def get_fallback_profile(
         system_prompt=prompt,
         mode=mode,
         response_schema=deepcopy(_STRUCTURED_OUTPUT_SCHEMA) if structured_output else None,
-        abstention_sentinel=NO_DIRECTIVE,
+        abstention_sentinel=None if structured_output else NO_DIRECTIVE,
     )

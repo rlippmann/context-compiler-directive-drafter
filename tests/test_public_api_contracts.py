@@ -808,7 +808,8 @@ def _assert_contract_schema(path: Path, contract: dict[str, object]) -> None:
             assert allowed is None or isinstance(allowed, list), label
             assert profile["mode"] in {"free_text", "structured"}, label
             assert isinstance(profile["system_prompt_sha256"], str), label
-            assert profile["abstention_sentinel"] == "<NO_DIRECTIVE>", label
+            expected_sentinel = "<NO_DIRECTIVE>" if profile["mode"] == "free_text" else None
+            assert profile["abstention_sentinel"] == expected_sentinel, label
 
 
 def _assert_member_specs_schema(members: dict[str, object], label: str) -> None:
