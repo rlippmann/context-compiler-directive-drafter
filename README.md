@@ -168,9 +168,11 @@ from context_compiler_directive_drafter.fallbacks.litellm import create_litellm_
 fallback = create_litellm_fallback(model="anthropic/claude-sonnet-4-5")
 ```
 
-Pass LiteLLM's provider/model identifier unchanged. The adapter uses LiteLLM's
-structured-schema capability information when selecting the profile and keeps
-provider/runtime errors as ordinary errors.
+Pass LiteLLM's provider/model identifier unchanged. The adapter uses
+LiteLLM's structured-schema capability signal first. When that signal is
+false, it probes the exact package-owned structured request; a successful
+probe selects structured mode, while an explicitly unsupported probe selects
+free text. Other provider/runtime errors remain ordinary errors.
 
 ### Native fallback integrations
 
