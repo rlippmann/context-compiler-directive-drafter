@@ -4,24 +4,24 @@
   "module": "context_compiler_directive_drafter.fallbacks",
   "capability": "native-fallback-integration",
   "members": {
-    "get_converter_prompt": {
-      "kind": "prompt_provider",
-      "prompt_mode": "free_text",
-      "required_substrings": [
-        "canonical directive",
-        "non-authoritative draft",
-        "Output contract"
-      ]
+    "DraftFallback": {
+      "kind": "type_alias"
     },
-    "get_structured_converter_prompt": {
-      "kind": "prompt_provider",
-      "prompt_mode": "structured",
-      "required_substrings": [
-        "classification",
-        "directive",
-        "rejected",
-        "output"
-      ]
+    "AsyncDraftFallback": {
+      "kind": "type_alias"
+    },
+    "FallbackProfile": {
+      "kind": "class"
+    },
+    "get_fallback_profile": {
+      "kind": "callable",
+      "signature": {
+        "is_async": false,
+        "params": [
+          {"name": "structured_output", "kind": "KEYWORD_ONLY", "has_default": true, "default": false},
+          {"name": "allowed_directive_kinds", "kind": "KEYWORD_ONLY", "has_default": true, "default": null}
+        ]
+      }
     },
     "get_structured_output_schema": {
       "kind": "structured_schema_provider",

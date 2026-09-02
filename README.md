@@ -161,21 +161,28 @@ directly while reusing the package-owned acquisition contract:
 
 ```python
 from context_compiler_directive_drafter.fallbacks import (
+    FallbackProfile,
     InvalidFallbackResponseError,
     NO_DIRECTIVE,
-    get_converter_prompt,
-    get_structured_converter_prompt,
-    get_structured_output_schema,
+    get_fallback_profile,
 )
 ```
 
-Use `get_converter_prompt()` when the provider returns canonical directive text,
-or use `get_structured_converter_prompt()` with
-`get_structured_output_schema()` when it supports structured output. Return
-`None` for a valid provider rejection, and raise
+Call `get_fallback_profile()` for free-text acquisition, or
+`get_fallback_profile(structured_output=True)` when the provider supports
+structured output. The returned `FallbackProfile` contains the package-owned
+system prompt, transport mode, and (for structured output) the response schema.
+Return `None` for a valid provider rejection, and raise
 `InvalidFallbackResponseError` for a malformed or inconsistent structured
 response. The callback returns raw candidate text; the Drafter passes it through
 Core parsing and produces the non-authoritative result.
+
+The namespaced `fallbacks.DraftFallback` and `fallbacks.AsyncDraftFallback`
+contracts accept the original `user_input`
+and return candidate directive text or `None`; the asynchronous form returns an
+awaitable with the same value contract. These callbacks are generic acquisition
+hooks and do not require prompts or schemas. `DirectiveDrafter` owns Core grammar
+validation and `DraftResult` construction after the callback returns.
 
 ### Live English Corpus Runner
 
@@ -219,9 +226,10 @@ observable drafting behavior for compatible ports, including the
 `DirectiveDrafter`, result variants, fallback routing, source metadata, public
 rejection reasons, and the native fallback integration capabilities. The
 native integration contract requires equivalent access to the free-text and
-structured acquisition prompts, the Core-derived structured schema, the
-abstention sentinel, and malformed-response signaling; it does not require an
-OpenAI-specific factory. `public-api-v1.json` defines Python package
+structured fallback specification, the Core-derived structured schema, the
+abstention sentinel, and malformed-response signaling; it also requires
+fallback callbacks to receive original user input and return candidate text or
+no candidate. It does not require an OpenAI-specific factory. `public-api-v1.json` defines Python package
 mechanics such as root exports, reflection-visible signatures, descriptors,
 and Python exception behavior; those details are not requirements for other
 languages.
@@ -238,10 +246,11 @@ Public interface:
 
 - `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, fallback output parsing and validation, and final result construction.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
+- `context_compiler_directive_drafter.fallbacks`: Namespaced public callback contracts, `FallbackProfile`, and `get_fallback_profile(...)` for generic fallback acquisition.
 - `RejectedDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
-- `context_compiler_directive_drafter.fallbacks`: Public prompt, structured-schema, abstention-sentinel, and invalid-response helpers for native fallback integrations.
+- `context_compiler_directive_drafter.fallbacks`: Public fallback specification, structured-schema, abstention-sentinel, and invalid-response helpers for native fallback integrations.
 - `context_compiler_directive_drafter.fallbacks.openai`: Optional OpenAI-compatible fallback factories.
 
 ### Output Contract

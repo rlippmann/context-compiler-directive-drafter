@@ -3,8 +3,10 @@ from types import MappingProxyType
 from context_compiler.grammar import CanonicalDirective, get_directive_metadata
 
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
-from context_compiler_directive_drafter.fallbacks import prompts as prompt_module
-from context_compiler_directive_drafter.fallbacks.prompts import get_converter_prompt
+from context_compiler_directive_drafter.fallbacks import _prompts as prompt_module
+from context_compiler_directive_drafter.fallbacks._prompts import _get_converter_prompt
+
+get_converter_prompt = _get_converter_prompt
 
 PREPROCESSOR_NO_DIRECTIVE_SENTINEL = NO_DIRECTIVE
 
@@ -38,7 +40,7 @@ def _positive_acquisition_examples_section(prompt: str) -> str:
 
 
 def test_get_converter_prompt_returns_non_empty_static_text() -> None:
-    prompt_module.get_converter_prompt.cache_clear()
+    prompt_module._get_converter_prompt.cache_clear()
     prompt = get_converter_prompt()
 
     assert prompt
@@ -152,7 +154,7 @@ def test_get_converter_prompt_positive_outputs_use_core_canonical_serialization(
 def test_scope_payload_contrasts_use_core_canonical_serialization() -> None:
     metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
 
-    for prompt in (get_converter_prompt(), prompt_module.get_structured_converter_prompt()):
+    for prompt in (get_converter_prompt(), prompt_module._get_structured_converter_prompt()):
         for example in prompt_module._SCOPE_PAYLOAD_CONTRASTS:
             metadata = metadata_by_kind[example.kind]
             correct = CanonicalDirective(
@@ -192,7 +194,7 @@ def test_get_converter_prompt_preserves_behavioral_examples() -> None:
 
 
 def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> None:
-    prompt_module.get_converter_prompt.cache_clear()
+    prompt_module._get_converter_prompt.cache_clear()
     calls = 0
     original = prompt_module._render_canonical_forms
 
@@ -212,7 +214,7 @@ def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> N
 
 
 def test_structured_converter_prompt_replaces_free_text_transport_contract() -> None:
-    prompt = prompt_module.get_structured_converter_prompt()
+    prompt = prompt_module._get_structured_converter_prompt()
 
     assert "Classify it as `directive`" in prompt
     assert "classify it as `rejected` and set `output` to null" in prompt

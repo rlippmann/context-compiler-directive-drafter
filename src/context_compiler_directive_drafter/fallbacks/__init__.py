@@ -1,29 +1,44 @@
-"""Public fallback-integration helpers.
+"""Public fallback-integration surface.
 
 These helpers let a host implement a native fallback callback without taking
 ownership of directive grammar or acquisition semantics.
+
+Implementation modules such as ``_types`` and ``_prompts`` are intentionally
+private; this module is the conformance-facing namespace for fallback APIs.
 """
 
 import json
-from copy import deepcopy
-from typing import Any
 
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
-from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
-from context_compiler_directive_drafter.fallbacks.prompts import (
-    get_converter_prompt,
-    get_structured_converter_prompt,
+
+# Re-export the callback contracts and profile from this namespace so adapters
+# do not depend on their implementation modules.
+from context_compiler_directive_drafter.fallbacks._types import (
+    AsyncDraftFallback,
+    DraftFallback,
+    InvalidFallbackResponseError,
+)
+from context_compiler_directive_drafter.fallbacks.profile import (
+    FallbackProfile,
+    get_fallback_profile,
+    get_structured_output_schema,
 )
 
 
-def get_structured_output_schema() -> dict[str, Any]:
-    """Return the structural JSON Schema for the structured fallback envelope."""
-
-    return deepcopy(_STRUCTURED_OUTPUT_SCHEMA)
-
-
 def parse_structured_response(content: str) -> str | None:
-    """Parse a structured fallback envelope into candidate text or abstention."""
+    """Parse a provider response into candidate text or fallback abstention.
+
+    Args:
+        content: JSON text using the package-owned structured response envelope.
+
+    Returns:
+        The candidate directive text, or ``None`` when the provider rejected
+        the input.
+
+    Raises:
+        InvalidFallbackResponseError: If the response is malformed or its
+            classification and output do not agree.
+    """
 
     try:
         envelope = json.loads(content)
@@ -40,22 +55,13 @@ def parse_structured_response(content: str) -> str | None:
     raise InvalidFallbackResponseError("structured fallback response is inconsistent")
 
 
-_STRUCTURED_OUTPUT_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "classification": {"type": "string", "enum": ["directive", "rejected"]},
-        "output": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-    },
-    "required": ["classification", "output"],
-    "additionalProperties": False,
-}
-
-
 __all__ = [
+    "FallbackProfile",
+    "DraftFallback",
+    "AsyncDraftFallback",
+    "get_fallback_profile",
     "InvalidFallbackResponseError",
     "NO_DIRECTIVE",
-    "get_converter_prompt",
-    "get_structured_converter_prompt",
     "get_structured_output_schema",
     "parse_structured_response",
 ]

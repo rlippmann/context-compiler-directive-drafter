@@ -1,4 +1,8 @@
-"""Converter prompt accessors for directive-drafter integrations."""
+"""Private prompt construction for directive-drafter fallback profiles.
+
+Prompts are exposed to integrations only through ``FallbackProfile`` so prompt
+construction stays separate from the public conformance surface.
+"""
 
 from dataclasses import dataclass
 from functools import lru_cache
@@ -336,19 +340,25 @@ _POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
 )
 
 
-def _render_canonical_forms() -> str:
+def _render_canonical_forms(allowed_directive_kinds: frozenset[DirectiveKind] | None = None) -> str:
     lines = ["Canonical directive forms:"]
     for metadata in get_directive_metadata():
+        if allowed_directive_kinds is not None and metadata.kind not in allowed_directive_kinds:
+            continue
         category = _DIRECTIVE_KIND_TO_CATEGORY[metadata.kind]
         canonical_form = _render_canonical_form(metadata)
         lines.append(f"- `{canonical_form}` ({category})")
     return "\n".join(lines)
 
 
-def _render_positive_acquisition_examples() -> str:
+def _render_positive_acquisition_examples(
+    allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+) -> str:
     metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
     lines = ["Examples of user requests that may be drafted as directives:"]
     for example in _POSITIVE_ACQUISITION_EXAMPLES:
+        if allowed_directive_kinds is not None and example.kind not in allowed_directive_kinds:
+            continue
         metadata = metadata_by_kind[example.kind]
         canonical_output = _render_example_output(metadata, example.operand_values)
         lines.extend(
@@ -361,10 +371,14 @@ def _render_positive_acquisition_examples() -> str:
     return "\n".join(lines[:-1])
 
 
-def _render_scope_payload_contrasts() -> str:
+def _render_scope_payload_contrasts(
+    allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+) -> str:
     metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
     lines = ["Scope and payload contrast examples:"]
     for example in _SCOPE_PAYLOAD_CONTRASTS:
+        if allowed_directive_kinds is not None and example.kind not in allowed_directive_kinds:
+            continue
         metadata = metadata_by_kind[example.kind]
         correct = _render_example_output(metadata, example.operand_values)
         truncated = _render_example_output(metadata, example.truncated_operand_values)
@@ -384,63 +398,58 @@ def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[st
     return CanonicalDirective(kind=metadata.kind, operands=operands).text
 
 
+def _render_prompt(
+    mode: str,
+    allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+) -> str:
+    structured = mode == "structured"
+    sections = [
+        "You are a directive converter that drafts candidate",
+        "Context Compiler directives from user requests.",
+        "",
+        "Context Compiler directives are compact canonical instructions that propose",
+        "persistent compiler state changes. Your output is a draft candidate only.",
+        "It is not an approval, not an execution result, and not an authoritative",
+        "state change.",
+        "",
+        _DIRECTIVE_CATEGORY_LINES,
+        "",
+        _render_canonical_forms()
+        if allowed_directive_kinds is None
+        else _render_canonical_forms(allowed_directive_kinds),
+        "",
+        _PREMISE_POLICY_GUIDANCE,
+        "",
+        _STRUCTURED_PROMPT_SUFFIX if structured else _PROMPT_SUFFIX,
+        "",
+        _render_scope_payload_contrasts()
+        if allowed_directive_kinds is None
+        else _render_scope_payload_contrasts(allowed_directive_kinds),
+        "",
+        _render_positive_acquisition_examples()
+        if allowed_directive_kinds is None
+        else _render_positive_acquisition_examples(allowed_directive_kinds),
+        "",
+        (
+            "Contrastive examples:\n- Ordinary conversation, questions, quoted or reported "
+            "directives, and\n"
+            "  unresolved mixed intent: classification `rejected`, output null."
+            if structured
+            else _BEHAVIOR_EXAMPLES
+        ),
+    ]
+    return "\n".join(sections).strip()
+
+
 @lru_cache(maxsize=1)
-def get_converter_prompt() -> str:
+def _get_converter_prompt() -> str:
     """Return the shared converter system prompt with metadata-derived grammar facts."""
 
-    sections = [
-        "You are a directive converter that drafts candidate",
-        "Context Compiler directives from user requests.",
-        "",
-        "Context Compiler directives are compact canonical instructions that propose",
-        "persistent compiler state changes. Your output is a draft candidate only.",
-        "It is not an approval, not an execution result, and not an authoritative",
-        "state change.",
-        "",
-        _DIRECTIVE_CATEGORY_LINES,
-        "",
-        _render_canonical_forms(),
-        "",
-        _PREMISE_POLICY_GUIDANCE,
-        "",
-        _PROMPT_SUFFIX,
-        "",
-        _render_scope_payload_contrasts(),
-        "",
-        _render_positive_acquisition_examples(),
-        "",
-        _BEHAVIOR_EXAMPLES,
-    ]
-    return "\n".join(sections).strip()
+    return _render_prompt("free_text")
 
 
 @lru_cache(maxsize=1)
-def get_structured_converter_prompt() -> str:
+def _get_structured_converter_prompt() -> str:
     """Return the structured-output acquisition prompt used by integrations."""
 
-    sections = [
-        "You are a directive converter that drafts candidate",
-        "Context Compiler directives from user requests.",
-        "",
-        "Context Compiler directives are compact canonical instructions that propose",
-        "persistent compiler state changes. Your output is a draft candidate only.",
-        "It is not an approval, not an execution result, and not an authoritative",
-        "state change.",
-        "",
-        _DIRECTIVE_CATEGORY_LINES,
-        "",
-        _render_canonical_forms(),
-        "",
-        _PREMISE_POLICY_GUIDANCE,
-        "",
-        _STRUCTURED_PROMPT_SUFFIX,
-        "",
-        _render_scope_payload_contrasts(),
-        "",
-        _render_positive_acquisition_examples(),
-        "",
-        "Contrastive examples:",
-        "- Ordinary conversation, questions, quoted or reported directives, and",
-        "  unresolved mixed intent: classification `rejected`, output null.",
-    ]
-    return "\n".join(sections).strip()
+    return _render_prompt("structured")

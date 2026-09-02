@@ -14,11 +14,8 @@ from context_compiler_directive_drafter import (
 )
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
+from context_compiler_directive_drafter.fallbacks import get_fallback_profile
 from context_compiler_directive_drafter.fallbacks import openai as adapter
-from context_compiler_directive_drafter.fallbacks.prompts import (
-    get_converter_prompt,
-    get_structured_converter_prompt,
-)
 
 
 class _FakeResponse:
@@ -140,7 +137,7 @@ def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prom
             "timeout": 12,
             "model": "compatible-model",
             "messages": [
-                {"role": "system", "content": get_converter_prompt()},
+                {"role": "system", "content": get_fallback_profile().system_prompt},
                 {"role": "user", "content": "Use Docker unchanged"},
             ],
         }
@@ -245,7 +242,7 @@ def test_sync_structured_fallback_selects_prompt_and_parses_envelope(
     call = client.chat.completions.calls[-1]
     assert call["messages"][0] == {
         "role": "system",
-        "content": get_structured_converter_prompt(),
+        "content": get_fallback_profile(structured_output=True).system_prompt,
     }
     assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
 
@@ -322,7 +319,7 @@ def test_async_fallback_forwards_configuration_and_returns_raw_text(
     assert client.chat.completions.calls[-1]["model"] == "compatible-model"
     assert client.chat.completions.calls[-1]["temperature"] == 0.2
     assert client.chat.completions.calls[-1]["messages"] == [
-        {"role": "system", "content": get_converter_prompt()},
+        {"role": "system", "content": get_fallback_profile().system_prompt},
         {"role": "user", "content": "original input"},
     ]
 
@@ -385,7 +382,7 @@ def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
     call = client.chat.completions.calls[-1]
     assert call["messages"][0] == {
         "role": "system",
-        "content": get_structured_converter_prompt(),
+        "content": get_fallback_profile(structured_output=True).system_prompt,
     }
     assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
 
