@@ -439,3 +439,35 @@ def test_main_routes_litellm_model_and_endpoint_configuration(
     assert captured["api_key"] == "key"
     assert captured["api_base"] == "https://proxy.example"
     assert captured["fallback_source"] == "litellm"
+
+
+def test_main_does_not_invent_litellm_api_key_from_environment(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_factory(**kwargs: object):
+        captured.update(kwargs)
+        return lambda _: None
+
+    monkeypatch.setenv("LITELLM_API_KEY", "stray-key")
+    monkeypatch.setattr(runner, "load_corpus", lambda _: [_case(input="use docker")])
+    monkeypatch.setattr(runner, "create_litellm_fallback", fake_factory)
+    monkeypatch.setattr(runner, "run_cases", lambda *args, **kwargs: [{"passed": True}])
+    monkeypatch.setattr(runner, "print_report", lambda *_: None)
+    monkeypatch.setattr(runner, "write_results", lambda *_: None)
+
+    assert (
+        runner.main(
+            [
+                "--transport",
+                "litellm",
+                "--model",
+                "openai/gpt-4o-mini",
+                "--output",
+                str(tmp_path / "results.jsonl"),
+            ]
+        )
+        == 0
+    )
+    assert "api_key" not in captured

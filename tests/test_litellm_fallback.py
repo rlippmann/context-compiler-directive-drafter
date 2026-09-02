@@ -7,6 +7,7 @@ import pytest
 from context_compiler.grammar import DirectiveKind
 
 from context_compiler_directive_drafter.fallbacks import (
+    FallbackProfile,
     InvalidFallbackResponseError,
     get_fallback_profile,
 )
@@ -125,10 +126,19 @@ def test_allowed_directive_kinds_are_rendered_in_litellm_profile() -> None:
 def test_async_free_text_path_uses_profile_sentinel() -> None:
     _FakeLiteLLM.response = _FakeResponse("<NO_DIRECTIVE>")
 
-    fallback = asyncio.run(adapter.create_async_litellm_fallback("gemini/gemini-2.0-flash"))
+    fallback = asyncio.run(
+        adapter.create_async_litellm_fallback(
+            "gemini/gemini-2.0-flash",
+            api_key="key",
+            api_base="https://proxy.example",
+        )
+    )
 
     assert asyncio.run(fallback("input")) is None
-    assert _FakeLiteLLM.async_completion_calls[0]["model"] == "gemini/gemini-2.0-flash"
+    call = _FakeLiteLLM.async_completion_calls[0]
+    assert call["model"] == "gemini/gemini-2.0-flash"
+    assert call["api_key"] == "key"
+    assert call["api_base"] == "https://proxy.example"
 
 
 def test_async_structured_path_parses_directive() -> None:
@@ -147,6 +157,20 @@ def test_structured_malformed_response_uses_existing_error() -> None:
 
     with pytest.raises(InvalidFallbackResponseError):
         fallback("input")
+
+
+def test_structured_helpers_reject_missing_schema_and_non_text_response() -> None:
+    profile = FallbackProfile(
+        system_prompt="",
+        mode="structured",
+        response_schema=None,
+        abstention_sentinel=None,
+    )
+    with pytest.raises(RuntimeError, match="no response schema"):
+        adapter._structured_response_format(profile)
+
+    with pytest.raises(InvalidFallbackResponseError, match="content is not text"):
+        adapter._structured_response_text(_FakeResponse(None))
 
 
 def test_provider_errors_remain_errors() -> None:
