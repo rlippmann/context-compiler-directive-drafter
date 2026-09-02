@@ -431,7 +431,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--api-key",
-        help="Optional API key; otherwise OPENAI_API_KEY is passed through when set.",
+        help=(
+            "Optional explicit API key. OpenAI-compatible mode otherwise uses OPENAI_API_KEY; "
+            "LiteLLM mode otherwise lets LiteLLM resolve provider credentials."
+        ),
     )
     parser.add_argument("--domain", action="append", dest="domains", help="Filter by domain.")
     parser.add_argument(
@@ -471,23 +474,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     if args.transport == "litellm":
-        api_key = args.api_key if args.api_key is not None else os.environ.get("LITELLM_API_KEY")
+        api_key = args.api_key
         fallback_factory = create_litellm_fallback
         fallback_source = "litellm"
     else:
         api_key = args.api_key if args.api_key is not None else os.environ.get("OPENAI_API_KEY")
         fallback_factory = create_openai_fallback
         fallback_source = "openai-compatible"
+    factory_kwargs: dict[str, str] = {"model": args.model}
+    if api_key is not None:
+        factory_kwargs["api_key"] = api_key
+    if args.base_url is not None:
+        factory_kwargs["api_base" if args.transport == "litellm" else "base_url"] = args.base_url
     try:
-        fallback = fallback_factory(
-            model=args.model,
-            api_key=api_key,
-            **(
-                {"api_base": args.base_url}
-                if args.transport == "litellm"
-                else {"base_url": args.base_url}
-            ),
-        )
+        fallback = fallback_factory(**factory_kwargs)
     except RuntimeError as error:
         print(str(error), file=sys.stderr)
         return 2
