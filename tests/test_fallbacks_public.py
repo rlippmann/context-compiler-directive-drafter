@@ -28,6 +28,7 @@ def test_public_fallback_spec_selects_provider_neutral_material() -> None:
     assert free_text.response_schema is None
     assert structured.mode == "structured"
     assert structured.response_schema is not None
+    assert structured.abstention_sentinel is None
     assert structured.system_prompt != free_text.system_prompt
     assert prompts._get_converter_prompt() == free_text.system_prompt
     assert prompts._get_structured_converter_prompt() == structured.system_prompt
