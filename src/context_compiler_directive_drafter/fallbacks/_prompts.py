@@ -429,9 +429,7 @@ def _render_prompt(
         "",
         _DIRECTIVE_CATEGORY_LINES,
         "",
-        _render_canonical_forms()
-        if allowed_directive_kinds is None
-        else _render_canonical_forms(allowed_directive_kinds),
+        _render_canonical_forms(allowed_directive_kinds),
         "",
         _PREMISE_POLICY_GUIDANCE,
         "",
@@ -441,13 +439,9 @@ def _render_prompt(
         if allowed_directive_kinds is not None
         else "",
         "",
-        _render_scope_payload_contrasts()
-        if allowed_directive_kinds is None
-        else _render_scope_payload_contrasts(allowed_directive_kinds),
+        _render_scope_payload_contrasts(allowed_directive_kinds),
         "",
-        _render_positive_acquisition_examples()
-        if allowed_directive_kinds is None
-        else _render_positive_acquisition_examples(allowed_directive_kinds),
+        _render_positive_acquisition_examples(allowed_directive_kinds),
         "",
         (
             "Contrastive examples:\n- Ordinary conversation, questions, quoted or reported "

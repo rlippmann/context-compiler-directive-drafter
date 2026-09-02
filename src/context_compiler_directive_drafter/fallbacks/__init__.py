@@ -21,7 +21,6 @@ from context_compiler_directive_drafter.fallbacks._types import (
 from context_compiler_directive_drafter.fallbacks.profile import (
     FallbackProfile,
     get_fallback_profile,
-    get_structured_output_schema,
 )
 
 
@@ -62,6 +61,5 @@ __all__ = [
     "get_fallback_profile",
     "InvalidFallbackResponseError",
     "NO_DIRECTIVE",
-    "get_structured_output_schema",
     "parse_structured_response",
 ]

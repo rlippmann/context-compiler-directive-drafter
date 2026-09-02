@@ -13,7 +13,6 @@ from context_compiler_directive_drafter.fallbacks import (
     DraftFallback,
     FallbackProfile,
     get_fallback_profile,
-    get_structured_output_schema,
     parse_structured_response,
 )
 from context_compiler_directive_drafter.fallbacks import _prompts as prompts
@@ -64,6 +63,12 @@ def test_contractual_profiles_preserve_exact_rendered_artifacts() -> None:
         )
 
         assert profile.mode == expected["mode"]
+        canonical_prompt = (
+            (fixture_path.parent / expected["system_prompt_fixture"])
+            .read_text(encoding="utf-8")
+            .removesuffix("\n")
+        )
+        assert profile.system_prompt == canonical_prompt
         assert (
             hashlib.sha256(profile.system_prompt.encode()).hexdigest()
             == expected["system_prompt_sha256"]
@@ -92,7 +97,8 @@ def test_public_callback_contract_preserves_original_input_and_none() -> None:
 
 
 def test_public_fallback_schema_is_structural_and_defensive() -> None:
-    schema = get_structured_output_schema()
+    schema = get_fallback_profile(structured_output=True).response_schema
+    assert schema is not None
 
     assert schema == {
         "type": "object",
@@ -105,7 +111,9 @@ def test_public_fallback_schema_is_structural_and_defensive() -> None:
     }
 
     schema["properties"]["classification"]["enum"].append("invalid")
-    assert "invalid" not in get_structured_output_schema()["properties"]["classification"]["enum"]
+    fresh_schema = get_fallback_profile(structured_output=True).response_schema
+    assert fresh_schema is not None
+    assert "invalid" not in fresh_schema["properties"]["classification"]["enum"]
 
 
 def test_public_fallback_sentinel_and_invalid_response_error_are_available() -> None:
