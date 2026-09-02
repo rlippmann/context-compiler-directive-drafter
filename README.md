@@ -222,6 +222,12 @@ uv run python -m evals.runners.directive_drafter_en \
   --category preference_statement \
   --limit 3
 
+# LiteLLM provider/model routing
+uv run python -m evals.runners.directive_drafter_en \
+  --transport litellm \
+  --model anthropic/claude-sonnet-4-5 \
+  --limit 3
+
 # Write detailed JSONL records to the ignored eval-results directory
 uv run python -m evals.runners.directive_drafter_en \
   --model gpt-4o-mini \
@@ -229,8 +235,11 @@ uv run python -m evals.runners.directive_drafter_en \
   --output eval-results/sample.jsonl
 ```
 
-The runner reports totals, heuristic versus fallback routing, domain and
-category breakdowns, and failure categories. It does not change the corpus
+The runner accepts the existing OpenAI-compatible transport by default. Use
+`--transport litellm` to pass a LiteLLM `provider/model` identifier unchanged
+through the LiteLLM fallback adapter. The runner reports totals, heuristic
+versus fallback routing, domain and category breakdowns, and failure
+categories. It does not change the corpus
 expectations or act as a conformance authority. JSONL records include the
 actual path, path agreement, fallback invocation count, and raw fallback
 response; semantic scoring and routing mismatches are reported separately.

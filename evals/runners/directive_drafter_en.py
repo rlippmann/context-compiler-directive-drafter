@@ -24,6 +24,7 @@ from context_compiler_directive_drafter import (
     create_openai_fallback,
 )
 from context_compiler_directive_drafter.drafter import DraftResult
+from context_compiler_directive_drafter.fallbacks.litellm import create_litellm_fallback
 
 DraftFallback = Callable[[str], str | None]
 
@@ -418,7 +419,13 @@ def build_parser() -> argparse.ArgumentParser:
         prog="directive-drafter-en-eval",
         description="Run the English Directive Drafter corpus through a live fallback.",
     )
-    parser.add_argument("--model", required=True, help="OpenAI-compatible model name.")
+    parser.add_argument("--model", required=True, help="Model name or LiteLLM provider/model ID.")
+    parser.add_argument(
+        "--transport",
+        choices=("openai-compatible", "litellm"),
+        default="openai-compatible",
+        help="Fallback transport (default: openai-compatible).",
+    )
     parser.add_argument(
         "--base-url", help="Optional OpenAI-compatible API base URL, such as an Ollama endpoint."
     )
@@ -463,12 +470,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("No corpus cases matched the selected filters.", file=sys.stderr)
         return 2
 
-    api_key = args.api_key if args.api_key is not None else os.environ.get("OPENAI_API_KEY")
+    if args.transport == "litellm":
+        api_key = args.api_key if args.api_key is not None else os.environ.get("LITELLM_API_KEY")
+        fallback_factory = create_litellm_fallback
+        fallback_source = "litellm"
+    else:
+        api_key = args.api_key if args.api_key is not None else os.environ.get("OPENAI_API_KEY")
+        fallback_factory = create_openai_fallback
+        fallback_source = "openai-compatible"
     try:
-        fallback = create_openai_fallback(
+        fallback = fallback_factory(
             model=args.model,
             api_key=api_key,
-            base_url=args.base_url,
+            **(
+                {"api_base": args.base_url}
+                if args.transport == "litellm"
+                else {"base_url": args.base_url}
+            ),
         )
     except RuntimeError as error:
         print(str(error), file=sys.stderr)
@@ -477,7 +495,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     records = run_cases(
         cases,
         fallback,
-        fallback_source="openai-compatible",
+        fallback_source=fallback_source,
     )
     print_report(records)
     write_results(args.output, records)

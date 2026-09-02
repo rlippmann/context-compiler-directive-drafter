@@ -92,3 +92,9 @@ normalization entry points.
 Promotion makes the heuristic outcome public cross-language behavior. The
 corpus therefore keeps exploratory semantic cases separate from stable
 fixture-backed behavior.
+
+The live runner uses the OpenAI-compatible fallback transport by default. Pass
+`--transport litellm` with a LiteLLM `provider/model` identifier, such as
+`--model anthropic/claude-sonnet-4-5`, to route fallback acquisition through
+LiteLLM. The identifier is forwarded unchanged and the corpus expectations do
+not change.

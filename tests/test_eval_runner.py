@@ -2,8 +2,10 @@ import io
 import json
 from pathlib import Path
 
+import pytest
 from context_compiler.grammar import decompose_directive
 
+import evals.runners.directive_drafter_en as runner
 from context_compiler_directive_drafter import DraftResult, RejectedDirective
 from evals.runners.directive_drafter_en import (
     build_parser,
@@ -378,9 +380,62 @@ def test_parser_exposes_live_runner_configuration() -> None:
     )
 
     assert args.model == "test-model"
+    assert args.transport == "openai-compatible"
     assert args.base_url == "http://localhost/v1"
     assert args.domains == ["health"]
     assert args.categories == ["question"]
     assert args.case_ids == ["case-1"]
     assert args.limit == 2
     assert args.output == Path("eval-results/test.jsonl")
+
+
+def test_parser_selects_litellm_transport_and_provider_model() -> None:
+    args = build_parser().parse_args(
+        ["--model", "anthropic/claude-sonnet-4-5", "--transport", "litellm"]
+    )
+
+    assert args.model == "anthropic/claude-sonnet-4-5"
+    assert args.transport == "litellm"
+
+
+def test_main_routes_litellm_model_and_endpoint_configuration(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_factory(**kwargs: object):
+        captured.update(kwargs)
+        return lambda _: None
+
+    def fake_run_cases(cases, fallback, *, fallback_source):
+        captured["fallback_source"] = fallback_source
+        captured["fallback"] = fallback
+        return [{"passed": True}]
+
+    monkeypatch.setattr(runner, "load_corpus", lambda _: [_case(input="use docker")])
+    monkeypatch.setattr(runner, "create_litellm_fallback", fake_factory)
+    monkeypatch.setattr(runner, "run_cases", fake_run_cases)
+    monkeypatch.setattr(runner, "print_report", lambda _: None)
+    monkeypatch.setattr(runner, "write_results", lambda *_: None)
+
+    assert (
+        runner.main(
+            [
+                "--transport",
+                "litellm",
+                "--model",
+                "anthropic/claude-sonnet-4-5",
+                "--api-key",
+                "key",
+                "--base-url",
+                "https://proxy.example",
+                "--output",
+                str(tmp_path / "results.jsonl"),
+            ]
+        )
+        == 0
+    )
+    assert captured["model"] == "anthropic/claude-sonnet-4-5"
+    assert captured["api_key"] == "key"
+    assert captured["api_base"] == "https://proxy.example"
+    assert captured["fallback_source"] == "litellm"
