@@ -5,9 +5,11 @@ instructions and response semantics come from the public ``fallbacks`` facade.
 """
 
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Mapping
 from importlib import import_module
 from typing import Any, cast
+
+from context_compiler.grammar import DirectiveKind
 
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.fallbacks import (
@@ -82,14 +84,22 @@ def _request_kwargs(
 
 def _select_transport(
     structured_output: bool,
+    allowed_directive_kinds: Collection[DirectiveKind] | None = None,
 ) -> tuple[str, object | None, Callable[[Any], str | None]]:
     if structured_output:
         return (
-            get_fallback_profile(structured_output=True).system_prompt,
+            get_fallback_profile(
+                structured_output=True,
+                allowed_directive_kinds=allowed_directive_kinds,
+            ).system_prompt,
             _STRUCTURED_RESPONSE_FORMAT,
             _structured_response_text,
         )
-    return get_fallback_profile().system_prompt, None, _normalize_response_text
+    return (
+        get_fallback_profile(allowed_directive_kinds=allowed_directive_kinds).system_prompt,
+        None,
+        _normalize_response_text,
+    )
 
 
 def _probe_request_kwargs(model: str) -> dict[str, object]:
@@ -177,12 +187,19 @@ def create_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
+    allowed_directive_kinds: Collection[DirectiveKind] | None = None,
 ) -> DraftFallback:
-    """Create a synchronous OpenAI-compatible Directive Drafter fallback."""
+    """Create a synchronous OpenAI-compatible Directive Drafter fallback.
+
+    ``allowed_directive_kinds`` is forwarded to the provider-neutral fallback
+    profile and limits the kinds the provider is instructed to propose.
+    """
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
     structured_output = _probe_structured_output(client, model)
-    prompt, response_format, parse_response = _select_transport(structured_output)
+    prompt, response_format, parse_response = _select_transport(
+        structured_output, allowed_directive_kinds
+    )
 
     def fallback(user_input: str) -> str | None:
         response = client.chat.completions.create(
@@ -199,12 +216,19 @@ async def create_async_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
+    allowed_directive_kinds: Collection[DirectiveKind] | None = None,
 ) -> AsyncDraftFallback:
-    """Create an asynchronous OpenAI-compatible Directive Drafter fallback."""
+    """Create an asynchronous OpenAI-compatible Directive Drafter fallback.
+
+    ``allowed_directive_kinds`` is forwarded to the provider-neutral fallback
+    profile and limits the kinds the provider is instructed to propose.
+    """
     _, async_openai_client = _load_openai_clients()
     client = async_openai_client(**_client_kwargs(api_key, base_url))
     structured_output = await _probe_structured_output_async(client, model)
-    prompt, response_format, parse_response = _select_transport(structured_output)
+    prompt, response_format, parse_response = _select_transport(
+        structured_output, allowed_directive_kinds
+    )
 
     async def fallback(user_input: str) -> str | None:
         response = await client.chat.completions.create(

@@ -398,6 +398,21 @@ def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[st
     return CanonicalDirective(kind=metadata.kind, operands=operands).text
 
 
+def _render_kind_restriction(allowed_directive_kinds: frozenset[DirectiveKind]) -> str:
+    allowed_names = [
+        metadata.kind.value
+        for metadata in get_directive_metadata()
+        if metadata.kind in allowed_directive_kinds
+    ]
+    names = ", ".join(f"`{name}`" for name in allowed_names) or "none"
+    return f"""Directive-kind restriction (hard boundary):
+- Only these directive kinds may be proposed: {names}.
+- If the user request cannot be represented by exactly one of these kinds, abstain
+  using the output contract below.
+- Never propose a directive of any other kind, even if the request would be
+  representable by that kind or general guidance mentions it."""
+
+
 def _render_prompt(
     mode: str,
     allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
@@ -421,6 +436,10 @@ def _render_prompt(
         _PREMISE_POLICY_GUIDANCE,
         "",
         _STRUCTURED_PROMPT_SUFFIX if structured else _PROMPT_SUFFIX,
+        "",
+        _render_kind_restriction(allowed_directive_kinds)
+        if allowed_directive_kinds is not None
+        else "",
         "",
         _render_scope_payload_contrasts()
         if allowed_directive_kinds is None
