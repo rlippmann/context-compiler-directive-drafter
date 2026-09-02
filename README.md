@@ -103,10 +103,16 @@ schema, classifications, domain scope, and promotion workflow.
 
 ## OpenAI-Compatible Fallback
 
-Install the optional integration extra:
+Install the optional OpenAI-compatible integration extra:
 
 ```bash
 pip install "context-compiler-directive-drafter[openai]"
+```
+
+For LiteLLM routing across providers, install the separate optional extra:
+
+```bash
+pip install "context-compiler-directive-drafter[litellm]"
 ```
 
 Use it with OpenAI by creating a fallback callback and passing it to the
@@ -153,6 +159,18 @@ unsupported providers use free-text mode, which translates the profile's
 the generic fallback callback contract's Python `None` value. Other model text
 is returned unchanged. The Drafter remains responsible for parsing, validation,
 and result shaping.
+
+LiteLLM provides the same fallback contract across its supported providers:
+
+```python
+from context_compiler_directive_drafter.fallbacks.litellm import create_litellm_fallback
+
+fallback = create_litellm_fallback(model="anthropic/claude-sonnet-4-5")
+```
+
+Pass LiteLLM's provider/model identifier unchanged. The adapter uses LiteLLM's
+structured-schema capability information when selecting the profile and keeps
+provider/runtime errors as ordinary errors.
 
 ### Native fallback integrations
 
@@ -258,6 +276,7 @@ Public interface:
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
 - `context_compiler_directive_drafter.fallbacks`: Public fallback profiles, callback contracts, structured-response parsing, and invalid-response helpers for native fallback integrations.
 - `context_compiler_directive_drafter.fallbacks.openai`: Optional OpenAI-compatible fallback factories.
+- `context_compiler_directive_drafter.fallbacks.litellm`: Optional LiteLLM fallback factories using LiteLLM's provider/model routing.
 
 ### Output Contract
 

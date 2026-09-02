@@ -31,6 +31,7 @@ classifiers = [
 
 [project.optional-dependencies]
 openai = ["openai>=1.0,<2.0"]
+litellm = ["litellm>=1.0,<2.0"]
 
 [project.urls]
 Homepage = "https://github.com/rlippmann/context-compiler-directive-drafter"
