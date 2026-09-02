@@ -797,6 +797,7 @@ def _assert_contract_schema(path: Path, contract: dict[str, object]) -> None:
                 "structured_output",
                 "allowed_directive_kinds",
                 "mode",
+                "system_prompt_fixture",
                 "system_prompt_sha256",
                 "response_schema",
                 "abstention_sentinel",

@@ -39,17 +39,6 @@ _STRUCTURED_OUTPUT_SCHEMA: dict[str, Any] = {
 }
 
 
-def get_structured_output_schema() -> dict[str, Any]:
-    """Return a defensive copy of the structured fallback response schema.
-
-    The schema describes the provider-neutral envelope that adapters may
-    translate into provider-specific structured-output request options.
-    Mutating the returned dictionary does not change package-owned material.
-    """
-
-    return deepcopy(_STRUCTURED_OUTPUT_SCHEMA)
-
-
 def get_fallback_profile(
     *,
     structured_output: bool = False,
@@ -90,6 +79,6 @@ def get_fallback_profile(
     return FallbackProfile(
         system_prompt=prompt,
         mode=mode,
-        response_schema=get_structured_output_schema() if structured_output else None,
+        response_schema=deepcopy(_STRUCTURED_OUTPUT_SCHEMA) if structured_output else None,
         abstention_sentinel=NO_DIRECTIVE,
     )
