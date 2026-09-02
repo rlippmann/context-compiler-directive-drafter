@@ -20,6 +20,8 @@ from context_compiler_directive_drafter.fallbacks import (
     parse_structured_response,
 )
 
+_STRUCTURED_PROBE_INPUT = "Probe structured-output support."
+
 
 def _load_litellm() -> ModuleType:
     try:
@@ -82,12 +84,83 @@ def _structured_response_text(response: Any) -> str | None:
     return parse_structured_response(content)
 
 
-def _select_transport(
+def _is_unsupported_structured_output_error(error: Exception) -> bool:
+    message = str(error).lower()
+    mentions_format = any(
+        term in message for term in ("response_format", "json schema", "structured output")
+    )
+    indicates_unsupported = any(
+        term in message
+        for term in (
+            "not supported",
+            "unsupported",
+            "does not support",
+            "unrecognized",
+            "unknown parameter",
+            "invalid parameter",
+        )
+    )
+    return mentions_format and indicates_unsupported
+
+
+def _probe_request_kwargs(
+    model: str,
+    profile: FallbackProfile,
+    request_kwargs: Mapping[str, object],
+) -> dict[str, object]:
+    response_format = _structured_response_format(profile)
+    return _request_kwargs(
+        model,
+        _STRUCTURED_PROBE_INPUT,
+        profile.system_prompt,
+        request_kwargs,
+        response_format,
+    )
+
+
+def _probe_structured_output(
     litellm: ModuleType,
     model: str,
+    request_kwargs: Mapping[str, object],
     allowed_directive_kinds: Collection[DirectiveKind] | None,
+) -> bool:
+    profile = get_fallback_profile(
+        structured_output=True,
+        allowed_directive_kinds=allowed_directive_kinds,
+    )
+    try:
+        litellm.completion(**_probe_request_kwargs(model, profile, request_kwargs))
+    except Exception as error:
+        if _is_unsupported_structured_output_error(error):
+            return False
+        raise
+    return True
+
+
+async def _probe_structured_output_async(
+    litellm: ModuleType,
+    model: str,
+    request_kwargs: Mapping[str, object],
+    allowed_directive_kinds: Collection[DirectiveKind] | None,
+) -> bool:
+    profile = get_fallback_profile(
+        structured_output=True,
+        allowed_directive_kinds=allowed_directive_kinds,
+    )
+    try:
+        await litellm.acompletion(**_probe_request_kwargs(model, profile, request_kwargs))
+    except Exception as error:
+        if _is_unsupported_structured_output_error(error):
+            return False
+        raise
+    return True
+
+
+def _select_transport(
+    model: str,
+    allowed_directive_kinds: Collection[DirectiveKind] | None,
+    structured_output: bool,
 ) -> tuple[FallbackProfile, object | None, Callable[[Any], str | None]]:
-    structured_output = bool(litellm.supports_response_schema(model=model))
     profile = get_fallback_profile(
         structured_output=structured_output,
         allowed_directive_kinds=allowed_directive_kinds,
@@ -116,14 +189,19 @@ def create_litellm_fallback(
     profile and limits the kinds the provider is instructed to propose.
     """
     litellm = _load_litellm()
-    profile, response_format, parse_response = _select_transport(
-        litellm, model, allowed_directive_kinds
-    )
     call_kwargs = dict(request_kwargs or {})
     if api_key is not None:
         call_kwargs["api_key"] = api_key
     if api_base is not None:
         call_kwargs["api_base"] = api_base
+    structured_output = bool(litellm.supports_response_schema(model=model))
+    if not structured_output:
+        structured_output = _probe_structured_output(
+            litellm, model, call_kwargs, allowed_directive_kinds
+        )
+    profile, response_format, parse_response = _select_transport(
+        model, allowed_directive_kinds, structured_output
+    )
 
     def fallback(user_input: str) -> str | None:
         response = litellm.completion(
@@ -151,14 +229,19 @@ async def create_async_litellm_fallback(
     profile and limits the kinds the provider is instructed to propose.
     """
     litellm = _load_litellm()
-    profile, response_format, parse_response = _select_transport(
-        litellm, model, allowed_directive_kinds
-    )
     call_kwargs = dict(request_kwargs or {})
     if api_key is not None:
         call_kwargs["api_key"] = api_key
     if api_base is not None:
         call_kwargs["api_base"] = api_base
+    structured_output = bool(litellm.supports_response_schema(model=model))
+    if not structured_output:
+        structured_output = await _probe_structured_output_async(
+            litellm, model, call_kwargs, allowed_directive_kinds
+        )
+    profile, response_format, parse_response = _select_transport(
+        model, allowed_directive_kinds, structured_output
+    )
 
     async def fallback(user_input: str) -> str | None:
         response = await litellm.acompletion(
