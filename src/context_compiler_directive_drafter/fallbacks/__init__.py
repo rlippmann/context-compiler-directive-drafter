@@ -9,8 +9,6 @@ private; this module is the conformance-facing namespace for fallback APIs.
 
 import json
 
-from context_compiler_directive_drafter.constants import NO_DIRECTIVE
-
 # Re-export the callback contracts and profile from this namespace so adapters
 # do not depend on their implementation modules.
 from context_compiler_directive_drafter.fallbacks._types import (
@@ -60,6 +58,5 @@ __all__ = [
     "AsyncDraftFallback",
     "get_fallback_profile",
     "InvalidFallbackResponseError",
-    "NO_DIRECTIVE",
     "parse_structured_response",
 ]

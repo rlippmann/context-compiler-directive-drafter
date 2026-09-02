@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from context_compiler.grammar import DirectiveKind
 
+import context_compiler_directive_drafter.fallbacks as fallback_namespace
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 from context_compiler_directive_drafter.fallbacks import (
-    NO_DIRECTIVE,
     AsyncDraftFallback,
     DraftFallback,
     FallbackProfile,
@@ -116,8 +116,9 @@ def test_public_fallback_schema_is_structural_and_defensive() -> None:
     assert "invalid" not in fresh_schema["properties"]["classification"]["enum"]
 
 
-def test_public_fallback_sentinel_and_invalid_response_error_are_available() -> None:
-    assert NO_DIRECTIVE == "<NO_DIRECTIVE>"
+def test_fallback_profile_owns_sentinel_and_invalid_response_error_is_available() -> None:
+    assert get_fallback_profile().abstention_sentinel == "<NO_DIRECTIVE>"
+    assert not hasattr(fallback_namespace, "NO_DIRECTIVE")
     assert issubclass(InvalidFallbackResponseError, RuntimeError)
 
 
