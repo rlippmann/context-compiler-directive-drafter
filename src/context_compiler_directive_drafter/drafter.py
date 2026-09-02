@@ -1,6 +1,5 @@
 """High-level orchestration for non-authoritative directive drafting."""
 
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import cast
 
@@ -22,6 +21,15 @@ from context_compiler_directive_drafter.constants import (
     REASON_NON_DIRECTIVE,
     RejectedReason,
     UnknownReason,
+)
+from context_compiler_directive_drafter.fallbacks._types import (
+    AsyncDraftFallback as _AsyncDraftFallback,
+)
+from context_compiler_directive_drafter.fallbacks._types import (
+    DraftFallback as _DraftFallback,
+)
+from context_compiler_directive_drafter.fallbacks._types import (
+    InvalidFallbackResponseError,
 )
 from context_compiler_directive_drafter.heuristic_preprocessor import (
     _preprocess_heuristic,
@@ -57,16 +65,6 @@ class DraftResult:
 
     source: str
     result: _DraftResultType
-
-
-_DraftFallback = Callable[[str], str | None]
-_AsyncDraftFallback = Callable[[str], Awaitable[str | None]]
-
-
-class InvalidFallbackResponseError(RuntimeError):
-    """Signal that a provider returned a malformed fallback response."""
-
-    __slots__ = ()
 
 
 class DirectiveDrafter:

@@ -1,4 +1,8 @@
-"""OpenAI-compatible fallback callback factories."""
+"""OpenAI-compatible fallback callback factories.
+
+This adapter owns OpenAI request and capability handling; acquisition
+instructions and response semantics come from the public ``fallbacks`` facade.
+"""
 
 import json
 from collections.abc import Callable, Mapping
@@ -6,18 +10,12 @@ from importlib import import_module
 from typing import Any, cast
 
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
-from context_compiler_directive_drafter.drafter import (
-    InvalidFallbackResponseError,
-    _AsyncDraftFallback,
-    _DraftFallback,
-)
 from context_compiler_directive_drafter.fallbacks import (
-    get_structured_output_schema,
+    AsyncDraftFallback,
+    DraftFallback,
+    InvalidFallbackResponseError,
+    get_fallback_profile,
     parse_structured_response,
-)
-from context_compiler_directive_drafter.fallbacks.prompts import (
-    get_converter_prompt,
-    get_structured_converter_prompt,
 )
 
 _STRUCTURED_RESPONSE_FORMAT = {
@@ -25,7 +23,7 @@ _STRUCTURED_RESPONSE_FORMAT = {
     "json_schema": {
         "name": "directive_drafter_result",
         "strict": True,
-        "schema": get_structured_output_schema(),
+        "schema": get_fallback_profile(structured_output=True).response_schema,
     },
 }
 _PROBE_RESPONSE_FORMAT = {
@@ -87,11 +85,11 @@ def _select_transport(
 ) -> tuple[str, object | None, Callable[[Any], str | None]]:
     if structured_output:
         return (
-            get_structured_converter_prompt(),
+            get_fallback_profile(structured_output=True).system_prompt,
             _STRUCTURED_RESPONSE_FORMAT,
             _structured_response_text,
         )
-    return get_converter_prompt(), None, _normalize_response_text
+    return get_fallback_profile().system_prompt, None, _normalize_response_text
 
 
 def _probe_request_kwargs(model: str) -> dict[str, object]:
@@ -179,7 +177,7 @@ def create_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
-) -> _DraftFallback:
+) -> DraftFallback:
     """Create a synchronous OpenAI-compatible Directive Drafter fallback."""
     openai_client, _ = _load_openai_clients()
     client = openai_client(**_client_kwargs(api_key, base_url))
@@ -201,7 +199,7 @@ async def create_async_openai_fallback(
     api_key: str | None = None,
     base_url: str | None = None,
     request_kwargs: Mapping[str, object] | None = None,
-) -> _AsyncDraftFallback:
+) -> AsyncDraftFallback:
     """Create an asynchronous OpenAI-compatible Directive Drafter fallback."""
     _, async_openai_client = _load_openai_clients()
     client = async_openai_client(**_client_kwargs(api_key, base_url))

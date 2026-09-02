@@ -1,20 +1,58 @@
 import pytest
+from context_compiler.grammar import DirectiveKind
 
 from context_compiler_directive_drafter.drafter import InvalidFallbackResponseError
 from context_compiler_directive_drafter.fallbacks import (
     NO_DIRECTIVE,
-    get_converter_prompt,
-    get_structured_converter_prompt,
+    AsyncDraftFallback,
+    DraftFallback,
+    FallbackProfile,
+    get_fallback_profile,
     get_structured_output_schema,
     parse_structured_response,
-    prompts,
 )
+from context_compiler_directive_drafter.fallbacks import _prompts as prompts
 from context_compiler_directive_drafter.fallbacks.openai import create_openai_fallback
 
 
-def test_public_fallback_prompts_reuse_package_prompt_sources() -> None:
-    assert get_converter_prompt is prompts.get_converter_prompt
-    assert get_structured_converter_prompt is prompts.get_structured_converter_prompt
+def test_public_fallback_spec_selects_provider_neutral_material() -> None:
+    free_text = get_fallback_profile()
+    structured = get_fallback_profile(structured_output=True)
+
+    assert isinstance(free_text, FallbackProfile)
+    assert free_text.mode == "free_text"
+    assert free_text.response_schema is None
+    assert structured.mode == "structured"
+    assert structured.response_schema is not None
+    assert structured.system_prompt != free_text.system_prompt
+    assert prompts._get_converter_prompt() == free_text.system_prompt
+    assert prompts._get_structured_converter_prompt() == structured.system_prompt
+
+
+def test_public_fallback_spec_can_restrict_directive_kinds() -> None:
+    spec = get_fallback_profile(allowed_directive_kinds={DirectiveKind.USE_ITEM})
+
+    assert "`use <item>`" in spec.system_prompt
+    assert "`prohibit <item>`" not in spec.system_prompt
+
+
+def test_public_callback_contract_preserves_original_input_and_none() -> None:
+    received: list[str] = []
+
+    def fallback(user_input: str) -> str | None:
+        received.append(user_input)
+        return None
+
+    sync_contract: DraftFallback = fallback
+    assert sync_contract("the original request") is None
+    assert received == ["the original request"]
+
+    async def async_fallback(user_input: str) -> str | None:
+        received.append(user_input)
+        return None
+
+    async_contract: AsyncDraftFallback = async_fallback
+    assert async_contract is async_fallback
 
 
 def test_public_fallback_schema_is_structural_and_defensive() -> None:
