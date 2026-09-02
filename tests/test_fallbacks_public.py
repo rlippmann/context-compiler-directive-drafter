@@ -1,3 +1,5 @@
+from enum import Enum
+
 import pytest
 from context_compiler.grammar import DirectiveKind
 
@@ -34,6 +36,16 @@ def test_public_fallback_spec_can_restrict_directive_kinds() -> None:
 
     assert "`use <item>`" in spec.system_prompt
     assert "`prohibit <item>`" not in spec.system_prompt
+    assert "Only these directive kinds may be proposed: `use_item`." in spec.system_prompt
+    assert "cannot be represented by exactly one of these kinds, abstain" in spec.system_prompt
+
+
+def test_public_fallback_profile_rejects_unknown_directive_kind() -> None:
+    class UnknownKind(Enum):
+        UNKNOWN = "unknown"
+
+    with pytest.raises(ValueError, match="Unknown directive kinds"):
+        get_fallback_profile(allowed_directive_kinds={UnknownKind.UNKNOWN})  # type: ignore[arg-type]
 
 
 def test_public_callback_contract_preserves_original_input_and_none() -> None:

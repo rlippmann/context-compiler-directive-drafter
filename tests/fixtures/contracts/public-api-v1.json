@@ -325,6 +325,12 @@
               "kind": "KEYWORD_ONLY",
               "has_default": true,
               "default": null
+            },
+            {
+              "name": "allowed_directive_kinds",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
             }
           ]
         }
@@ -353,6 +359,12 @@
             },
             {
               "name": "request_kwargs",
+              "kind": "KEYWORD_ONLY",
+              "has_default": true,
+              "default": null
+            },
+            {
+              "name": "allowed_directive_kinds",
               "kind": "KEYWORD_ONLY",
               "has_default": true,
               "default": null

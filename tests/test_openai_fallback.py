@@ -4,6 +4,7 @@ import sys
 from types import SimpleNamespace
 
 import pytest
+from context_compiler.grammar import DirectiveKind
 
 from context_compiler_directive_drafter import (
     DirectiveDrafter,
@@ -142,6 +143,23 @@ def test_sync_fallback_forwards_configuration_request_and_selects_free_text_prom
             ],
         }
     ]
+
+
+def test_sync_fallback_forwards_allowed_directive_kinds_to_profile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    fallback = create_openai_fallback(
+        model="compatible-model",
+        allowed_directive_kinds={DirectiveKind.USE_ITEM},
+    )
+
+    assert fallback("input") == "use docker"
+    prompt = _FakeOpenAI.instances[0].chat.completions.calls[-1]["messages"][0]["content"]
+    assert (
+        prompt
+        == get_fallback_profile(allowed_directive_kinds={DirectiveKind.USE_ITEM}).system_prompt
+    )
 
 
 def test_sync_fallback_omits_unset_client_configuration(
@@ -385,6 +403,34 @@ def test_async_structured_fallback_maps_rejection_and_uses_structured_prompt(
         "content": get_fallback_profile(structured_output=True).system_prompt,
     }
     assert call["response_format"] == adapter._STRUCTURED_RESPONSE_FORMAT
+
+
+def test_async_structured_fallback_forwards_allowed_directive_kinds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_clients(monkeypatch)
+    _enable_structured_output()
+    allowed = {DirectiveKind.USE_ITEM}
+    fallback = asyncio.run(
+        create_async_openai_fallback(
+            model="compatible-model",
+            allowed_directive_kinds=allowed,
+        )
+    )
+    client = _FakeAsyncOpenAI.instances[0]
+    client.chat.completions.response = _FakeResponse(
+        '{"classification":"directive","output":"use docker"}'
+    )
+
+    assert asyncio.run(fallback("input")) == "use docker"
+    call = client.chat.completions.calls[-1]
+    assert (
+        call["messages"][0]["content"]
+        == get_fallback_profile(
+            structured_output=True,
+            allowed_directive_kinds=allowed,
+        ).system_prompt
+    )
 
 
 def test_async_drafter_maps_invalid_structured_response_to_invalid_candidate(
