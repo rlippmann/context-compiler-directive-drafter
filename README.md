@@ -148,8 +148,8 @@ fallback = create_openai_fallback(
 The helper probes structured-output support once while it is constructed,
 then selects the package-owned converter prompt and transport mode for all
 callback calls. Structured mode owns the JSON Schema response envelope;
-unsupported providers use free-text mode, which translates the provider-level
-`<NO_DIRECTIVE>` abstention sentinel to
+unsupported providers use free-text mode, which translates the profile's
+`FallbackProfile.abstention_sentinel` abstention value to
 the generic fallback callback contract's Python `None` value. Other model text
 is returned unchanged. The Drafter remains responsible for parsing, validation,
 and result shaping.
@@ -163,7 +163,6 @@ directly while reusing the package-owned acquisition contract:
 from context_compiler_directive_drafter.fallbacks import (
     FallbackProfile,
     InvalidFallbackResponseError,
-    NO_DIRECTIVE,
     get_fallback_profile,
 )
 ```
@@ -228,11 +227,14 @@ rejection reasons, and the native fallback integration capabilities. The
 native integration contract defines the exact rendered artifacts for each
 contractual fallback profile: the system prompt, structured schema when
 applicable, and abstention representation. Restricted-kind variants are
-rendered deterministically from the canonical rules. Provider adapters may wrap
-these artifacts in provider-specific transport, but must not rewrite them.
-Changes to a contractual artifact require a conformance/version change. The
-contract also requires fallback callbacks to receive original user input and
-return candidate text or no candidate. It does not require an OpenAI-specific
+rendered deterministically from the canonical rules. Free-text adapters obtain
+the exact abstention value from `FallbackProfile.abstention_sentinel`; it is not
+a separately exported sentinel symbol. Structured adapters represent abstention
+as `rejected` with a JSON `null` output. Provider adapters may wrap these
+artifacts in provider-specific transport, but must not rewrite them. Changes to
+a contractual artifact require a conformance/version change. The contract also
+requires fallback callbacks to receive original user input and return candidate
+text or no candidate. It does not require an OpenAI-specific
 factory. `public-api-v1.json` defines Python package
 mechanics such as root exports, reflection-visible signatures, descriptors,
 and Python exception behavior; those details are not requirements for other
@@ -254,7 +256,7 @@ Public interface:
 - `RejectedDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
-- `context_compiler_directive_drafter.fallbacks`: Public fallback specification, structured-schema, abstention-sentinel, and invalid-response helpers for native fallback integrations.
+- `context_compiler_directive_drafter.fallbacks`: Public fallback profiles, callback contracts, structured-response parsing, and invalid-response helpers for native fallback integrations.
 - `context_compiler_directive_drafter.fallbacks.openai`: Optional OpenAI-compatible fallback factories.
 
 ### Output Contract

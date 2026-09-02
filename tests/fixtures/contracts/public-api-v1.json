@@ -12,6 +12,7 @@
     "AsyncDraftFallback",
     "FallbackProfile",
     "get_fallback_profile",
+    "NO_DIRECTIVE",
     "PREPROCESSOR_NO_DIRECTIVE_SENTINEL",
     "DRAFT_OUTCOME_DIRECTIVE",
     "DRAFT_OUTCOME_REJECTED",

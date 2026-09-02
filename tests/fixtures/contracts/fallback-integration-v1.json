@@ -81,10 +81,6 @@
         ]
       }
     },
-    "NO_DIRECTIVE": {
-      "kind": "abstention_sentinel",
-      "value": "<NO_DIRECTIVE>"
-    },
     "InvalidFallbackResponseError": {
       "kind": "invalid_response_signal"
     },
