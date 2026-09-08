@@ -254,6 +254,17 @@ def _assert_directive_drafter_behavior_probe_schema(probe: dict[str, object], la
     _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
 
 
+def _assert_directive_drafter_unknown_without_fallback_probe_schema(
+    probe: dict[str, object], label: str
+) -> None:
+    _assert_exact_keys(probe, {"kind", "mode", "user_input", "expect_result"}, label)
+    assert probe["kind"] == "directive_drafter_unknown_without_fallback", label
+    assert probe["mode"] in {"sync", "async"}, label
+    assert isinstance(probe["user_input"], str), label
+    assert isinstance(probe["expect_result"], dict), label
+    _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
+
+
 def _assert_directive_drafter_fallback_routing_probe_schema(
     probe: dict[str, object], label: str
 ) -> None:
@@ -467,6 +478,11 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
                     probe, f"{label}.behavior_probes[{index}]"
                 )
                 continue
+            if probe.get("kind") == "directive_drafter_unknown_without_fallback":
+                _assert_directive_drafter_unknown_without_fallback_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
             if probe.get("kind") == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe_schema(
                     probe, f"{label}.behavior_probes[{index}]"
@@ -518,6 +534,11 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
                     probe, f"{label}.behavior_probes[{index}]"
                 )
                 continue
+            if probe.get("kind") == "directive_drafter_unknown_without_fallback":
+                _assert_directive_drafter_unknown_without_fallback_probe_schema(
+                    probe, f"{label}.behavior_probes[{index}]"
+                )
+                continue
             if probe.get("kind") == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe_schema(
                     probe, f"{label}.behavior_probes[{index}]"
@@ -537,6 +558,17 @@ def _assert_converter_prompt_behavior_probe(exported: object, probe: dict[str, o
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
     drafter = exported()
     result = drafter.draft_directive(probe["user_input"])
+    _assert_shape(_serialize_contract_value(result), probe["expect_result"])
+
+
+def _assert_directive_drafter_unknown_without_fallback_probe(
+    exported: object, probe: dict[str, object]
+) -> None:
+    drafter = exported()
+    if probe["mode"] == "sync":
+        result = drafter.draft_directive(probe["user_input"])
+    else:
+        result = asyncio.run(drafter.async_draft_directive(probe["user_input"]))
     _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
@@ -726,6 +758,9 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
             if probe["kind"] == "directive_drafter_draft":
                 _assert_directive_drafter_behavior_probe(exported, probe)
                 continue
+            if probe["kind"] == "directive_drafter_unknown_without_fallback":
+                _assert_directive_drafter_unknown_without_fallback_probe(exported, probe)
+                continue
             if probe["kind"] == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe(exported, probe)
                 continue
@@ -760,6 +795,9 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
         if name == "DirectiveDrafter":
             if probe["kind"] == "directive_drafter_draft":
                 _assert_directive_drafter_behavior_probe(exported, probe)
+                continue
+            if probe["kind"] == "directive_drafter_unknown_without_fallback":
+                _assert_directive_drafter_unknown_without_fallback_probe(exported, probe)
                 continue
             if probe["kind"] == "directive_drafter_fallback_routing":
                 _assert_directive_drafter_fallback_routing_probe(exported, probe)
