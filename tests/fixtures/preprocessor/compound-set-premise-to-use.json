@@ -1,0 +1,10 @@
+{
+  "name": "compound-set-premise-to-use",
+  "input": "set premise to use",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}
