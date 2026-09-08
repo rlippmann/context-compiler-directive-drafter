@@ -51,6 +51,7 @@ def test_public_fallback_profile_rejects_unknown_directive_kind() -> None:
         get_fallback_profile(allowed_directive_kinds={UnknownKind.UNKNOWN})  # type: ignore[arg-type]
 
 
+@pytest.mark.contract
 def test_contractual_profiles_preserve_exact_rendered_artifacts() -> None:
     fixture_path = Path(__file__).parent / "fixtures" / "contracts" / "fallback-integration-v1.json"
     contract = json.loads(fixture_path.read_text(encoding="utf-8"))
