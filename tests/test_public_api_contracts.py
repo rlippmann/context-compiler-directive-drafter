@@ -250,8 +250,13 @@ def _assert_converter_prompt_behavior_probe_schema(probe: dict[str, object], lab
 
 
 def _assert_directive_drafter_behavior_probe_schema(probe: dict[str, object], label: str) -> None:
-    _assert_exact_keys(probe, {"kind", "user_input", "expect_result"}, label)
+    _assert_exact_keys(
+        probe,
+        {"kind", "user_input", "expect_result"} | ({"mode"} if "mode" in probe else set()),
+        label,
+    )
     assert probe["kind"] == "directive_drafter_draft", label
+    assert probe.get("mode", "sync") in {"sync", "async"}, label
     assert isinstance(probe["user_input"], str), label
     assert isinstance(probe["expect_result"], dict), label
     _assert_shape_schema(probe["expect_result"], f"{label}.expect_result")
@@ -560,7 +565,10 @@ def _assert_converter_prompt_behavior_probe(exported: object, probe: dict[str, o
 
 def _assert_directive_drafter_behavior_probe(exported: object, probe: dict[str, object]) -> None:
     drafter = exported()
-    result = drafter.draft_directive(probe["user_input"])
+    if probe.get("mode", "sync") == "sync":
+        result = drafter.draft_directive(probe["user_input"])
+    else:
+        result = asyncio.run(drafter.async_draft_directive(probe["user_input"]))
     _assert_shape(_serialize_contract_value(result), probe["expect_result"])
 
 
