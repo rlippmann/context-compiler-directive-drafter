@@ -167,6 +167,40 @@
           }
         },
         {
+          "kind": "directive_drafter_unknown_without_fallback",
+          "mode": "sync",
+          "user_input": "Could we maybe use uv later",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "semantic_uncertainty"}}
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_unknown_without_fallback",
+          "mode": "async",
+          "user_input": "Could we maybe use uv later",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["reason"],
+                "properties": {"reason": {"type": "string", "const": "semantic_uncertainty"}}
+              }
+            }
+          }
+        },
+        {
           "kind": "directive_drafter_draft",
           "user_input": "use",
           "expect_result": {

@@ -104,6 +104,82 @@ def test_semantic_uncertainty_is_the_only_fallback_eligible_result() -> None:
     assert calls == ["Could we maybe use uv later"]
 
 
+def test_unknown_directive_is_returned_without_sync_fallback() -> None:
+    result = DirectiveDrafter().draft_directive("Could we maybe use uv later")
+
+    assert result == DraftResult(
+        source="heuristic",
+        result=UnknownDirective(reason="semantic_uncertainty"),
+    )
+
+
+def test_unknown_directive_is_returned_without_async_fallback() -> None:
+    result = asyncio.run(DirectiveDrafter().async_draft_directive("Could we maybe use uv later"))
+
+    assert result == DraftResult(
+        source="heuristic",
+        result=UnknownDirective(reason="semantic_uncertainty"),
+    )
+
+
+@pytest.mark.parametrize(
+    "fallback_output",
+    [
+        "[use docker]",
+        "use docker and prohibit peanuts",
+        "use docker\nextra text",
+        "  USE\tdocker  ",
+    ],
+)
+def test_sync_and_async_fallback_outputs_have_equivalent_classification(
+    fallback_output: str,
+) -> None:
+    sync_result = DirectiveDrafter(fallback=lambda _: fallback_output).draft_directive(
+        "Could we maybe use uv later"
+    )
+
+    async def async_fallback(_: str) -> str:
+        return fallback_output
+
+    async_result = asyncio.run(
+        DirectiveDrafter(async_fallback=async_fallback).async_draft_directive(
+            "Could we maybe use uv later"
+        )
+    )
+
+    assert type(sync_result.result) is type(async_result.result)
+    assert sync_result.result == async_result.result
+    assert sync_result.source == async_result.source == "fallback"
+
+
+def test_sync_fallback_exception_propagates_unchanged() -> None:
+    error = RuntimeError("fallback failed")
+
+    def fallback(_: str) -> str:
+        raise error
+
+    with pytest.raises(RuntimeError) as raised:
+        DirectiveDrafter(fallback=fallback).draft_directive("Could we maybe use uv later")
+
+    assert raised.value is error
+
+
+def test_async_fallback_exception_propagates_unchanged() -> None:
+    error = RuntimeError("fallback failed")
+
+    async def fallback(_: str) -> str:
+        raise error
+
+    with pytest.raises(RuntimeError) as raised:
+        asyncio.run(
+            DirectiveDrafter(async_fallback=fallback).async_draft_directive(
+                "Could we maybe use uv later"
+            )
+        )
+
+    assert raised.value is error
+
+
 def test_provider_no_directive_sentinel_maps_to_public_terminal_reason() -> None:
     result = DirectiveDrafter(fallback=lambda _: f"  {NO_DIRECTIVE}  ").draft_directive(
         "Could we maybe use uv later"
