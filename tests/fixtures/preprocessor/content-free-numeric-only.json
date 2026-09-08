@@ -1,0 +1,10 @@
+{
+  "name": "content-free-numeric-only",
+  "input": "12345",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "ordinary_non_directive"
+  }
+}

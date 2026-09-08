@@ -589,7 +589,36 @@ def test_canonical_directive_rejects_non_string_item_operand() -> None:
         )
 
 
-@pytest.mark.parametrize("message", ['""', "''", "()", "[]", "``"])
-def test_heuristic_empty_wrappers_do_not_produce_directive(message: str) -> None:
-    result = preprocess_heuristic(message)
-    assert result["directive"] is None
+@pytest.mark.parametrize(
+    ("message", "internal_reason"),
+    [
+        ("", "ordinary_non_directive"),
+        ("   ", "ordinary_non_directive"),
+        ('""', "quoted_reported"),
+        ("''", "quoted_reported"),
+        ("()", "ordinary_non_directive"),
+        ("[]", "ordinary_non_directive"),
+        ("{}", "ordinary_non_directive"),
+        ("<>", "ordinary_non_directive"),
+        ("!!!", "ordinary_non_directive"),
+        ("12345", "ordinary_non_directive"),
+        ("🙂", "ordinary_non_directive"),
+        ("```\n```", "quoted_reported"),
+    ],
+)
+def test_heuristic_content_free_inputs_are_terminal_non_directive(
+    message: str, internal_reason: str
+) -> None:
+    assert preprocess_heuristic(message) == {
+        "outcome": "rejected",
+        "directive": None,
+        "reason": internal_reason,
+    }
+
+
+def test_heuristic_non_ascii_alphabetic_input_is_not_content_free() -> None:
+    assert preprocess_heuristic("éclair") == {
+        "outcome": "unknown",
+        "directive": None,
+        "reason": "semantic_uncertainty",
+    }

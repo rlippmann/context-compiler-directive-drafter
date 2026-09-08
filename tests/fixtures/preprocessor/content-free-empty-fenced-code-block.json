@@ -1,0 +1,10 @@
+{
+  "name": "content-free-empty-fenced-code-block",
+  "input": "```\n```",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "quoted_reported"
+  }
+}
