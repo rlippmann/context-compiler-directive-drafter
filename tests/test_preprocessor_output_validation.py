@@ -1,4 +1,4 @@
-from context_compiler.grammar import decompose_directive
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter.output_validation import _classify_drafter_output
 
@@ -6,10 +6,13 @@ classify_drafter_output = _classify_drafter_output
 
 
 def test_core_canonical_validation_accepts_canonical_shapes() -> None:
-    assert decompose_directive("clear state") is not None
-    assert decompose_directive("set premise concise replies") is not None
-    assert decompose_directive("change premise to formal tone") is not None
-    assert decompose_directive("use podman instead of docker") is not None
+    for text in (
+        "clear state",
+        "set premise concise replies",
+        "change premise to formal tone",
+        "use podman instead of docker",
+    ):
+        assert isinstance(decompose_directive(text), CanonicalDirective)
 
 
 def test_validate_text_accepts_canonical_directive() -> None:
@@ -127,5 +130,5 @@ def test_custom_host_can_validate_then_parse_with_core() -> None:
     assert validated == {"classification": "directive", "output": "use docker"}
 
     parsed = decompose_directive(validated["output"])
-    assert parsed is not None
+    assert isinstance(parsed, CanonicalDirective)
     assert parsed.text == "use docker"

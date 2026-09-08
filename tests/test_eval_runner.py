@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 import pytest
-from context_compiler.grammar import decompose_directive
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 import evals.runners.directive_drafter_en as runner
 from context_compiler_directive_drafter import DraftResult, RejectedDirective
@@ -19,9 +19,9 @@ from evals.runners.directive_drafter_en import (
 )
 
 
-def _canonical(text: str):
+def _canonical(text: str) -> CanonicalDirective:
     result = decompose_directive(text)
-    assert result is not None
+    assert isinstance(result, CanonicalDirective)
     return result
 
 

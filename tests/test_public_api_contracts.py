@@ -101,9 +101,12 @@ def _serialize_contract_value(value: object) -> object:
     if isinstance(value, DraftResult):
         _assert_public_data_attributes(value, {"source", "result"})
         return {"source": value.source, "result": _serialize_contract_value(value.result)}
-    if isinstance(value, RejectedDirective | UnknownDirective):
+    if isinstance(value, UnknownDirective):
         _assert_public_data_attributes(value, {"reason"})
-        return {"reason": value.reason}
+        return {"variant": "unknown", "reason": value.reason}
+    if isinstance(value, RejectedDirective):
+        _assert_public_data_attributes(value, {"reason"})
+        return {"variant": "rejected", "reason": value.reason}
     if isinstance(value, dict):
         return {key: _serialize_contract_value(nested) for key, nested in value.items()}
     if isinstance(value, list):
