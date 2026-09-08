@@ -23,7 +23,7 @@ OPENWEBUI_IMPORT_RATIONALE = (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Check:
     pattern: str
     rationale: str
@@ -50,7 +50,7 @@ HOST_INTEGRATION_IMPORTS = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Violation:
     path: Path
     line: int
