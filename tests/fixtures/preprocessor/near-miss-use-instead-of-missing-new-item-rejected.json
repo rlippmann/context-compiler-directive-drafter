@@ -1,0 +1,10 @@
+{
+  "name": "near-miss-use-instead-of-missing-new-item-rejected",
+  "input": "use instead of docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

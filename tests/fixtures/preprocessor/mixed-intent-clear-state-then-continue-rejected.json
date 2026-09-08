@@ -1,0 +1,10 @@
+{
+  "name": "mixed-intent-clear-state-then-continue-rejected",
+  "input": "clear state then continue",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

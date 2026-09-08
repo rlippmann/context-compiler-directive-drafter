@@ -1,0 +1,10 @@
+{
+  "name": "admin-alias-reset-policy-rejected",
+  "input": "reset policy",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "invalid_candidate",
+    "internal_reason": "malformed_directive"
+  }
+}

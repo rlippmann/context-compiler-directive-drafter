@@ -1,0 +1,10 @@
+{
+  "name": "compound-use-and-prohibit-rejected",
+  "input": "use docker and prohibit peanuts",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

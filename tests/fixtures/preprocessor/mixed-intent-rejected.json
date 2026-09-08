@@ -1,0 +1,10 @@
+{
+  "name": "mixed-intent-rejected",
+  "input": "use docker and then continue with the answer",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

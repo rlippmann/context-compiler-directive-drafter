@@ -1,0 +1,10 @@
+{
+  "name": "compound-remove-policy-newline-use-rejected",
+  "input": "remove policy docker\nuse podman",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "preference-statement-question-rejected",
+  "input": "I prefer concise replies?",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "question_form"
+  }
+}

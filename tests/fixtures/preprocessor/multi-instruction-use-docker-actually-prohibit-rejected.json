@@ -1,0 +1,10 @@
+{
+  "name": "multi-instruction-use-docker-actually-prohibit-rejected",
+  "input": "use docker, actually prohibit docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

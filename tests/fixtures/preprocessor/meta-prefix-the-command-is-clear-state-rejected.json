@@ -1,0 +1,10 @@
+{
+  "name": "meta-prefix-the-command-is-clear-state-rejected",
+  "input": "the command is clear state",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "quoted_reported"
+  }
+}

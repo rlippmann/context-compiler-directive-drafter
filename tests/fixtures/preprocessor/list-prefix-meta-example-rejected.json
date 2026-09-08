@@ -1,0 +1,10 @@
+{
+  "name": "list-prefix-meta-example-rejected",
+  "input": "1. example: use docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "unsupported_input"
+  }
+}

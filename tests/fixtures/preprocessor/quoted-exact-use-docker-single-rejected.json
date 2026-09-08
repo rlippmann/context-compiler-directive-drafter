@@ -1,0 +1,10 @@
+{
+  "name": "quoted-exact-use-docker-single-rejected",
+  "input": "'use docker'",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "quoted_reported"
+  }
+}

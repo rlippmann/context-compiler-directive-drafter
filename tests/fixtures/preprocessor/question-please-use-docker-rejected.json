@@ -1,0 +1,10 @@
+{
+  "name": "question-please-use-docker-rejected",
+  "input": "please use docker?",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "question_form"
+  }
+}
