@@ -371,6 +371,14 @@ def test_heuristic_does_not_canonicalize_set_premise_to_with_empty_payload() -> 
     }
 
 
+def test_heuristic_rejects_set_premise_payload_that_starts_directive() -> None:
+    assert preprocess_heuristic("set premise to use") == {
+        "outcome": "rejected",
+        "directive": None,
+        "reason": "compound_directive",
+    }
+
+
 def test_heuristic_rewrites_polite_set_premise_to_form() -> None:
     _assert_directive_result(
         preprocess_heuristic("please set premise to concise replies"),

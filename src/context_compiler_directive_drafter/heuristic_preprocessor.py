@@ -206,8 +206,6 @@ def _strip_exact_wrapper(message: str) -> str:
     if (opener, closer) not in _WRAPPER_PAIRS:
         return stripped
     inner = stripped[1:-1].strip()
-    if not inner:
-        return stripped
     return inner
 
 
