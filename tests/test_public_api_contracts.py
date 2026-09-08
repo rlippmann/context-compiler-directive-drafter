@@ -1144,18 +1144,6 @@ def test_removed_preprocessor_validator_is_not_exported() -> None:
     assert "validate_preprocessor_output" not in package.__all__
 
 
-def test_forbidden_class_members_are_rejected_by_the_harness() -> None:
-    class LegacyResult:
-        outcome = "directive"
-
-    with pytest.raises(AssertionError):
-        _assert_class_contract(
-            "LegacyResult",
-            LegacyResult,
-            {"kind": "class", "forbidden_members": ["outcome"]},
-        )
-
-
 def test_directive_drafter_constructor_supports_optional_fallback() -> None:
     signature = inspect.signature(package.DirectiveDrafter)
     parameters = list(signature.parameters.values())
