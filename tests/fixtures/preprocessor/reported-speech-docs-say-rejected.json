@@ -1,0 +1,10 @@
+{
+  "name": "reported-speech-docs-say-rejected",
+  "input": "the docs say \"use docker\"",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "quoted_reported"
+  }
+}

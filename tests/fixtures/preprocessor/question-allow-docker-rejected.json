@@ -1,0 +1,10 @@
+{
+  "name": "question-allow-docker-rejected",
+  "input": "allow docker?",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "question_form"
+  }
+}

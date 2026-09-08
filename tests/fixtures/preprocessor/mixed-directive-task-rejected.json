@@ -1,0 +1,10 @@
+{
+  "name": "mixed-directive-task-rejected",
+  "input": "use docker and explain why",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "meta-prefix-directive-rejected",
+  "input": "example: use docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "quoted_reported"
+  }
+}

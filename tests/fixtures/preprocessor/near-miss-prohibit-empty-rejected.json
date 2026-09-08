@@ -1,0 +1,10 @@
+{
+  "name": "near-miss-prohibit-empty-rejected",
+  "input": "prohibit",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "incomplete",
+    "internal_reason": "incomplete_directive"
+  }
+}

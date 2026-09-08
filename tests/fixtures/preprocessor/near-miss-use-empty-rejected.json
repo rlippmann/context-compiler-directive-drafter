@@ -1,0 +1,10 @@
+{
+  "name": "near-miss-use-empty-rejected",
+  "input": "use",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "incomplete",
+    "internal_reason": "incomplete_directive"
+  }
+}

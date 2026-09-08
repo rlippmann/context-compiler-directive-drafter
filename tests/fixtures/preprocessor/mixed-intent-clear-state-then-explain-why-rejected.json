@@ -1,0 +1,10 @@
+{
+  "name": "mixed-intent-clear-state-then-explain-why-rejected",
+  "input": "clear state, then explain why",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "invalid_candidate",
+    "internal_reason": "malformed_directive"
+  }
+}

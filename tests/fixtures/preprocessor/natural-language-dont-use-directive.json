@@ -1,0 +1,12 @@
+{
+  "name": "natural-language-dont-use-directive",
+  "input": "don't use peanuts",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "prohibit peanuts",
+      "kind": "prohibit_item",
+      "operands": {"item": "peanuts"}
+    }
+  }
+}

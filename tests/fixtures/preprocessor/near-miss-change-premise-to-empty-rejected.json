@@ -1,0 +1,10 @@
+{
+  "name": "near-miss-change-premise-to-empty-rejected",
+  "input": "change premise to",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "incomplete",
+    "internal_reason": "incomplete_directive"
+  }
+}

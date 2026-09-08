@@ -1,9 +1,0 @@
-{
-  "name": "ambiguous-directive-adjacent",
-  "input": "could we maybe use uv later",
-  "expected": {
-    "outcome": "unknown",
-    "directive": null,
-    "reason": "semantic_uncertainty"
-  }
-}

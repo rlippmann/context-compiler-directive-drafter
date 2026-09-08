@@ -1,0 +1,10 @@
+{
+  "name": "compound-set-premise-then-use-rejected",
+  "input": "set premise deployment target is staging, then use cautious rollout",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

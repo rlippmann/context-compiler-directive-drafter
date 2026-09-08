@@ -1,0 +1,10 @@
+{
+  "name": "compound-prohibit-semicolon-use-rejected",
+  "input": "prohibit peanuts; use docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

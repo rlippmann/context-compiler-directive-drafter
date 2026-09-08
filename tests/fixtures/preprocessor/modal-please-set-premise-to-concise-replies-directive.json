@@ -1,0 +1,12 @@
+{
+  "name": "modal-please-set-premise-to-concise-replies-directive",
+  "input": "please set premise to concise replies",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "set premise concise replies",
+      "kind": "set_premise",
+      "operands": {"value": "concise replies"}
+    }
+  }
+}

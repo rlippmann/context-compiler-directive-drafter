@@ -1,0 +1,10 @@
+{
+  "name": "admin-alias-remove-policies-rejected",
+  "input": "remove policies docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "invalid_candidate",
+    "internal_reason": "malformed_directive"
+  }
+}

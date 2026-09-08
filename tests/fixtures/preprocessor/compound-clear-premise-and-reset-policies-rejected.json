@@ -1,0 +1,10 @@
+{
+  "name": "compound-clear-premise-and-reset-policies-rejected",
+  "input": "clear premise and reset policies",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

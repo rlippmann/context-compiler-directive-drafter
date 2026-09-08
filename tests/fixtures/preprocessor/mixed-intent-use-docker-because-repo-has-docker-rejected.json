@@ -1,0 +1,10 @@
+{
+  "name": "mixed-intent-use-docker-because-repo-has-docker-rejected",
+  "input": "use docker because this repo already has Docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "compound_directive"
+  }
+}

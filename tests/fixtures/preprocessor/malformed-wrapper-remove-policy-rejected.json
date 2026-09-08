@@ -1,0 +1,10 @@
+{
+  "name": "malformed-wrapper-remove-policy-rejected",
+  "input": "[remove policy]",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "incomplete",
+    "internal_reason": "incomplete_directive"
+  }
+}

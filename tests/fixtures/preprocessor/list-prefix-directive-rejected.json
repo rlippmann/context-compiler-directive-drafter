@@ -1,0 +1,10 @@
+{
+  "name": "list-prefix-directive-rejected",
+  "input": "1. use docker",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "multiple_directives",
+    "internal_reason": "unsupported_input"
+  }
+}

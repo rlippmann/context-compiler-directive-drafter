@@ -1,0 +1,12 @@
+{
+  "name": "modal-please-change-premise-concise-replies-directive",
+  "input": "please change premise concise replies",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "change premise to concise replies",
+      "kind": "change_premise",
+      "operands": {"value": "concise replies"}
+    }
+  }
+}

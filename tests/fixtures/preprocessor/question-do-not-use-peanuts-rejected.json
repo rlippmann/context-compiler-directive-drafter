@@ -1,0 +1,10 @@
+{
+  "name": "question-do-not-use-peanuts-rejected",
+  "input": "do not use peanuts?",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "question_form"
+  }
+}

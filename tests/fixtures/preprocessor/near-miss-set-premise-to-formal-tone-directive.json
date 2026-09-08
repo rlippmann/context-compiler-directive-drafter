@@ -1,0 +1,12 @@
+{
+  "name": "near-miss-set-premise-to-formal-tone-directive",
+  "input": "set premise to formal tone",
+  "expected": {
+    "outcome": "directive",
+    "directive": {
+      "text": "set premise formal tone",
+      "kind": "set_premise",
+      "operands": {"value": "formal tone"}
+    }
+  }
+}
