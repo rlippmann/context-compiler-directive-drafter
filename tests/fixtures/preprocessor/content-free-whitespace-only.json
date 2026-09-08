@@ -1,0 +1,10 @@
+{
+  "name": "content-free-whitespace-only",
+  "input": " \t\n ",
+  "expected": {
+    "outcome": "rejected",
+    "directive": null,
+    "reason": "non_directive",
+    "internal_reason": "ordinary_non_directive"
+  }
+}

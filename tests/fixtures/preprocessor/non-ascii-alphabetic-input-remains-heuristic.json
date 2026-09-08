@@ -1,0 +1,9 @@
+{
+  "name": "non-ascii-alphabetic-input-remains-heuristic",
+  "input": "éclair",
+  "expected": {
+    "outcome": "unknown",
+    "directive": null,
+    "reason": "semantic_uncertainty"
+  }
+}
