@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import FrozenInstanceError
 
 import pytest
-from context_compiler.grammar import decompose_directive
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 from context_compiler_directive_drafter import (
     DirectiveDrafter,
@@ -14,9 +14,9 @@ from context_compiler_directive_drafter import drafter as drafter_module
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 
 
-def _canonical(text: str):
+def _canonical(text: str) -> CanonicalDirective:
     parsed = decompose_directive(text)
-    assert parsed is not None
+    assert isinstance(parsed, CanonicalDirective)
     return parsed
 
 
@@ -406,7 +406,7 @@ def test_fallback_canonical_directive_receives_the_same_validation_path() -> Non
     assert result == DraftResult(source="llm", result=_canonical("set premise concise replies"))
 
 
-def test_heuristic_directive_results_are_preserved_without_transformation() -> None:
+def test_heuristic_result_to_draft_result_preserves_directive_without_transformation() -> None:
     canonical = _canonical("set premise concise replies")
 
     result = drafter_module._heuristic_result_to_draft_result(
@@ -449,7 +449,7 @@ def test_none_fallback_output_returns_no_directive_from_drafter() -> None:
     assert result == DraftResult(source="llm", result=RejectedDirective(reason="non_directive"))
 
 
-def test_invalid_fallback_text_returns_unknown_from_drafter() -> None:
+def test_invalid_fallback_text_returns_rejected_from_drafter() -> None:
     drafter = DirectiveDrafter(fallback=lambda _: "please use docker", fallback_source="llm")
 
     result = drafter.draft_directive("directive-like but unresolved")
@@ -611,7 +611,7 @@ def test_async_none_fallback_output_returns_no_directive_from_drafter() -> None:
     assert result == DraftResult(source="llm", result=RejectedDirective(reason="non_directive"))
 
 
-def test_async_invalid_fallback_text_returns_unknown_from_drafter() -> None:
+def test_async_invalid_fallback_text_returns_rejected_from_drafter() -> None:
     async def async_fallback(_: str) -> str | None:
         return "please use docker"
 

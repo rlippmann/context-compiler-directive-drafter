@@ -3,7 +3,7 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
-from context_compiler.grammar import decompose_directive
+from context_compiler.grammar import CanonicalDirective, decompose_directive
 
 _CORPUS_PATH = (
     Path(__file__).resolve().parents[1]
@@ -103,7 +103,7 @@ def test_english_corpus_schema_and_contract_links() -> None:
         if case["expected_outcome"] == "directive":
             directive = case["expected_directive"]
             assert isinstance(directive, str) and directive
-            assert decompose_directive(directive) is not None, case["id"]
+            assert isinstance(decompose_directive(directive), CanonicalDirective), case["id"]
         else:
             assert case["expected_directive"] is None, case["id"]
 
@@ -120,7 +120,9 @@ def test_english_corpus_schema_and_contract_links() -> None:
             if preferred_directive is not None:
                 assert preferred_outcome == "directive", case["id"]
                 assert isinstance(preferred_directive, str)
-                assert decompose_directive(preferred_directive) is not None, case["id"]
+                assert isinstance(decompose_directive(preferred_directive), CanonicalDirective), (
+                    case["id"]
+                )
 
         contract_ref = case.get("contract_ref")
         if contract_ref is None:

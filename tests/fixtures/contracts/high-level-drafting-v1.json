@@ -160,8 +160,11 @@
               "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
+                }
               }
             }
           }
@@ -177,8 +180,11 @@
               "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "semantic_uncertainty"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "unknown"},
+                  "reason": {"type": "string", "const": "semantic_uncertainty"}
+                }
               }
             }
           }
@@ -194,8 +200,11 @@
               "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "semantic_uncertainty"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "unknown"},
+                  "reason": {"type": "string", "const": "semantic_uncertainty"}
+                }
               }
             }
           }
@@ -210,8 +219,11 @@
               "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "incomplete"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "incomplete"}
+                }
               }
             }
           }
@@ -226,8 +238,11 @@
               "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "multiple_directives"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "multiple_directives"}
+                }
               }
             }
           }
@@ -242,8 +257,11 @@
               "source": {"type": "string", "const": "heuristic"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "semantic_uncertainty"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "unknown"},
+                  "reason": {"type": "string", "const": "semantic_uncertainty"}
+                }
               }
             }
           }
@@ -278,7 +296,13 @@
             "required_keys": ["source", "result"],
             "properties": {
               "source": {"type": "string", "const": "heuristic"},
-              "result": {"type": "object", "required_keys": ["reason"]}
+              "result": {
+                "type": "object",
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"}
+                }
+              }
             }
           }
         },
@@ -355,8 +379,11 @@
               "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
+                }
               }
             }
           }
@@ -376,8 +403,11 @@
               "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
+                }
               }
             }
           }
@@ -397,8 +427,11 @@
               "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
+                }
               }
             }
           }
@@ -418,8 +451,11 @@
               "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "non_directive"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
+                }
               }
             }
           }
@@ -439,8 +475,11 @@
               "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "invalid_candidate"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "invalid_candidate"}
+                }
               }
             }
           }
@@ -460,8 +499,11 @@
               "source": {"type": "string", "const": "contract-fallback"},
               "result": {
                 "type": "object",
-                "required_keys": ["reason"],
-                "properties": {"reason": {"type": "string", "const": "invalid_candidate"}}
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "invalid_candidate"}
+                }
               }
             }
           }
