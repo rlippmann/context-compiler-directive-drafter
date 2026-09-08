@@ -29,8 +29,17 @@ CANONICAL_DIRECTIVES = [
 
 NON_EMPTY_TEXT = st.text(min_size=1, max_size=40).filter(lambda s: s.strip() != "")
 ITEM = st.from_regex(r"[a-z]{1,12}", fullmatch=True)
+CANONICAL_STARTS = tuple({metadata.canonical_start for metadata in get_directive_metadata()})
+
+
+def _contains_canonical_start(text: str) -> bool:
+    return any(re.search(rf"\b{re.escape(start)}\b", text) for start in CANONICAL_STARTS)
+
+
 PREMISE = st.from_regex(r"[a-z]{1,8}(?: [a-z]{1,8}){0,3}", fullmatch=True).filter(
-    lambda premise: premise != "to" and not premise.startswith("to ")
+    lambda premise: (
+        premise != "to" and not premise.startswith("to ") and not _contains_canonical_start(premise)
+    )
 )
 WRAPPERS = st.sampled_from(
     [
@@ -55,7 +64,6 @@ CANONICAL_LOOKALIKE_WORDS = st.sampled_from(
         "near reset-policy docs",
     ]
 )
-CANONICAL_STARTS = tuple({metadata.canonical_start for metadata in get_directive_metadata()})
 DIRECTIVE_FRAGMENTS = tuple({cue for cue in heuristic_module._directive_cues() if " " not in cue})
 
 
