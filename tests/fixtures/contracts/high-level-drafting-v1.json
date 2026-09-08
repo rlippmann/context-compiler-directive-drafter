@@ -170,6 +170,53 @@
           }
         },
         {
+          "kind": "directive_drafter_draft",
+          "mode": "async",
+          "user_input": "set premise concise replies",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["text", "kind", "operands"],
+                "properties": {
+                  "text": {"type": "string", "const": "set premise concise replies"},
+                  "kind": {"type": "string", "const": "set_premise"},
+                  "operands": {
+                    "type": "object",
+                    "required_keys": ["value"],
+                    "properties": {
+                      "value": {"type": "string", "const": "concise replies"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_draft",
+          "mode": "async",
+          "user_input": "can you help with lunch?",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
+                }
+              }
+            }
+          }
+        },
+        {
           "kind": "directive_drafter_unknown_without_fallback",
           "mode": "sync",
           "user_input": "Could we maybe use uv later",
@@ -285,6 +332,23 @@
         },
         {
           "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "set premise concise replies",
+          "heuristic_result": "canonical",
+          "fallback_output": "canonical",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {"type": "object", "required_keys": ["kind"]}
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
           "mode": "sync",
           "user_input": "can you help with lunch?",
           "heuristic_result": "rejected",
@@ -301,6 +365,30 @@
                 "required_keys": ["variant", "reason"],
                 "properties": {
                   "variant": {"type": "string", "const": "rejected"}
+                }
+              }
+            }
+          }
+        },
+        {
+          "kind": "directive_drafter_fallback_routing",
+          "mode": "async",
+          "user_input": "can you help with lunch?",
+          "heuristic_result": "rejected",
+          "fallback_output": "canonical",
+          "expect_fallback_calls": 0,
+          "expect_source": "heuristic",
+          "expect_result": {
+            "type": "object",
+            "required_keys": ["source", "result"],
+            "properties": {
+              "source": {"type": "string", "const": "heuristic"},
+              "result": {
+                "type": "object",
+                "required_keys": ["variant", "reason"],
+                "properties": {
+                  "variant": {"type": "string", "const": "rejected"},
+                  "reason": {"type": "string", "const": "non_directive"}
                 }
               }
             }
