@@ -374,6 +374,13 @@ def _preprocess_heuristic(message: str) -> _PreprocessResult:
             "reason": _REASON_QUOTED_REPORTED,
         }
 
+    if not any(character.isalpha() for character in message):
+        return {
+            "outcome": _DRAFT_OUTCOME_REJECTED,
+            "directive": None,
+            "reason": _REASON_ORDINARY_NON_DIRECTIVE,
+        }
+
     if _MALFORMED_DIRECTIVE_LOOKALIKE_PATTERN.fullmatch(message):
         return {
             "outcome": _DRAFT_OUTCOME_REJECTED,
