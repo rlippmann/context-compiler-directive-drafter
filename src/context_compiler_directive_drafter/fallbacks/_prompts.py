@@ -357,15 +357,6 @@ def _render_canonical_forms_from_metadata(
     return "\n".join(lines)
 
 
-def _render_canonical_forms(allowed_directive_kinds: frozenset[DirectiveKind] | None = None) -> str:
-    metadata = tuple(
-        item
-        for item in get_directive_metadata()
-        if allowed_directive_kinds is None or item.kind in allowed_directive_kinds
-    )
-    return _render_canonical_forms_from_metadata(metadata, _DIRECTIVE_KIND_TO_CATEGORY)
-
-
 def _render_positive_acquisition_examples(
     allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
     metadata: Iterable[DirectiveMetadata] | None = None,
