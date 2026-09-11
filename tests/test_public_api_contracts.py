@@ -20,6 +20,7 @@ _REQUIRED_CONTRACT_FILES = {
     "fallback-integration-v1.json",
     "high-level-drafting-v1.json",
     "public-api-v1.json",
+    "python-api-v1.json",
 }
 
 pytestmark = pytest.mark.contract
@@ -820,6 +821,16 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
 def _assert_contract_schema(path: Path, contract: dict[str, object]) -> None:
     label = path.name
     kind = contract.get("kind")
+    if kind == "python-api-surface-contract":
+        _assert_exact_keys(contract, {"id", "kind", "module", "exports"}, label)
+        exports = contract["exports"]
+        assert isinstance(exports, dict), label
+        _assert_exact_keys(exports, {"mode", "names"}, f"{label}.exports")
+        assert exports["mode"] == "exact", label
+        assert isinstance(exports["names"], list), label
+        assert all(isinstance(name, str) and name for name in exports["names"]), label
+        assert len(exports["names"]) == len(set(exports["names"])), label
+        return
     if kind == "api-surface-contract":
         _assert_exact_keys(
             contract, {"id", "kind", "module", "forbidden_exports", "exports"}, label
@@ -942,6 +953,8 @@ def test_public_api_contract_fixtures_have_valid_schema() -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
         _assert_contract_schema(path, contract)
+        if contract["kind"] == "python-api-surface-contract":
+            continue
         if contract["kind"] == "api-surface-contract":
             exports = contract["exports"]
             _assert_exact_keys(exports, {"mode", "names", "members"}, f"{path.name}.exports")
@@ -967,7 +980,7 @@ def test_public_api_surface_contract_matches_package_root_exports() -> None:
     expected_exports = exports["names"]
     export_members = exports["members"]
 
-    assert set(package.__all__) == set(expected_exports)
+    assert set(expected_exports) <= set(package.__all__)
     for name in expected_exports:
         assert hasattr(package, name), name
         assert name in package.__all__, name
@@ -991,14 +1004,16 @@ def test_public_api_surface_contract_has_unique_entries() -> None:
     assert set(export_member_names) == set(export_names)
 
 
-def test_public_api_surface_contract_excludes_typing_only_names() -> None:
-    path = _CONTRACTS_DIR / "public-api-v1.json"
+def test_python_package_surface_contract_matches_exact_root_exports() -> None:
+    path = _CONTRACTS_DIR / "python-api-v1.json"
     contract = _load_contract(path)
-    for name in ["DraftOutcome", "PreprocessResult"]:
-        assert name not in contract["exports"]["names"], name
-        assert name in contract["forbidden_exports"], name
-        assert not hasattr(package, name), name
-        assert name not in package.__all__, name
+    assert contract["module"] == package.__name__
+    exports = contract["exports"]
+    assert exports["mode"] == "exact"
+    assert set(package.__all__) == set(exports["names"])
+    for name in exports["names"]:
+        assert hasattr(package, name), name
+        assert name in package.__all__, name
 
 
 def test_public_api_excludes_detailed_rejection_reason_constants() -> None:
@@ -1046,6 +1061,8 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
 ) -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
+        if contract["kind"] == "python-api-surface-contract":
+            continue
         module = import_module(contract["module"])
         members = (
             contract["exports"]["members"]
@@ -1110,22 +1127,13 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
             raise AssertionError(f"Unsupported contract kind for {name}: {kind}")
 
 
-def test_public_api_surface_contract_matches_exact_export_set() -> None:
-    path = _CONTRACTS_DIR / "public-api-v1.json"
-    contract = _load_contract(path)
-    assert set(contract["exports"]["names"]) == {
-        "DraftResult",
-        "DirectiveDrafter",
-        "RejectedDirective",
-        "RejectedReason",
-        "UnknownDirective",
-        "create_openai_fallback",
-        "create_async_openai_fallback",
-        "REASON_NON_DIRECTIVE",
-        "REASON_INCOMPLETE",
-        "REASON_MULTIPLE_DIRECTIVES",
-        "REASON_INVALID_CANDIDATE",
-    }
+def test_openai_factories_are_python_only_exports() -> None:
+    portable = _load_contract(_CONTRACTS_DIR / "public-api-v1.json")
+    python_surface = _load_contract(_CONTRACTS_DIR / "python-api-v1.json")
+    for name in {"create_openai_fallback", "create_async_openai_fallback"}:
+        assert name not in portable["exports"]["names"]
+        assert name in python_surface["exports"]["names"]
+        assert name in package.__all__
 
 
 def test_typing_only_names_are_not_importable_from_package_root() -> None:

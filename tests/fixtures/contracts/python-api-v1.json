@@ -1,0 +1,21 @@
+{
+  "id": "python-api-surface-v1",
+  "kind": "python-api-surface-contract",
+  "module": "context_compiler_directive_drafter",
+  "exports": {
+    "mode": "exact",
+    "names": [
+      "REASON_NON_DIRECTIVE",
+      "REASON_INCOMPLETE",
+      "REASON_MULTIPLE_DIRECTIVES",
+      "REASON_INVALID_CANDIDATE",
+      "DraftResult",
+      "DirectiveDrafter",
+      "RejectedDirective",
+      "RejectedReason",
+      "UnknownDirective",
+      "create_openai_fallback",
+      "create_async_openai_fallback"
+    ]
+  }
+}
