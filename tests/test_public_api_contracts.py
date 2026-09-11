@@ -506,7 +506,13 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
         spec,
         {"kind"}
         | (
-            {"constructor", "forbidden_members", "public_members", "behavior_probes"}
+            {
+                "constructor",
+                "forbidden_members",
+                "portable_members",
+                "public_members",
+                "behavior_probes",
+            }
             & set(spec.keys())
         ),
         label,
@@ -515,6 +521,27 @@ def _assert_class_spec_schema(spec: dict[str, object], label: str) -> None:
         _assert_forbidden_names_schema(spec["forbidden_members"], f"{label}.forbidden_members")
     if "constructor" in spec:
         _assert_constructor_spec_schema(spec["constructor"], f"{label}.constructor")
+    portable_members = spec.get("portable_members")
+    if portable_members is not None:
+        _assert_exact_keys(portable_members, {"mode", "members"}, f"{label}.portable_members")
+        assert portable_members["mode"] == "exact", f"{label}.portable_members"
+        members = portable_members["members"]
+        assert isinstance(members, dict), f"{label}.portable_members.members"
+        for member_name, member_contract in members.items():
+            assert isinstance(member_name, str), f"{label}.portable_members.members"
+            assert isinstance(member_contract, dict), f"{label}.{member_name}"
+            kind = member_contract.get("kind")
+            assert kind in {"configuration_status", "operation"}, f"{label}.{member_name}"
+            if kind == "configuration_status":
+                _assert_exact_keys(member_contract, {"kind"}, f"{label}.{member_name}")
+            else:
+                _assert_exact_keys(
+                    member_contract,
+                    {"kind", "async"} if "async" in member_contract else {"kind"},
+                    f"{label}.{member_name}",
+                )
+                if "async" in member_contract:
+                    assert isinstance(member_contract["async"], bool), f"{label}.{member_name}"
     public_members = spec.get("public_members")
     if public_members is not None:
         assert isinstance(public_members, dict), f"{label}.public_members"
@@ -783,6 +810,19 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
 
     if "constructor" in spec:
         _assert_constructor_contract(exported, spec["constructor"], name)
+
+    portable_members = spec.get("portable_members")
+    if portable_members is not None:
+        members = portable_members["members"]
+        instance = exported()
+        actual_public_members = {member for member in dir(instance) if not member.startswith("_")}
+        assert actual_public_members == set(members), name
+        for member_name, member_contract in members.items():
+            value = getattr(instance, member_name)
+            if member_contract["kind"] == "operation":
+                assert callable(value), f"{name}.{member_name}"
+            else:
+                assert not callable(value), f"{name}.{member_name}"
 
     public_members = spec.get("public_members")
     if public_members is not None:
