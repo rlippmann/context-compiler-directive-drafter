@@ -1,0 +1,282 @@
+{
+  "id": "prompt-construction-v1",
+  "kind": "prompt-construction-contract",
+  "cases": [
+    {
+      "name": "synthetic-free-text-unrestricted",
+      "mode": "free_text",
+      "metadata": [
+        {
+          "kind": "use_item",
+          "canonical_start": "use",
+          "operand_names": ["item"],
+          "category": "Policy"
+        },
+        {
+          "kind": "adopt_rule",
+          "canonical_start": "adopt",
+          "operand_names": ["rule"],
+          "category": "Policy"
+        },
+        {
+          "kind": "clear_state",
+          "canonical_start": "clear state",
+          "operand_names": [],
+          "category": "Administrative"
+        }
+      ],
+      "allowed_directive_kinds": null,
+      "positive_examples": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "please adopt strictness",
+          "operand_values": ["strictness"]
+        },
+        {
+          "kind": "use_item",
+          "user_input": "please use docker",
+          "operand_values": ["docker"]
+        }
+      ],
+      "scope_payload_contrasts": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "Strictness is required for release",
+          "operand_values": ["strictness for release"],
+          "truncated_operand_values": ["strictness"]
+        }
+      ],
+      "expected": {
+        "canonical_forms": [
+          "- `use <item>` (Policy)",
+          "- `adopt <rule>` (Policy)",
+          "- `clear state` (Administrative)"
+        ],
+        "positive_examples": [
+          "User: please adopt strictness",
+          "Output: adopt strictness",
+          "User: please use docker",
+          "Output: use docker"
+        ],
+        "scope_payload_contrasts": [
+          "Source: Strictness is required for release",
+          "Correct candidate: adopt strictness for release",
+          "Do not truncate it to: adopt strictness"
+        ],
+        "kind_restriction": null,
+        "required_substrings": [
+          "Output contract:",
+          "output exactly `<NO_DIRECTIVE>`",
+          "Output exactly one line."
+        ],
+        "forbidden_substrings": [
+          "classify it as `rejected` and set `output` to null"
+        ]
+      }
+    },
+    {
+      "name": "synthetic-structured-unrestricted",
+      "mode": "structured",
+      "metadata": [
+        {
+          "kind": "use_item",
+          "canonical_start": "use",
+          "operand_names": ["item"],
+          "category": "Policy"
+        },
+        {
+          "kind": "adopt_rule",
+          "canonical_start": "adopt",
+          "operand_names": ["rule"],
+          "category": "Policy"
+        },
+        {
+          "kind": "clear_state",
+          "canonical_start": "clear state",
+          "operand_names": [],
+          "category": "Administrative"
+        }
+      ],
+      "allowed_directive_kinds": null,
+      "positive_examples": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "please adopt strictness",
+          "operand_values": ["strictness"]
+        },
+        {
+          "kind": "use_item",
+          "user_input": "please use docker",
+          "operand_values": ["docker"]
+        }
+      ],
+      "scope_payload_contrasts": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "Strictness is required for release",
+          "operand_values": ["strictness for release"],
+          "truncated_operand_values": ["strictness"]
+        }
+      ],
+      "expected": {
+        "canonical_forms": [
+          "- `use <item>` (Policy)",
+          "- `adopt <rule>` (Policy)",
+          "- `clear state` (Administrative)"
+        ],
+        "positive_examples": [
+          "User: please adopt strictness",
+          "Output: adopt strictness",
+          "User: please use docker",
+          "Output: use docker"
+        ],
+        "scope_payload_contrasts": [
+          "Source: Strictness is required for release",
+          "Correct candidate: adopt strictness for release",
+          "Do not truncate it to: adopt strictness"
+        ],
+        "kind_restriction": null,
+        "required_substrings": [
+          "classify it as `rejected` and set `output` to null",
+          "classification `rejected`, output null."
+        ],
+        "forbidden_substrings": ["output exactly `<NO_DIRECTIVE>`"]
+      }
+    },
+    {
+      "name": "synthetic-free-text-restricted",
+      "mode": "free_text",
+      "metadata": [
+        {
+          "kind": "use_item",
+          "canonical_start": "use",
+          "operand_names": ["item"],
+          "category": "Policy"
+        },
+        {
+          "kind": "adopt_rule",
+          "canonical_start": "adopt",
+          "operand_names": ["rule"],
+          "category": "Policy"
+        }
+      ],
+      "allowed_directive_kinds": ["adopt_rule"],
+      "positive_examples": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "please adopt strictness",
+          "operand_values": ["strictness"]
+        },
+        {
+          "kind": "use_item",
+          "user_input": "please use docker",
+          "operand_values": ["docker"]
+        }
+      ],
+      "scope_payload_contrasts": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "Strictness is required for release",
+          "operand_values": ["strictness for release"],
+          "truncated_operand_values": ["strictness"]
+        },
+        {
+          "kind": "use_item",
+          "user_input": "Docker is required for release",
+          "operand_values": ["docker for release"],
+          "truncated_operand_values": ["docker"]
+        }
+      ],
+      "expected": {
+        "canonical_forms": ["- `adopt <rule>` (Policy)"],
+        "positive_examples": [
+          "User: please adopt strictness",
+          "Output: adopt strictness"
+        ],
+        "scope_payload_contrasts": [
+          "Source: Strictness is required for release",
+          "Correct candidate: adopt strictness for release",
+          "Do not truncate it to: adopt strictness"
+        ],
+        "kind_restriction": [
+          "Directive-kind restriction (hard boundary):",
+          "Only these directive kinds may be proposed: `adopt_rule`.",
+          "If the user request cannot be represented by exactly one of these kinds, abstain"
+        ],
+        "required_substrings": ["Output contract:"],
+        "forbidden_substrings": [
+          "- `use <item>` (Policy)",
+          "User: please use docker",
+          "Source: Docker is required for release"
+        ]
+      }
+    },
+    {
+      "name": "synthetic-structured-restricted",
+      "mode": "structured",
+      "metadata": [
+        {
+          "kind": "use_item",
+          "canonical_start": "use",
+          "operand_names": ["item"],
+          "category": "Policy"
+        },
+        {
+          "kind": "adopt_rule",
+          "canonical_start": "adopt",
+          "operand_names": ["rule"],
+          "category": "Policy"
+        }
+      ],
+      "allowed_directive_kinds": ["use_item"],
+      "positive_examples": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "please adopt strictness",
+          "operand_values": ["strictness"]
+        },
+        {
+          "kind": "use_item",
+          "user_input": "please use docker",
+          "operand_values": ["docker"]
+        }
+      ],
+      "scope_payload_contrasts": [
+        {
+          "kind": "adopt_rule",
+          "user_input": "Strictness is required for release",
+          "operand_values": ["strictness for release"],
+          "truncated_operand_values": ["strictness"]
+        },
+        {
+          "kind": "use_item",
+          "user_input": "Docker is required for release",
+          "operand_values": ["docker for release"],
+          "truncated_operand_values": ["docker"]
+        }
+      ],
+      "expected": {
+        "canonical_forms": ["- `use <item>` (Policy)"],
+        "positive_examples": ["User: please use docker", "Output: use docker"],
+        "scope_payload_contrasts": [
+          "Source: Docker is required for release",
+          "Correct candidate: use docker for release",
+          "Do not truncate it to: use docker"
+        ],
+        "kind_restriction": [
+          "Directive-kind restriction (hard boundary):",
+          "Only these directive kinds may be proposed: `use_item`.",
+          "If the user request cannot be represented by exactly one of these kinds, abstain"
+        ],
+        "required_substrings": [
+          "classify it as `rejected` and set `output` to null"
+        ],
+        "forbidden_substrings": [
+          "- `adopt <rule>` (Policy)",
+          "User: please adopt strictness",
+          "Source: Strictness is required for release"
+        ]
+      }
+    }
+  ]
+}
