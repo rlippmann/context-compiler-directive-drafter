@@ -1,6 +1,6 @@
 from types import MappingProxyType
 
-from context_compiler.grammar import CanonicalDirective, DirectiveKind, get_directive_metadata
+from context_compiler.grammar import CanonicalDirective, get_directive_metadata
 
 from context_compiler_directive_drafter.constants import NO_DIRECTIVE
 from context_compiler_directive_drafter.fallbacks import _prompts as prompt_module
@@ -196,16 +196,19 @@ def test_get_converter_prompt_preserves_behavioral_examples() -> None:
 def test_get_converter_prompt_is_cached_after_first_generation(monkeypatch) -> None:
     prompt_module._get_converter_prompt.cache_clear()
     calls = 0
-    original = prompt_module._render_canonical_forms
+    original = prompt_module._render_canonical_forms_from_metadata
 
     def counting_render_canonical_forms(
-        allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+        metadata: object,
+        category_by_kind: object,
     ) -> str:
         nonlocal calls
         calls += 1
-        return original(allowed_directive_kinds)
+        return original(metadata, category_by_kind)
 
-    monkeypatch.setattr(prompt_module, "_render_canonical_forms", counting_render_canonical_forms)
+    monkeypatch.setattr(
+        prompt_module, "_render_canonical_forms_from_metadata", counting_render_canonical_forms
+    )
 
     first = get_converter_prompt()
     second = get_converter_prompt()

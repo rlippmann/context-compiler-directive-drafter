@@ -368,14 +368,19 @@ def _render_canonical_forms(allowed_directive_kinds: frozenset[DirectiveKind] | 
 
 def _render_positive_acquisition_examples(
     allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+    metadata: Iterable[DirectiveMetadata] | None = None,
+    examples: Iterable[_AcquisitionExample] | None = None,
 ) -> str:
-    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
+    metadata_by_kind = {
+        item.kind: item for item in (get_directive_metadata() if metadata is None else metadata)
+    }
+    examples = _POSITIVE_ACQUISITION_EXAMPLES if examples is None else examples
     lines = ["Examples of user requests that may be drafted as directives:"]
-    for example in _POSITIVE_ACQUISITION_EXAMPLES:
+    for example in examples:
         if allowed_directive_kinds is not None and example.kind not in allowed_directive_kinds:
             continue
-        metadata = metadata_by_kind[example.kind]
-        canonical_output = _render_example_output(metadata, example.operand_values)
+        item_metadata = metadata_by_kind[example.kind]
+        canonical_output = _render_example_output(item_metadata, example.operand_values)
         lines.extend(
             [
                 f"User: {example.user_input}",
@@ -388,15 +393,20 @@ def _render_positive_acquisition_examples(
 
 def _render_scope_payload_contrasts(
     allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+    metadata: Iterable[DirectiveMetadata] | None = None,
+    examples: Iterable[_ScopePayloadContrast] | None = None,
 ) -> str:
-    metadata_by_kind = {metadata.kind: metadata for metadata in get_directive_metadata()}
+    metadata_by_kind = {
+        item.kind: item for item in (get_directive_metadata() if metadata is None else metadata)
+    }
+    examples = _SCOPE_PAYLOAD_CONTRASTS if examples is None else examples
     lines = ["Scope and payload contrast examples:"]
-    for example in _SCOPE_PAYLOAD_CONTRASTS:
+    for example in examples:
         if allowed_directive_kinds is not None and example.kind not in allowed_directive_kinds:
             continue
-        metadata = metadata_by_kind[example.kind]
-        correct = _render_example_output(metadata, example.operand_values)
-        truncated = _render_example_output(metadata, example.truncated_operand_values)
+        item_metadata = metadata_by_kind[example.kind]
+        correct = _render_example_output(item_metadata, example.operand_values)
+        truncated = _render_example_output(item_metadata, example.truncated_operand_values)
         lines.extend(
             [
                 f"Source: {example.user_input}",
@@ -409,15 +419,23 @@ def _render_scope_payload_contrasts(
 
 
 def _render_example_output(metadata: DirectiveMetadata, operand_values: tuple[str, ...]) -> str:
-    operands = MappingProxyType(dict(zip(metadata.operand_names, operand_values, strict=True)))
-    return CanonicalDirective(kind=metadata.kind, operands=operands).text
+    if isinstance(metadata.kind, DirectiveKind):
+        operands = MappingProxyType(dict(zip(metadata.operand_names, operand_values, strict=True)))
+        return CanonicalDirective(kind=metadata.kind, operands=operands).text
+    return " ".join(part for part in (metadata.canonical_start, *operand_values) if part)
 
 
-def _render_kind_restriction(allowed_directive_kinds: frozenset[DirectiveKind]) -> str:
+def _kind_value(kind: Any) -> str:
+    return kind.value if isinstance(kind, DirectiveKind) else str(kind)
+
+
+def _render_kind_restriction(
+    allowed_directive_kinds: frozenset[DirectiveKind],
+    metadata: Iterable[DirectiveMetadata] | None = None,
+) -> str:
+    metadata = tuple(get_directive_metadata() if metadata is None else metadata)
     allowed_names = [
-        metadata.kind.value
-        for metadata in get_directive_metadata()
-        if metadata.kind in allowed_directive_kinds
+        _kind_value(item.kind) for item in metadata if item.kind in allowed_directive_kinds
     ]
     names = ", ".join(f"`{name}`" for name in allowed_names) or "none"
     return f"""Directive-kind restriction (hard boundary):
@@ -428,10 +446,15 @@ def _render_kind_restriction(allowed_directive_kinds: frozenset[DirectiveKind]) 
   representable by that kind or general guidance mentions it."""
 
 
-def _render_prompt(
+def _render_prompt_from_construction(
     mode: str,
+    metadata: Iterable[DirectiveMetadata],
+    category_by_kind: Mapping[Any, str],
+    positive_examples: Iterable[_AcquisitionExample],
+    scope_payload_contrasts: Iterable[_ScopePayloadContrast],
     allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
 ) -> str:
+    metadata = tuple(metadata)
     structured = mode == "structured"
     sections = [
         "You are a directive converter that drafts candidate",
@@ -444,19 +467,24 @@ def _render_prompt(
         "",
         _DIRECTIVE_CATEGORY_LINES,
         "",
-        _render_canonical_forms(allowed_directive_kinds),
+        _render_canonical_forms_from_metadata(metadata, category_by_kind)
+        if allowed_directive_kinds is None
+        else _render_canonical_forms_from_metadata(
+            tuple(item for item in metadata if item.kind in allowed_directive_kinds),
+            category_by_kind,
+        ),
         "",
         _PREMISE_POLICY_GUIDANCE,
         "",
         _STRUCTURED_PROMPT_SUFFIX if structured else _PROMPT_SUFFIX,
         "",
-        _render_kind_restriction(allowed_directive_kinds)
+        _render_kind_restriction(allowed_directive_kinds, metadata)
         if allowed_directive_kinds is not None
         else "",
         "",
-        _render_scope_payload_contrasts(allowed_directive_kinds),
+        _render_scope_payload_contrasts(allowed_directive_kinds, metadata, scope_payload_contrasts),
         "",
-        _render_positive_acquisition_examples(allowed_directive_kinds),
+        _render_positive_acquisition_examples(allowed_directive_kinds, metadata, positive_examples),
         "",
         (
             "Contrastive examples:\n- Ordinary conversation, questions, quoted or reported "
@@ -467,6 +495,21 @@ def _render_prompt(
         ),
     ]
     return "\n".join(sections).strip()
+
+
+def _render_prompt(
+    mode: str,
+    allowed_directive_kinds: frozenset[DirectiveKind] | None = None,
+) -> str:
+    metadata = tuple(get_directive_metadata())
+    return _render_prompt_from_construction(
+        mode,
+        metadata,
+        _DIRECTIVE_KIND_TO_CATEGORY,
+        _POSITIVE_ACQUISITION_EXAMPLES,
+        _SCOPE_PAYLOAD_CONTRASTS,
+        allowed_directive_kinds,
+    )
 
 
 @lru_cache(maxsize=1)
