@@ -32,9 +32,22 @@ def test_grammar_dependent_outputs_follow_synthetic_metadata() -> None:
 
         starts = heuristic_preprocessor._directive_canonical_starts_from_metadata(metadata)
         grammar_section = _prompts._render_canonical_forms_from_metadata(metadata, categories)
+        incomplete = case["incomplete"]
+        rewrite = case["rewrite"]
 
         assert list(starts) == case["canonical_starts"]
         assert grammar_section.splitlines()[1:] == case["prompt_forms"]
+        for message, expected in incomplete.items():
+            assert (
+                heuristic_preprocessor._is_incomplete_canonical_directive(message, metadata)
+                is expected
+            )
+        assert (
+            heuristic_preprocessor._render_canonical_candidate(
+                rewrite["kind"], tuple(rewrite["operands"]), metadata
+            )
+            == rewrite["expected"]
+        )
 
 
 def test_synthetic_added_directive_changes_both_derived_outputs() -> None:
@@ -54,8 +67,20 @@ def test_synthetic_added_directive_changes_both_derived_outputs() -> None:
         baseline_metadata, baseline_categories
     )
     added_prompt = _prompts._render_canonical_forms_from_metadata(added_metadata, added_categories)
+    baseline_rewrite = heuristic_preprocessor._render_canonical_candidate(
+        baseline["rewrite"]["kind"],
+        tuple(baseline["rewrite"]["operands"]),
+        baseline_metadata,
+    )
+    added_rewrite = heuristic_preprocessor._render_canonical_candidate(
+        added["rewrite"]["kind"],
+        tuple(added["rewrite"]["operands"]),
+        added_metadata,
+    )
 
     assert "adopt" not in baseline_starts
     assert "adopt" in added_starts
     assert "`adopt <rule>` (Policy)" not in baseline_prompt
     assert "`adopt <rule>` (Policy)" in added_prompt
+    assert baseline_rewrite == "use docker"
+    assert added_rewrite == "adopt strictness"
