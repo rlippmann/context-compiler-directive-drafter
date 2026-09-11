@@ -279,6 +279,7 @@ def test_heuristic_lexical_boundary_does_not_create_false_second_directive_start
 
 def test_heuristic_rejects_incomplete_or_ambiguous_replacement_syntax() -> None:
     cases = [
+        ("use", "incomplete_directive"),
         ("use instead of docker", "compound_directive"),
         ("use podman instead of", "incomplete_directive"),
         ("use podman not docker", "compound_directive"),
