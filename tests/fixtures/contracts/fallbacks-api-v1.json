@@ -1,0 +1,25 @@
+{
+  "id": "fallbacks-api-surface-v1",
+  "kind": "api-namespace-contract",
+  "module": "context_compiler_directive_drafter.fallbacks",
+  "forbidden_exports": [],
+  "exports": {
+    "mode": "exact",
+    "names": [
+      "FallbackProfile",
+      "DraftFallback",
+      "AsyncDraftFallback",
+      "get_fallback_profile",
+      "InvalidFallbackResponseError",
+      "parse_structured_response"
+    ],
+    "members": {
+      "FallbackProfile": {"kind": "class"},
+      "DraftFallback": {"kind": "type_alias"},
+      "AsyncDraftFallback": {"kind": "type_alias"},
+      "get_fallback_profile": {"kind": "operation"},
+      "InvalidFallbackResponseError": {"kind": "invalid_response_signal"},
+      "parse_structured_response": {"kind": "operation"}
+    }
+  }
+}

@@ -9,6 +9,7 @@ import pytest
 from context_compiler.grammar import CanonicalDirective
 
 import context_compiler_directive_drafter as package
+import context_compiler_directive_drafter.fallbacks as fallback_namespace
 from context_compiler_directive_drafter.drafter import (
     DraftResult,
     RejectedDirective,
@@ -18,6 +19,7 @@ from context_compiler_directive_drafter.drafter import (
 _CONTRACTS_DIR = Path(__file__).resolve().parent / "fixtures" / "contracts"
 _REQUIRED_CONTRACT_FILES = {
     "fallback-integration-v1.json",
+    "fallbacks-api-v1.json",
     "high-level-drafting-v1.json",
     "public-api-v1.json",
     "python-api-v1.json",
@@ -821,6 +823,29 @@ def _assert_class_contract(name: str, exported: object, spec: dict[str, object])
 def _assert_contract_schema(path: Path, contract: dict[str, object]) -> None:
     label = path.name
     kind = contract.get("kind")
+    if kind == "api-namespace-contract":
+        _assert_exact_keys(
+            contract,
+            {"id", "kind", "module", "forbidden_exports", "exports"},
+            label,
+        )
+        _assert_forbidden_names_schema(contract["forbidden_exports"], f"{label}.forbidden_exports")
+        exports = contract["exports"]
+        assert isinstance(exports, dict), label
+        _assert_exact_keys(exports, {"mode", "names", "members"}, f"{label}.exports")
+        assert exports["mode"] == "exact", label
+        names = exports["names"]
+        members = exports["members"]
+        assert isinstance(names, list) and all(isinstance(name, str) for name in names), label
+        assert len(names) == len(set(names)), label
+        assert isinstance(members, dict), label
+        assert set(members) == set(names), label
+        allowed_kinds = {"class", "type_alias", "operation", "invalid_response_signal"}
+        for name, member in members.items():
+            assert isinstance(member, dict), name
+            _assert_exact_keys(member, {"kind"}, name)
+            assert member["kind"] in allowed_kinds, name
+        return
     if kind == "python-api-surface-contract":
         _assert_exact_keys(contract, {"id", "kind", "module", "exports"}, label)
         exports = contract["exports"]
@@ -953,7 +978,7 @@ def test_public_api_contract_fixtures_have_valid_schema() -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
         _assert_contract_schema(path, contract)
-        if contract["kind"] == "python-api-surface-contract":
+        if contract["kind"] in {"api-namespace-contract", "python-api-surface-contract"}:
             continue
         if contract["kind"] == "api-surface-contract":
             exports = contract["exports"]
@@ -1016,6 +1041,33 @@ def test_python_package_surface_contract_matches_exact_root_exports() -> None:
         assert name in package.__all__, name
 
 
+def test_portable_fallback_namespace_contract_matches_exact_exports() -> None:
+    path = _CONTRACTS_DIR / "fallbacks-api-v1.json"
+    contract = _load_contract(path)
+    assert contract["module"] == fallback_namespace.__name__
+    exports = contract["exports"]
+    names = exports["names"]
+    members = exports["members"]
+
+    assert exports["mode"] == "exact"
+    assert set(fallback_namespace.__all__) == set(names)
+    for name in names:
+        assert hasattr(fallback_namespace, name), name
+        assert name in fallback_namespace.__all__, name
+
+        member_kind = members[name]["kind"]
+        exported = getattr(fallback_namespace, name)
+        if member_kind == "class":
+            assert inspect.isclass(exported), name
+        elif member_kind == "type_alias":
+            assert not inspect.isclass(exported) and not inspect.isroutine(exported), name
+        elif member_kind == "operation":
+            assert callable(exported), name
+        else:
+            assert inspect.isclass(exported), name
+            assert issubclass(exported, RuntimeError), name
+
+
 def test_public_api_excludes_detailed_rejection_reason_constants() -> None:
     detailed_names = {
         "REASON_ORDINARY_NON_DIRECTIVE",
@@ -1061,7 +1113,7 @@ def test_public_api_contracts_validate_kinds_signatures_and_shapes(
 ) -> None:
     for path in _contract_paths():
         contract = _load_contract(path)
-        if contract["kind"] == "python-api-surface-contract":
+        if contract["kind"] in {"api-namespace-contract", "python-api-surface-contract"}:
             continue
         module = import_module(contract["module"])
         members = (
