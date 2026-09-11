@@ -18,7 +18,22 @@
     ],
     "members": {
       "DraftResult": {"kind": "class"},
-      "DirectiveDrafter": {"kind": "class"},
+      "DirectiveDrafter": {
+        "kind": "class",
+        "portable_members": {
+          "mode": "exact",
+          "members": {
+            "fallback": {"kind": "configuration_status"},
+            "async_fallback": {"kind": "configuration_status"},
+            "configure_fallback": {"kind": "operation"},
+            "clear_fallback": {"kind": "operation"},
+            "configure_async_fallback": {"kind": "operation"},
+            "clear_async_fallback": {"kind": "operation"},
+            "draft_directive": {"kind": "operation", "async": false},
+            "async_draft_directive": {"kind": "operation", "async": true}
+          }
+        }
+      },
       "RejectedDirective": {"kind": "class"},
       "RejectedReason": {
         "kind": "type_alias",
