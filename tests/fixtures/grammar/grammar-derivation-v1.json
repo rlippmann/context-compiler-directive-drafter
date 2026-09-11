@@ -12,7 +12,9 @@
       "prompt_forms": [
         "- `use <item>` (Policy)",
         "- `clear state` (Administrative)"
-      ]
+      ],
+      "incomplete": {"use": true, "adopt": false},
+      "rewrite": {"kind": "use_item", "operands": ["docker"], "expected": "use docker"}
     },
     {
       "name": "added_directive",
@@ -26,7 +28,9 @@
         "- `use <item>` (Policy)",
         "- `clear state` (Administrative)",
         "- `adopt <rule>` (Policy)"
-      ]
+      ],
+      "incomplete": {"use": true, "adopt": true},
+      "rewrite": {"kind": "adopt_rule", "operands": ["strictness"], "expected": "adopt strictness"}
     }
   ]
 }

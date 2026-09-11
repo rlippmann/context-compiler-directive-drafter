@@ -8,10 +8,12 @@ boundaries; ambiguous interpretation remains fallback-eligible.
 
 import re
 from collections.abc import Iterable
+from types import MappingProxyType
 from typing import Literal, TypedDict
 
 from context_compiler.grammar import (
     CanonicalDirective,
+    DirectiveKind,
     DirectiveMetadata,
     decompose_directive,
     get_directive_metadata,
@@ -116,15 +118,12 @@ def _has_multiple_directive_starts(message: str) -> bool:
 
 
 def _is_incomplete_directive(message: str) -> bool:
+    if _is_incomplete_canonical_directive(message, get_directive_metadata()):
+        return True
     if (
         message
         in {
-            "use",
-            "prohibit",
-            "remove policy",
             "change premise",
-            "change premise to",
-            "set premise",
             "set premise to",
         }
         or message.endswith(" instead of")
@@ -132,6 +131,13 @@ def _is_incomplete_directive(message: str) -> bool:
     ):
         return True
     return bool(_INCOMPLETE_PROHIBIT_PATTERN.fullmatch(message))
+
+
+def _is_incomplete_canonical_directive(
+    message: str,
+    metadata: Iterable[DirectiveMetadata],
+) -> bool:
+    return any(item.operand_names and message == item.canonical_start for item in metadata)
 
 
 def _normalized_for_match(message: str) -> str:
@@ -238,6 +244,7 @@ def _is_reported_quoted_directive(message: str) -> bool:
 def _rewrite_bounded_candidate(message: str) -> str:
     """Apply deterministic whole-message rewrites before grammar parsing."""
     current = message
+    metadata = tuple(get_directive_metadata())
 
     match = _PLEASE_PREFIX_PATTERN.fullmatch(current)
     if match is not None:
@@ -248,45 +255,81 @@ def _rewrite_bounded_candidate(message: str) -> str:
         payload = match.group("payload")
         if re.search(r"\bi prefer\b", payload):
             return current
-        current = f"use {payload}"
+        current = _render_canonical_candidate(DirectiveKind.USE_ITEM, (payload,), metadata)
 
     match = _SET_PREMISE_TO_PATTERN.fullmatch(current)
     if match is not None:
-        return f"set premise {match.group('payload')}"
+        return _render_canonical_candidate(
+            DirectiveKind.SET_PREMISE, (match.group("payload"),), metadata
+        )
 
     match = _CHANGE_PREMISE_MISSING_TO_PATTERN.fullmatch(current)
     if match is not None:
-        return f"change premise to {match.group('payload')}"
+        return _render_canonical_candidate(
+            DirectiveKind.CHANGE_PREMISE, (match.group("payload"),), metadata
+        )
 
     match = _ALLOW_ALIAS_PATTERN.fullmatch(current)
     if match is not None:
-        return f"use {match.group('item')}"
+        return _render_canonical_candidate(DirectiveKind.USE_ITEM, (match.group("item"),), metadata)
 
     match = _PROHIBIT_ALIAS_PATTERN.fullmatch(current)
     if match is not None:
-        return f"prohibit {match.group('item')}"
+        return _render_canonical_candidate(
+            DirectiveKind.PROHIBIT_ITEM, (match.group("item"),), metadata
+        )
 
     match = _STOP_USING_ALIAS_PATTERN.fullmatch(current)
     if match is not None:
-        return f"prohibit {match.group('item')}"
+        return _render_canonical_candidate(
+            DirectiveKind.PROHIBIT_ITEM, (match.group("item"),), metadata
+        )
 
     match = _TRANSPOSED_PROHIBIT_PATTERN.fullmatch(current)
     if match is not None:
-        return f"prohibit {match.group('item')}"
+        return _render_canonical_candidate(
+            DirectiveKind.PROHIBIT_ITEM, (match.group("item"),), metadata
+        )
 
     match = _REPLACE_MISSING_OF_PATTERN.fullmatch(current)
     if match is not None:
-        return f"use {match.group('new_item')} instead of {match.group('old_item')}"
+        return _render_canonical_candidate(
+            DirectiveKind.REPLACE_USE,
+            (match.group("new_item"), match.group("old_item")),
+            metadata,
+        )
 
     match = _REPLACE_SPLIT_OF_PATTERN.fullmatch(current)
     if match is not None:
-        return f"use {match.group('new_item')} instead of {match.group('old_item')}"
+        return _render_canonical_candidate(
+            DirectiveKind.REPLACE_USE,
+            (match.group("new_item"), match.group("old_item")),
+            metadata,
+        )
 
     return current
 
 
 def _is_ambiguous_alias(message: str) -> bool:
     return any(pattern.fullmatch(message) for pattern in _AMBIGUOUS_ALIAS_PATTERNS)
+
+
+def _render_canonical_candidate(
+    kind: object,
+    operand_values: tuple[str, ...],
+    metadata: Iterable[DirectiveMetadata],
+) -> str:
+    item = next(item for item in metadata if item.kind == kind)
+    if isinstance(kind, DirectiveKind):
+        operand_mapping = MappingProxyType(
+            dict(zip(item.operand_names, operand_values, strict=True))
+        )
+        try:
+            return CanonicalDirective(kind=kind, operands=operand_mapping).text
+        except ValueError:
+            pass
+    operand_text = " ".join(operand_values)
+    return " ".join(part for part in (item.canonical_start, operand_text) if part)
 
 
 def _is_unsupported_alias(message: str) -> bool:
