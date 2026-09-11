@@ -4,9 +4,11 @@ Prompts are exposed to integrations only through ``FallbackProfile`` so prompt
 construction stays separate from the public conformance surface.
 """
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import lru_cache
 from types import MappingProxyType
+from typing import Any
 
 from context_compiler.grammar import (
     CanonicalDirective,
@@ -27,6 +29,9 @@ def _sample_operand(name: str) -> str:
 
 
 def _render_canonical_form(metadata: DirectiveMetadata) -> str:
+    if not isinstance(metadata.kind, DirectiveKind):
+        operands = " ".join(_placeholder(name) for name in metadata.operand_names)
+        return " ".join(part for part in (metadata.canonical_start, operands) if part)
     sample_operands = MappingProxyType(
         {name: _sample_operand(name) for name in metadata.operand_names}
     )
@@ -340,15 +345,25 @@ _POSITIVE_ACQUISITION_EXAMPLES: tuple[_AcquisitionExample, ...] = (
 )
 
 
-def _render_canonical_forms(allowed_directive_kinds: frozenset[DirectiveKind] | None = None) -> str:
+def _render_canonical_forms_from_metadata(
+    metadata: Iterable[DirectiveMetadata],
+    category_by_kind: Mapping[Any, str],
+) -> str:
     lines = ["Canonical directive forms:"]
-    for metadata in get_directive_metadata():
-        if allowed_directive_kinds is not None and metadata.kind not in allowed_directive_kinds:
-            continue
-        category = _DIRECTIVE_KIND_TO_CATEGORY[metadata.kind]
-        canonical_form = _render_canonical_form(metadata)
+    for item in metadata:
+        category = category_by_kind[item.kind]
+        canonical_form = _render_canonical_form(item)
         lines.append(f"- `{canonical_form}` ({category})")
     return "\n".join(lines)
+
+
+def _render_canonical_forms(allowed_directive_kinds: frozenset[DirectiveKind] | None = None) -> str:
+    metadata = tuple(
+        item
+        for item in get_directive_metadata()
+        if allowed_directive_kinds is None or item.kind in allowed_directive_kinds
+    )
+    return _render_canonical_forms_from_metadata(metadata, _DIRECTIVE_KIND_TO_CATEGORY)
 
 
 def _render_positive_acquisition_examples(
