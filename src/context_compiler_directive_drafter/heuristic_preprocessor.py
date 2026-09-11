@@ -7,10 +7,12 @@ boundaries; ambiguous interpretation remains fallback-eligible.
 """
 
 import re
+from collections.abc import Iterable
 from typing import Literal, TypedDict
 
 from context_compiler.grammar import (
     CanonicalDirective,
+    DirectiveMetadata,
     decompose_directive,
     get_directive_metadata,
 )
@@ -136,9 +138,15 @@ def _normalized_for_match(message: str) -> str:
     return re.sub(r"\s+", " ", message.strip()).lower()
 
 
-def _directive_canonical_starts() -> tuple[str, ...]:
-    starts = {metadata.canonical_start for metadata in get_directive_metadata()}
+def _directive_canonical_starts_from_metadata(
+    metadata: Iterable[DirectiveMetadata],
+) -> tuple[str, ...]:
+    starts = {item.canonical_start for item in metadata}
     return tuple(sorted(starts, key=len, reverse=True))
+
+
+def _directive_canonical_starts() -> tuple[str, ...]:
+    return _directive_canonical_starts_from_metadata(get_directive_metadata())
 
 
 def _directive_cues() -> tuple[str, ...]:

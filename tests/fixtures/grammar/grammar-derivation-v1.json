@@ -1,0 +1,32 @@
+{
+  "id": "grammar-derivation-v1",
+  "kind": "grammar-derivation-contract",
+  "cases": [
+    {
+      "name": "baseline",
+      "metadata": [
+        {"kind": "use_item", "canonical_start": "use", "operand_names": ["item"], "category": "Policy"},
+        {"kind": "clear_state", "canonical_start": "clear state", "operand_names": [], "category": "Administrative"}
+      ],
+      "canonical_starts": ["clear state", "use"],
+      "prompt_forms": [
+        "- `use <item>` (Policy)",
+        "- `clear state` (Administrative)"
+      ]
+    },
+    {
+      "name": "added_directive",
+      "metadata": [
+        {"kind": "use_item", "canonical_start": "use", "operand_names": ["item"], "category": "Policy"},
+        {"kind": "clear_state", "canonical_start": "clear state", "operand_names": [], "category": "Administrative"},
+        {"kind": "adopt_rule", "canonical_start": "adopt", "operand_names": ["rule"], "category": "Policy"}
+      ],
+      "canonical_starts": ["clear state", "adopt", "use"],
+      "prompt_forms": [
+        "- `use <item>` (Policy)",
+        "- `clear state` (Administrative)",
+        "- `adopt <rule>` (Policy)"
+      ]
+    }
+  ]
+}
