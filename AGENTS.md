@@ -44,7 +44,6 @@ Be explicit that drafting proposes and `context-compiler` decides.
 ## Public API and imports
 
 - The public import package is `context_compiler_directive_drafter`.
-- The CLI command is `directive-drafter`.
 - Do not preserve or reintroduce legacy `context_compiler_directive_drafter` imports.
 - Do not add compatibility aliases that blur the public package boundary unless explicitly requested.
 
@@ -60,7 +59,6 @@ User-facing behavior includes:
 * abstention behavior
 * validation behavior
 * prompt and resource loading
-* CLI exit status and output contract
 * replay-input-only preprocessing behavior in integration examples
 * forwarded-message preservation in integration examples
 * integration handoff boundaries between the drafter and `context-compiler`
@@ -146,8 +144,8 @@ Keep the ownership boundary explicit:
 - `context-compiler-directive-drafter` owns drafting-package docs, prompt/resource usage docs, and drafting integration guidance for this package
 - `context-compiler` owns compiler behavior, engine semantics, authoritative state mutation, and directive application rules
 
-README examples, integration examples, migration guides, CLI usage
-documentation, and explicitly requested documentation changes are part of the
+README examples, integration examples, migration guides, and explicitly
+requested documentation changes are part of the
 project contract.
 
 Treat documentation requirements in a task as acceptance criteria.
@@ -175,7 +173,6 @@ Drift detection is required work, not optional polish.
 When changing behavior or docs, actively check for drift across:
 - README contract language
 - integration examples and their documented behavior
-- CLI usage and exit/output descriptions
 - prompt/resource loading behavior
 - exported package surface and package-listing claims
 - tests, fixtures, and captured examples
@@ -188,7 +185,7 @@ If you find drift:
 
 ## Documentation style
 
-For README, integration, migration, CLI, and package-listing docs, explain
+For README, integration, migration, and package-listing docs, explain
 user-visible drafting behavior before architecture.
 
 Lead with what the package does, how users or hosts use it, and how it relates

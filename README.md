@@ -420,16 +420,6 @@ resources.
 
 Hosts that want broader proposal behavior should implement it explicitly.
 
-## CLI
-
-The CLI command is `directive-drafter`. The CLI currently supports a limited set of behaviors:
-
-```bash
-uv run directive-drafter "please make replies concise"
-```
-
-It returns a non-zero exit status because the public high-level drafting API requires a host-provided engine context.
-
 ## Development
 
 Run local checks:
