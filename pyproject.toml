@@ -38,9 +38,6 @@ Homepage = "https://github.com/rlippmann/context-compiler-directive-drafter"
 Repository = "https://github.com/rlippmann/context-compiler-directive-drafter"
 Issues = "https://github.com/rlippmann/context-compiler-directive-drafter/issues"
 
-[project.scripts]
-directive-drafter = "context_compiler_directive_drafter.cli:main"
-
 [dependency-groups]
 dev = [
   "coverage",
