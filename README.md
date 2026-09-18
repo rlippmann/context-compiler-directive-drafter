@@ -110,12 +110,6 @@ Install the optional OpenAI-compatible integration extra:
 pip install "context-compiler-directive-drafter[openai]"
 ```
 
-For LiteLLM routing across providers, install the separate optional extra:
-
-```bash
-pip install "context-compiler-directive-drafter[litellm]"
-```
-
 Use it with OpenAI by creating a fallback callback and passing it to the
 Drafter:
 
@@ -162,6 +156,12 @@ is returned unchanged. The adapter owns provider-response parsing; the Drafter
 passes candidate text through Core parsing and validation and shapes the result.
 
 ### LiteLLM fallback
+
+Install the optional LiteLLM integration extra:
+
+```bash
+pip install "context-compiler-directive-drafter[litellm]"
+```
 
 LiteLLM provides the same fallback contract across its supported providers:
 
@@ -283,7 +283,7 @@ fixtures.
 
 Public interface:
 
-- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, fallback output parsing and validation, and final result construction.
+- `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, Core parsing, and final result construction.
 - `DirectiveDrafter.async_draft_directive(...)`: Asynchronous orchestration over the same drafting stages using an async fallback callback when configured.
 - `DraftResult`: Structured non-authoritative result returned by either drafting entry point.
 - `context_compiler_directive_drafter.fallbacks`: Provider-neutral fallback profiles, callback contracts, structured-response parsing, and invalid-response helpers.
