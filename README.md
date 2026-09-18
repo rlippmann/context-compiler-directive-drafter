@@ -1,17 +1,12 @@
 # Context Compiler Directive Drafter
 
-Draft candidate Context Compiler directives from natural-language input.
+Directive Drafter turns user input into non-authoritative candidate directives
+for host review. It combines deterministic heuristic drafting with an optional
+fallback acquisition step for input the heuristic path cannot interpret
+confidently.
 
-For example, the drafter can turn:
-
-> Please use Docker for container examples.
-
-into the candidate directive:
-
-> use docker
-
-Drafts are non-authoritative. `context-compiler` remains responsible for
-grammar validity, policy decisions, application, and authoritative state.
+The Drafter proposes. Context Compiler remains authoritative for grammar,
+policy decisions, application, and state.
 
 ## Installation
 
@@ -27,103 +22,73 @@ uv sync --group dev
 
 ## Basic usage
 
+This Python example uses the deterministic heuristic path:
+
 ```python
+from context_compiler import Engine
+from context_compiler.grammar import CanonicalDirective
+
 from context_compiler_directive_drafter import (
     DirectiveDrafter,
     RejectedDirective,
     UnknownDirective,
 )
 
-result = DirectiveDrafter().draft_directive(
-    "Please use Docker for container examples."
-)
+drafter = DirectiveDrafter()
+engine = Engine()
+result = drafter.draft_directive("I prefer concise replies")
 
-if hasattr(result.result, "text"):
-    print("Candidate directive:", result.result.text)
+if isinstance(result.result, CanonicalDirective):
+    print("Candidate directive:", result.result.text)  # use concise replies
+    if input("Confirm and apply this directive? [y/N] ").lower() == "y":
+        decision = engine.apply_directive(result.result)
+        print("Compiler decision:", decision)
 elif isinstance(result.result, RejectedDirective):
     print("Directive acquisition rejected:", result.result.reason)
 elif isinstance(result.result, UnknownDirective):
-    print("Need clarification:", result.result.reason)
+    print("Need clarification or optional fallback:", result.result.reason)
 ```
 
-`DraftResult.result` is one of three high-level outcomes:
+`DraftResult.result` has one of three high-level forms:
 
-- `CanonicalDirective`: a proposed directive for host review;
-- `RejectedDirective`: terminal acquisition rejection that is not sent to fallback;
-- `UnknownDirective`: semantic uncertainty eligible for optional fallback acquisition.
+- `CanonicalDirective`: a candidate directive for host review;
+- `RejectedDirective`: a terminal acquisition rejection;
+- `UnknownDirective`: semantic uncertainty that may be sent to an optional
+  fallback.
 
-The `source` field identifies the final producer, such as `heuristic` or a
-configured fallback source. It does not represent compiler approval or applied
-state. For a runnable example, see [examples/basic_usage.py](examples/basic_usage.py).
+The `source` field identifies the producer of the final drafting result. It does
+not represent compiler approval, applied state, or authoritative state.
 
-## Fallback integrations
+## Optional fallbacks
 
-The drafter always tries heuristic drafting first. Configure a fallback when
-the host wants provider-backed interpretation of `UnknownDirective` results.
-Fallback callbacks receive the original input and return candidate directive
-text or `None`.
+Fallbacks are optional acquisition integrations for `UnknownDirective` results.
+They receive the original input and may propose candidate directive text for
+the host to review. For example, a fallback may interpret:
 
-### OpenAI-compatible providers
+> The intended audience is senior management
 
-```bash
-pip install "context-compiler-directive-drafter[openai]"
-```
+as:
 
-```python
-import os
+> `set premise intended audience is senior management`
 
-from context_compiler_directive_drafter import DirectiveDrafter
-from context_compiler_directive_drafter.fallbacks.openai import create_openai_fallback
-
-fallback = create_openai_fallback(
-    model="gpt-4o-mini",
-    api_key=os.environ["OPENAI_API_KEY"],
-)
-drafter = DirectiveDrafter(fallback=fallback, fallback_source="openai")
-```
-
-Use `create_async_openai_fallback(...)` with
-`DirectiveDrafter(async_fallback=...)` and `async_draft_directive(...)` for an
-asynchronous host path. OpenAI-compatible endpoints can provide a custom
-`base_url`.
-
-### LiteLLM
-
-```bash
-pip install "context-compiler-directive-drafter[litellm]"
-```
-
-```python
-from context_compiler_directive_drafter.fallbacks.litellm import create_litellm_fallback
-
-fallback = create_litellm_fallback(model="anthropic/claude-sonnet-4-5")
-```
-
-Pass LiteLLM's provider/model identifier unchanged. For native integrations,
-the [`fallbacks` namespace](src/context_compiler_directive_drafter/fallbacks/__init__.py)
-provides provider-neutral callback types, fallback profiles, structured-response
-parsing, and invalid-response errors.
-
-Provider adapters handle provider response formats. The Drafter uses Core
-grammar parsing and validation for returned candidate text and constructs the
-non-authoritative result.
+The premise interpretation depends on optional fallback acquisition; it is not
+claimed as deterministic heuristic behavior. Available fallback integrations
+depend on the implementation. See the [Python fallback integrations](docs/PythonFallbacks.md)
+document for provider-specific setup.
 
 ## Authority boundary
 
-The Drafter proposes; the Context Compiler decides and applies. Hosts should
-review or confirm a `CanonicalDirective` before handing it to Core. Never pass
-raw provider output directly to the compiler, and do not use the Drafter to
-read or mutate authoritative compiler state.
-
-The drafter's acquisition rules, including rejection, uncertainty, bounded
-rewrites, and other input-boundary behavior, are specified in
-[DrafterAcquisitionSpec.md](docs/DrafterAcquisitionSpec.md).
+Hosts decide whether to confirm a proposed `CanonicalDirective`. Only after
+confirmation should a host hand it to Context Compiler through
+`engine.apply_directive(...)`. Do not pass raw fallback output directly to the
+compiler, and do not use the Drafter to read or mutate authoritative compiler
+state.
 
 ## Further documentation
 
 - [Acquisition specification](docs/DrafterAcquisitionSpec.md)
+- [Python fallback integrations](docs/PythonFallbacks.md)
 - [Contributor guidance](CONTRIBUTING.md)
-- [English evaluation data and review workflow](docs/EnglishEvaluationCorpus.md)
 
 ## Development
 
@@ -131,10 +96,6 @@ rewrites, and other input-boundary behavior, are specified in
 uv run pre-commit run --all-files
 uv run pytest
 ```
-
-The shared compatibility fixtures under `tests/fixtures/` are the executable
-authority for portable behavior; detailed fixture and evaluation material is
-kept out of this entry-point document.
 
 ## License
 
