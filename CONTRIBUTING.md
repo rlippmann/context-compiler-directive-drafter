@@ -56,10 +56,11 @@ This package does own the human-input drafting boundary. Documentation and
 specification changes in this repository should treat the drafter as responsible
 for converting messy user input into one of three non-authoritative outcomes:
 
-- `directive`: propose one canonical directive string
-- `no_directive`: classify the message as not requesting a directive
-- `unknown`: preserve uncertainty, malformed recovery failure, or unresolved
-  directive-like intent without guessing
+- `CanonicalDirective`: propose one canonical directive
+- `RejectedDirective`: classify the message as not requesting a directive or
+  reject an unsafe or malformed candidate
+- `UnknownDirective`: preserve uncertainty or unresolved directive-like intent
+  without guessing
 
 The authoritative acquisition contract lives in [docs/DrafterAcquisitionSpec.md](docs/DrafterAcquisitionSpec.md).
 

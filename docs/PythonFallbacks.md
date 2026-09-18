@@ -34,8 +34,9 @@ drafter = DirectiveDrafter(fallback=fallback, fallback_source="openai")
 ```
 
 Use `create_async_openai_fallback(...)` with
-`DirectiveDrafter(async_fallback=...)` and
-`async_draft_directive(...)` for an asynchronous host path. OpenAI-compatible
+`DirectiveDrafter(async_fallback=..., async_fallback_source="openai")` and
+`async_draft_directive(...)` for an asynchronous host path. Set the source
+explicitly because the async source is configured separately. OpenAI-compatible
 endpoints can provide a custom `base_url`.
 
 ## LiteLLM
