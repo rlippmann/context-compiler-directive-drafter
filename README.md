@@ -10,9 +10,8 @@ into candidate directives, such as:
 
 > use docker
 
-This package drafts suggestions for the Context Compiler. Only `context-compiler` applies directives and updates state.
-
-The drafter suggests candidate directives. context-compiler decides what to do with them.
+This package drafts non-authoritative suggestions for `context-compiler`, which
+alone decides whether to apply directives and updates authoritative state.
 
 The drafter owns the human-facing acquisition step between messy user input and
 canonical directive text. That includes deciding when a message is close enough
@@ -101,7 +100,9 @@ conformance fixtures remain the executable compatibility authority. See
 [docs/EnglishEvaluationCorpus.md](docs/EnglishEvaluationCorpus.md) for the
 schema, classifications, domain scope, and promotion workflow.
 
-## OpenAI-Compatible Fallback
+## Fallback integrations
+
+### OpenAI-compatible fallback
 
 Install the optional OpenAI-compatible integration extra:
 
@@ -157,8 +158,10 @@ callback calls. Structured mode owns the JSON Schema response envelope;
 unsupported providers use free-text mode, which translates the profile's
 `FallbackProfile.abstention_sentinel` abstention value to
 the generic fallback callback contract's Python `None` value. Other model text
-is returned unchanged. The Drafter remains responsible for parsing, validation,
-and result shaping.
+is returned unchanged. The adapter owns provider-response parsing; the Drafter
+passes candidate text through Core parsing and validation and shapes the result.
+
+### LiteLLM fallback
 
 LiteLLM provides the same fallback contract across its supported providers:
 
@@ -282,12 +285,11 @@ Public interface:
 
 - `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, fallback output parsing and validation, and final result construction.
 - `DirectiveDrafter.async_draft_directive(...)`: Asynchronous orchestration over the same drafting stages using an async fallback callback when configured.
-- `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
-- `context_compiler_directive_drafter.fallbacks`: Namespaced public callback contracts, `FallbackProfile`, and `get_fallback_profile(...)` for generic fallback acquisition.
+- `DraftResult`: Structured non-authoritative result returned by either drafting entry point.
+- `context_compiler_directive_drafter.fallbacks`: Provider-neutral fallback profiles, callback contracts, structured-response parsing, and invalid-response helpers.
 - `RejectedDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
 - `create_openai_fallback(...)`: Create a synchronous OpenAI-compatible fallback callback.
 - `create_async_openai_fallback(...)`: Create an asynchronous OpenAI-compatible fallback callback.
-- `context_compiler_directive_drafter.fallbacks`: Public fallback profiles, callback contracts, structured-response parsing, and invalid-response helpers for native fallback integrations.
 - `context_compiler_directive_drafter.fallbacks.openai`: Optional OpenAI-compatible fallback factories.
 - `context_compiler_directive_drafter.fallbacks.litellm`: Optional LiteLLM fallback factories using LiteLLM's provider/model routing.
 
@@ -346,7 +348,8 @@ not "this directive is permitted" and not "this directive has been applied."
 
 Custom fallback callbacks receive the original user input and return raw text or
 `None`. Provider callbacks own provider response parsing; `DirectiveDrafter`
-owns candidate normalization, Core validation, and result construction.
+uses Core parsing and validation for candidate normalization and constructs the
+result.
 
 **Safety Guidance:**
 
@@ -365,8 +368,6 @@ Hosts may use `UnknownDirective` to trigger clarification, confirmation, or
 resubmission guidance. That interaction is part of the human-input drafting
 boundary, but any eventual canonical directive must still be revalidated before
 compiler handoff.
-
-Do not pass raw model output to the compiler.
 
 ## Current Limits
 
