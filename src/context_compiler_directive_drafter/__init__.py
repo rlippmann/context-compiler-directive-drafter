@@ -1,4 +1,9 @@
-"""Public package surface for context-compiler-directive-drafter."""
+"""Public package surface for context-compiler-directive-drafter.
+
+The root surface contains the portable drafting and result APIs. This Python
+package also re-exports its OpenAI-compatible convenience factories; provider
+specific integrations remain outside the portable contract.
+"""
 
 from context_compiler_directive_drafter.constants import (
     REASON_INCOMPLETE,

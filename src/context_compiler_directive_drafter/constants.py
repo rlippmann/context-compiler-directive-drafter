@@ -1,8 +1,17 @@
-"""Shared protocol constants for directive-drafting paths."""
+"""Public result constants and private protocol values for directive drafting.
+
+The ``REASON_*`` constants and ``RejectedReason`` alias are stable host-facing
+values. Underscored names support Python implementation classification and are
+not part of the public API.
+"""
 
 from typing import Final, Literal
 
 NO_DIRECTIVE: Final = "<NO_DIRECTIVE>"
+
+# Public rejection reasons are stable host-facing result values. The drafter
+# owns acquisition classification; Core remains authoritative for application
+# and state transitions.
 
 _DRAFT_OUTCOME_DIRECTIVE: Final = "directive"
 _DRAFT_OUTCOME_REJECTED: Final = "rejected"
