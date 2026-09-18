@@ -39,7 +39,7 @@ from context_compiler_directive_drafter.heuristic_preprocessor import (
 
 @dataclass(frozen=True, slots=True)
 class UnknownDirective:
-    """Represent semantic uncertainty that may be sent to fallback."""
+    """Represent semantic uncertainty eligible for optional fallback acquisition."""
 
     reason: UnknownReason
 
@@ -71,9 +71,10 @@ class DirectiveDrafter:
     """High-level drafting API over the public helper functions.
 
     This class orchestrates heuristic preprocessing, optional sync or async
-    fallback acquisition, and result validation without becoming an authority
-    over compiler state. It proposes at most one canonical directive per call
-    and leaves authoritative review and application to `context-compiler`.
+    fallback acquisition, Core parsing, and result shaping without becoming an
+    authority over compiler state. It proposes at most one canonical directive
+    per call and leaves authoritative review and application to
+    `context-compiler`.
     """
 
     __slots__ = (
@@ -158,8 +159,8 @@ class DirectiveDrafter:
         The drafter always attempts heuristic preprocessing first. When that
         heuristic result is not fallback-eligible, it is returned immediately.
         When it is, the drafter may invoke the optional fallback acquisition
-        callback, parse and validate its returned candidate text, and build
-        the final DraftResult itself.
+        callback, pass its returned candidate text through Core parsing, and
+        build the final DraftResult itself.
         """
 
         heuristic_result = _preprocess_heuristic(user_input)
@@ -183,8 +184,8 @@ class DirectiveDrafter:
         The drafter always attempts heuristic preprocessing first. When that
         heuristic result is not fallback-eligible, it is returned immediately.
         When it is, the drafter may await the optional async fallback
-        acquisition callback, parse and validate its returned candidate text,
-        and build the final DraftResult itself.
+        acquisition callback, pass its returned candidate text through Core
+        parsing, and build the final DraftResult itself.
         """
 
         heuristic_result = _preprocess_heuristic(user_input)
