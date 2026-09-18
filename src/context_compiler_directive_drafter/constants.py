@@ -9,16 +9,15 @@ from typing import Final, Literal
 
 NO_DIRECTIVE: Final = "<NO_DIRECTIVE>"
 
-# Public rejection reasons are stable host-facing result values. The drafter
-# owns acquisition classification; Core remains authoritative for application
-# and state transitions.
-
 _DRAFT_OUTCOME_DIRECTIVE: Final = "directive"
 _DRAFT_OUTCOME_REJECTED: Final = "rejected"
 _DRAFT_OUTCOME_UNKNOWN: Final = "unknown"
 _DraftOutcome = Literal["directive", "rejected", "unknown"]
 _OutputClassification = Literal["directive", "rejected"]
 
+# Public rejection reasons are stable host-facing result values. The drafter
+# owns acquisition classification; Core remains authoritative for application
+# and state transitions.
 REASON_NON_DIRECTIVE: Final = "non_directive"
 REASON_INCOMPLETE: Final = "incomplete"
 REASON_MULTIPLE_DIRECTIVES: Final = "multiple_directives"
