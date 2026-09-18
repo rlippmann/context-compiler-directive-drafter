@@ -72,7 +72,7 @@ enforced repository rule is narrower: package source and package-owned examples
 must not drive authoritative transitions, mutate authoritative state, or depend
 on runnable host/framework integrations from within the drafting layer.
 
-That boundary does not authorize this repository to duplicate the compiler's normative grammar. When an extracted grammar contract is available, this package should reference and consume that contract instead of restating grammar rules as if they were drafter-owned.
+That boundary does not authorize this repository to duplicate the compiler's normative grammar. This package should reference and consume the compiler-owned grammar contract instead of restating grammar rules as if they were drafter-owned.
 
 Changes that weaken that separation should be treated as architectural
 proposals, not routine feature requests.

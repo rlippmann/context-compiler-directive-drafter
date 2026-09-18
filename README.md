@@ -200,8 +200,8 @@ The namespaced `fallbacks.DraftFallback` and `fallbacks.AsyncDraftFallback`
 contracts accept the original `user_input`
 and return candidate directive text or `None`; the asynchronous form returns an
 awaitable with the same value contract. These callbacks are generic acquisition
-hooks and do not require prompts or schemas. `DirectiveDrafter` owns Core grammar
-validation and `DraftResult` construction after the callback returns.
+hooks and do not require prompts or schemas. `DirectiveDrafter` uses Core grammar
+parsing and validation and constructs the `DraftResult` after the callback returns.
 
 ### Live English Corpus Runner
 
@@ -264,10 +264,11 @@ artifacts in provider-specific transport, but must not rewrite them. Changes to
 a contractual artifact require a conformance/version change. The contract also
 requires fallback callbacks to receive original user input and return candidate
 text or no candidate. It does not require an OpenAI-specific
-factory. `public-api-v1.json` defines Python package
-mechanics such as root exports, reflection-visible signatures, descriptors,
-and Python exception behavior; those details are not requirements for other
-languages.
+factory. `public-api-v1.json` defines the exact language-neutral root Drafter
+surface, including portable exports and member kinds. `fallbacks-api-v1.json`
+defines the exact provider-neutral fallback namespace surface.
+`python-api-v1.json` separately preserves the exact Python package-root export
+set, including Python-specific provider conveniences.
 
 Heuristic fixture inputs and portable expected outcomes are shared behavior.
 Private Python entry points and detailed internal diagnostic reasons are
@@ -280,6 +281,7 @@ fixtures.
 Public interface:
 
 - `DirectiveDrafter()`: Synchronous orchestration over heuristic preprocessing, optional fallback acquisition, fallback output parsing and validation, and final result construction.
+- `DirectiveDrafter.async_draft_directive(...)`: Asynchronous orchestration over the same drafting stages using an async fallback callback when configured.
 - `DraftResult`: Structured non-authoritative result returned by `DirectiveDrafter.draft_directive(...)`.
 - `context_compiler_directive_drafter.fallbacks`: Namespaced public callback contracts, `FallbackProfile`, and `get_fallback_profile(...)` for generic fallback acquisition.
 - `RejectedDirective` and `UnknownDirective`: Non-canonical drafting result variants with preserved reasons.
@@ -413,10 +415,9 @@ operand is the literal quoted text. The heuristic does not strip operand quotes.
 directive. `context-compiler` remains responsible for independently enforcing
 the single-directive invariant before any authoritative application.
 
-The drafter should consume the compiler-owned grammar contract once that
-extracted contract is available. This package should not duplicate or become
-the normative owner of grammar rules in its own documentation or prompt
-resources.
+The drafter consumes the compiler-owned grammar contract through Core's public
+grammar metadata. This package should not duplicate or become the normative
+owner of grammar rules in its own documentation or prompt resources.
 
 Hosts that want broader proposal behavior should implement it explicitly.
 
