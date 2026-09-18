@@ -1,12 +1,11 @@
 # Context Compiler Directive Drafter
 
-Directive Drafter turns user input into non-authoritative candidate directives
-for host review. It combines deterministic heuristic drafting with an optional
-fallback acquisition step for input the heuristic path cannot interpret
-confidently.
+Directive Drafter helps turn a user's words into a possible Context Compiler
+directive. It starts with predictable rules. You can add an optional fallback
+for requests those rules cannot understand with confidence.
 
-The Drafter proposes. Context Compiler remains authoritative for grammar,
-policy decisions, application, and state.
+The Drafter only makes suggestions. Context Compiler makes the final decision
+and is the only component that applies a directive or changes saved state.
 
 ## Installation
 
@@ -14,7 +13,7 @@ policy decisions, application, and state.
 pip install "context-compiler-directive-drafter"
 ```
 
-For local development:
+For development:
 
 ```bash
 uv sync --group dev
@@ -22,7 +21,8 @@ uv sync --group dev
 
 ## Basic usage
 
-This Python example uses the deterministic heuristic path:
+This example uses the built-in rules. It turns `I prefer concise replies` into
+`use concise replies`:
 
 ```python
 from context_compiler import Engine
@@ -36,34 +36,34 @@ from context_compiler_directive_drafter import (
 
 drafter = DirectiveDrafter()
 engine = Engine()
-result = drafter.draft_directive("I prefer concise replies")
+draft_result = drafter.draft_directive("I prefer concise replies")
 
-if isinstance(result.result, CanonicalDirective):
-    print("Candidate directive:", result.result.text)  # use concise replies
+if isinstance(draft_result.result, CanonicalDirective):
+    print("Candidate directive:", draft_result.result.text)  # use concise replies
     if input("Confirm and apply this directive? [y/N] ").lower() == "y":
-        decision = engine.apply_directive(result.result)
+        decision = engine.apply_directive(draft_result.result)
         print("Compiler decision:", decision)
-elif isinstance(result.result, RejectedDirective):
-    print("Directive acquisition rejected:", result.result.reason)
-elif isinstance(result.result, UnknownDirective):
-    print("Need clarification or optional fallback:", result.result.reason)
+elif isinstance(draft_result.result, RejectedDirective):
+    print("Directive acquisition rejected:", draft_result.result.reason)
+elif isinstance(draft_result.result, UnknownDirective):
+    print("Need clarification or optional fallback:", draft_result.result.reason)
 ```
 
-`DraftResult.result` has one of three high-level forms:
+`DraftResult.result` can be one of three things:
 
-- `CanonicalDirective`: a candidate directive for host review;
-- `RejectedDirective`: a terminal acquisition rejection;
-- `UnknownDirective`: semantic uncertainty that may be sent to an optional
+- `CanonicalDirective`: a possible directive for the host to review;
+- `RejectedDirective`: the input should not be treated as a directive;
+- `UnknownDirective`: the input is unclear and may be sent to an optional
   fallback.
 
-The `source` field identifies the producer of the final drafting result. It does
-not represent compiler approval, applied state, or authoritative state.
+The `source` field says where the result came from. It does not mean that the
+compiler approved the result or applied it.
 
 ## Optional fallbacks
 
-Fallbacks are optional acquisition integrations for `UnknownDirective` results.
-They receive the original input and may propose candidate directive text for
-the host to review. For example, a fallback may interpret:
+Fallbacks are optional helpers for `UnknownDirective` results. They receive the
+original input and may suggest directive text for the host to review. For
+example, a fallback may interpret:
 
 > The intended audience is senior management
 
@@ -71,18 +71,17 @@ as:
 
 > `set premise intended audience is senior management`
 
-The premise interpretation depends on optional fallback acquisition; it is not
-claimed as deterministic heuristic behavior. Available fallback integrations
-depend on the implementation. See the [Python fallback integrations](docs/PythonFallbacks.md)
-document for provider-specific setup.
+The premise example needs a fallback; the built-in rules do not interpret it on
+their own. Available fallback integrations depend on the implementation. See
+the [Python fallback integrations](docs/PythonFallbacks.md) document for
+provider-specific setup.
 
 ## Authority boundary
 
-Hosts decide whether to confirm a proposed `CanonicalDirective`. Only after
-confirmation should a host hand it to Context Compiler through
+The host decides whether to accept a proposed `CanonicalDirective`. After the
+user confirms it, the host can pass it to Context Compiler with
 `engine.apply_directive(...)`. Do not pass raw fallback output directly to the
-compiler, and do not use the Drafter to read or mutate authoritative compiler
-state.
+compiler. The Drafter must not read or change compiler state.
 
 ## Further documentation
 
