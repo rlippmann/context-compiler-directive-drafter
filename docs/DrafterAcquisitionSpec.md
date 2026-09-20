@@ -1,144 +1,82 @@
-# Directive Drafter - Acquisition Specification
+# Directive Drafter Acquisition Specification
 
-## Goal
+## 1. Purpose and authority boundary
 
-Define the acquisition-layer behavior that sits before core execution.
+This specification defines the acquisition step before Context Compiler
+execution. It covers human-facing interpretation that is outside the Core
+grammar and state-transition contract.
 
-This document covers human-facing interpretation that is intentionally outside
-the core authority contract in
-[Context Compiler Directive Grammar Specification](https://github.com/rlippmann/context-compiler/blob/main/docs/DirectiveGrammarSpec.md).
+Each `draft_directive(...)` or `async_draft_directive(...)` call returns a
+`DraftResult`. `DraftResult.result` is one of `CanonicalDirective`,
+`RejectedDirective`, or `UnknownDirective`. The Drafter is not authoritative:
+it must not mutate compiler state or replace Core validation.
 
-The drafter is non-authoritative: it may propose canonical directives for core,
-but it does not mutate authoritative state and does not replace core
-validation.
+The host controls confirmation and submission. Context Compiler remains the
+authority for canonical grammar, directive validity, policy decisions,
+contradictions, lifecycle rules, state transitions, and execution.
 
-The host application owns any confirmation workflow before submitting a drafted
-directive to core.
+Because a draft is only a proposal, acquisition does not need the confidence
+required for an authoritative state change. The Drafter may propose a plausible
+single candidate when the user's meaning is naturally represented in compiler
+state. It must not guess, create compound proposals, or bypass host approval.
 
-Because a drafted directive is a non-authoritative candidate for later
-host or human review, acquisition does not require the confidence needed for
-an authoritative state mutation. The drafter may propose a plausible single
-candidate when the user's meaning is naturally representable in compiler
-state. This does not permit guessing, compound proposals, or bypassing the
-existing uncertainty and host-approval boundaries.
+## 2. Input unit and output contract
 
-## 1. Ownership Boundary
+The Drafter accepts one sentence or one directive request as one acquisition
+unit. It does not split a host message into multiple sentences and never emits
+multiple candidates. Obvious multi-sentence input is rejected; a host may
+segment the message and submit each unit separately.
 
-The drafter owns:
+Each call returns a `DraftResult` with one of these `result` variants:
 
-- near misses of canonical directives
-- alternate human phrasing
-- malformed-but-recoverable input
-- deciding when a candidate directive, clarification, or no-directive result
-  is appropriate for non-canonical input
-- context-assisted interpretation before core execution
-- proposed semantic narrowing from non-canonical input to one canonical
-  directive candidate
+- `CanonicalDirective`: one proposed canonical directive for host review;
+- `RejectedDirective`: a terminal result that must not be sent to fallback;
+- `UnknownDirective`: an uncertain result that may be sent to fallback.
 
-The drafter does not own:
+`RejectedDirective` uses only these host-actionable reasons:
+`non_directive`, `incomplete`, `multiple_directives`, and
+`invalid_candidate`. Heuristic implementation details are not part of the
+public result contract.
 
-- conversational sentence segmentation or splitting one host message into
-  multiple acquisition units
-- authoritative state mutation
-- canonical directive validation
-- authoritative state validation
-- deterministic state transitions
-- contradiction handling after a canonical directive is chosen
-- core-owned validation or execution after a canonical directive is submitted
+`UnknownDirective` is reserved for an eligible single acquisition unit that is
+directive-adjacent but cannot be confidently reduced to one candidate and
+cannot be confidently classified as non-directive. It may be sent to fallback.
+Multi-sentence, rejected, or terminally malformed input must not reach fallback
+through this boundary.
 
-Core remains the authority for those behaviors in the
-[Context Compiler Directive Grammar Specification](https://github.com/rlippmann/context-compiler/blob/main/docs/DirectiveGrammarSpec.md).
+The Drafter must not:
 
-## 2. Drafter Output Contract
+- emit more than one canonical directive for one input;
+- synthesize compound state changes;
+- bypass Core validation;
+- mutate authoritative state.
 
-The drafter may return one of these outcomes to the host:
+## 3. Acquisition paths
 
-- a single canonical directive candidate to submit to core
-- a request for clarification
-- no directive, leaving the input as ordinary non-directive text
+### Heuristic path
 
-A drafted directive is a proposal only.
+The heuristic path uses deterministic, bounded recognition and rewrite rules.
+Failure to recognize canonical syntax or a bounded rewrite is not, by itself,
+grounds for rejection. The heuristic path may apply a documented bounded
+rewrite when it reduces the full input to one canonical directive without
+changing the meaning.
 
-The drafter accepts one sentence or one directive request as its acquisition
-unit. It does not split conversational input into multiple sentences and does
-not emit multiple candidates. Obvious multi-sentence input is outside that
-unit and returns `rejected`, with responsibility for segmentation left to
-the host. A host may segment the message and submit the resulting units to the
-drafter individually.
+The verified deterministic preference rule is the whole-message form `I prefer
+X`, described below. Other policy and premise interpretations are semantic
+guidance for optional fallback acquisition, not guarantees of heuristic output.
 
-`unknown` is reserved for an eligible single acquisition unit that is
-directive-adjacent but cannot be confidently reduced to one canonical
-candidate. That outcome may be sent to fallback. Multi-sentence input must not
-reach fallback through this boundary.
+### Semantic fallback
 
-The outcome distinction is evidence-based:
+Semantic fallback is optional interpretation for eligible inputs left unresolved
+by the heuristic path. It may be model-based or implemented another way. When
+fallback interprets uncertain input, it should prefer `use` or `prohibit`
+when that preserves a user-owned preference, requirement, constraint, or
+equipment meaning. Premise is residual governing context: use `set premise`
+when representing the input as policy would distort its meaning. Do not turn
+third-party statements or external facts into the user's policy. Preserve
+explicit qualifiers, polarity, and scope.
 
-- `rejected` is terminal and covers confidently ordinary input as well as
-  questions, quoted or reported commands, incomplete directives, and compound
-  or malformed directive-shaped input;
-- `unknown` means that the drafter cannot confidently produce one candidate and
-  cannot confidently classify the input as non-directive, so fallback may
-  interpret it.
-
-The public `RejectedDirective` result uses only these host-actionable reasons:
-`non_directive`, `incomplete`, `multiple_directives`, and `invalid_candidate`.
-Heuristic implementation details do not form part of the public result
-contract.
-
-Failure to recognize canonical syntax or a bounded rewrite is not sufficient by
-itself to return `rejected`. Natural-language acquisition should prefer a
-policy candidate when the user's meaning can naturally be represented as
-`use` or `prohibit` without materially changing it. Declarative wording does
-not prevent policy acquisition. Conversely, premise is residual: use it when
-the information is governing context that cannot naturally be represented as a
-policy without distorting the user's meaning. Neither `bare fact -> premise`
-nor `bare fact -> no directive` is a general rule.
-
-The drafter should not select `set premise` merely because an input is
-declarative, factual, or non-imperative. It should also preserve the ownership
-and uncertainty boundaries: third-party statements do not automatically become
-the user's policy, tentative language may remain unresolved, and mixed,
-malformed, incomplete, or multiple-directive input must not be reduced by
-guessing.
-
-The host application is responsible for:
-
-- segmenting obvious multi-sentence conversational input before resubmitting
-  individual units, when that workflow is desired;
-- deciding whether confirmation is required;
-- deciding whether to submit the candidate to core;
-- managing user-facing interaction.
-
-The drafter must not:
-
-- emit more than one canonical directive for a single user input
-- synthesize compound state changes from one user input
-- bypass core validation
-- mutate authoritative state directly
-
-## 3. Proposed Narrowing Rules
-
-When narrowing non-canonical input into one canonical directive candidate, the
-drafter:
-
-- may preserve one apparent atomic user mutation
-- may apply a specifically authorized narrowing rule only when this
-  acquisition contract defines a safe reduction to one atomic directive
-- should prefer `use` or `prohibit` whenever they naturally preserve the
-  user's meaning
-- should use `set premise` or `change premise to` only for governing context
-  that would be unnatural or distorting as a policy
-- must not add extra mutations beyond that atomic change
-- must not silently replace user intent with a different operation
-- must preserve the user's payload, polarity, and scope as the default,
-  including temporal or situational qualifiers; narrowing is not a general
-  fallback for making an input canonical
-- must not paraphrase, substitute synonyms, generalize scope, invent
-  alternatives, or silently change semantic nouns
-- must abstain when more than one canonical directive is plausible
-- must leave contradiction and lifecycle validation to core after drafting
-
-Policy-first examples:
+For fallback evaluation, policy-first examples include:
 
 ```text
 I have a Nord Stage 4
@@ -157,7 +95,7 @@ I would rather avoid shellfish
 -> prohibit shellfish
 ```
 
-Premise-residual examples:
+For fallback evaluation, premise-residual examples include:
 
 ```text
 The intended audience is senior management
@@ -173,236 +111,103 @@ The deployment environment is offline
 -> set premise deployment environment is offline
 ```
 
-Preference, requirement, and constraint wording does not need to be
-imperative to become policy when it is user-owned and naturally representable
-as one `use` or `prohibit` operation. This includes ordinary forms such as
-want, prefer, like, need, require, must have, dislike, hate, need to avoid,
-cannot have, and do not want; these are semantic examples, not an exhaustive
-lexical alias grammar. Preserve qualifiers such as `today`, `for this trip`,
-or `for this project` rather than broadening them into a standing policy.
-
 Bare facts, observations, evaluations, external rules, and third-party
-conditions do not determine their acquisition outcome from grammatical form
-alone. Natural-language input may remain `unknown` at the deterministic
-heuristic stage so fallback can interpret its semantic role. Fallback may
-propose `use` or `prohibit` when policy naturally preserves the meaning, use
-premise when the information functions as governing context that cannot
-naturally be represented as policy, or return no directive when neither
-interpretation is justified. Existing multiple-directive, malformed,
-third-party, tentative, and host-approval boundaries remain in force.
+conditions do not determine their outcome from grammar alone. They may produce
+`UnknownDirective` so fallback can interpret their semantic role. A fallback may
+propose `use`, `prohibit`, or `set premise` when that preserves the meaning, or
+abstain by returning `None` when no interpretation is justified.
 
-These rules preserve the authority split:
+The Drafter must not turn third-party statements into the user's policy, resolve
+tentative language by guessing, or reduce mixed, malformed, incomplete, or
+multiple-directive input to one candidate.
 
-- drafter interprets and proposes
-- host controls submission workflow
-- core validates and executes
+### Explicit preference form
 
-## 4. Near-Miss Canonical Forms
-
-These behaviors belong to acquisition because they interpret user input into
-existing core grammar.
-
-Supported near-miss patterns:
-
-- `set premise to X`
-  - candidate canonical directive:
-    `set premise X`
-
-- `change premise X`
-  - candidate canonical directive:
-    `change premise to X`
-
-Constraints:
-
-- the payload `X` must be non-empty after the near-miss prefix
-- these are drafting behaviors, not additional core grammar productions
-- the drafter must not submit unrelated mutations
-- if the drafter cannot preserve the user's apparent intent, it should ask
-  for clarification or return no directive
-
-### 4.1 Explicit preference alias
-
-The heuristic treats a clear whole-message `I prefer X` form as a bounded
-deterministic alias for `use X`. For example:
+The complete whole-message form `I prefer X` is a bounded deterministic alias
+for `use X`:
 
 ```text
 I prefer concise replies
+-> use concise replies
 ```
 
-produces the proposed canonical directive:
+This applies only when the full acquisition unit reduces to one canonical
+`use` directive. Questions, explanations, empty payloads, and multiple
+preference statements do not produce this canonical result.
 
-```text
-use concise replies
-```
+## 4. Rejection and uncertainty
 
-This rewrite applies only when the complete acquisition unit can be reduced to
-one canonical `use` directive. Questions, mixed explanations, empty payloads,
-and multiple preference statements remain unresolved. An evaluative statement
-such as `Docker would be better` is not this explicit preference form and also
-remains unresolved unless another acquisition rule supports it.
+Rejection is terminal. It covers confidently ordinary input as well as
+questions, quoted or reported commands, incomplete directives, and compound or
+malformed directive-shaped input.
 
-## 5. Replacement Interpretation
+Unknown preserves uncertainty when the Drafter cannot confidently produce one
+candidate and cannot confidently classify the input as non-directive. Only
+Unknown is eligible for fallback.
 
-Replacement interpretation belongs to acquisition when the submitted input
-cannot be executed literally by core and would need reinterpretation.
+The Drafter should abstain rather than guess when more than one canonical
+directive is plausible. It should also preserve the ownership boundary when
+input is tentative, third-party, mixed, malformed, or incomplete.
 
-### 5.1 Missing-source replacement
+## 5. Narrowing rules
 
-Example:
+The deterministic path may narrow input only through a documented bounded rule.
+It:
 
-```text
-use Linux instead of Windows
-```
+- may apply a specifically authorized rule to produce one atomic candidate;
+- must not add mutations or silently select a different operation;
+- must preserve payload, polarity, and scope by default, including temporal and
+  situational qualifiers;
+- must not paraphrase, substitute synonyms, generalize scope, invent
+  alternatives, or change semantic nouns;
+- must leave contradiction and lifecycle validation to Core.
 
-If `Windows` is not present in authoritative policy state, core does not repair
-this into a different directive.
+### Near-miss canonical forms
 
-A drafter may use context to propose a candidate canonical directive such as:
+These acquisition patterns interpret existing Core grammar; they do not add
+new Core grammar productions:
 
-```text
-use Linux
-```
+- `set premise to X` -> `set premise X`;
+- `change premise X` -> `change premise to X`.
 
-This is a specifically authorized structural narrowing rule for this
-replacement case. It permits retaining the clearly surviving atomic policy
-when the replacement relation cannot be safely completed or preserved; it is
-not a general license to discard meaningful operands, qualifiers, polarity, or
-scope.
+`X` must be non-empty after the near-miss prefix. If the apparent intent cannot
+be preserved, it produces `RejectedDirective` or `UnknownDirective` according
+to the existing heuristic classification. The host may ask for clarification
+after receiving `UnknownDirective`.
 
-Constraints for this authorized narrowing:
+Canonical replacement syntax, such as `use X instead of Y`, belongs to Core's
+grammar and application semantics. This API does not inspect authoritative
+policy state or reinterpret a missing source item. Any future context-assisted
+acquisition would require a separate API and contract.
 
-- the result must remain a single atomic mutation
-- the result must not imply removal of another item
-- the drafter must not silently emit additional mutations
-- the host decides whether confirmation is required before submission
+## 6. Host responsibilities
 
-Allowed flow:
+The host is responsible for:
 
-1. User input: `use Linux instead of Windows`
-2. Context indicates `Windows` is not currently present
-3. Drafter proposes: `use Linux`
-4. Host workflow decides whether to submit the candidate
-5. Host submits canonical directive `use Linux` to core
+- segmenting obvious multi-sentence conversational input when that workflow is
+  desired;
+- deciding whether confirmation is required;
+- deciding whether to submit a candidate to Core;
+- managing clarification, resubmission, and other user-facing interaction.
 
-Not allowed:
+For non-canonical input, the Drafter returns one of the three public results: a
+`CanonicalDirective`, a terminal `RejectedDirective`, or an `UnknownDirective`.
+After `UnknownDirective`, the host may ask for clarification, invoke an
+optional fallback, or treat the input as unresolved. This specification does
+not require one fixed prompt or confirmation workflow.
 
-1. User input: `use Linux instead of Windows`
-2. Context indicates `Windows` is not currently present
-3. Drafter silently submits `use Linux` to core
+## 7. Explicit non-goals and prohibited behavior
 
-### 5.2 Prohibited-item replacement interpretations
+The Drafter does not own:
 
-Historical core prompts also covered cases like:
+- conversational sentence segmentation;
+- canonical directive validation;
+- authoritative state validation;
+- deterministic state transitions;
+- contradiction handling after a candidate is chosen;
+- directive application or state mutation;
+- compiler-owned directive semantics.
 
-- `"Y" is currently prohibited. Did you mean to remove it and use "X" instead?`
-- `"X" is currently prohibited. Did you mean to remove "Y" and use "X" instead?`
-
-Those interpretations are acquisition-layer behaviors because they rewrite the
-submitted replacement request into materially different policy operations.
-
-Current ownership:
-
-- drafter may decide whether to propose a candidate, request clarification,
-  or return no directive
-- core must not authorize rewritten mutations from the original non-canonical
-  input
-
-## 6. Clarification and Resubmission
-
-For non-canonical input, the drafter may:
-
-- suggest a canonical rewrite
-- under a specifically authorized acquisition rule, suggest a narrower
-  canonical directive candidate
-- ask the user for clarification
-- return no directive and treat the message as ordinary conversation
-
-This document does not require one fixed user-facing prompt set for all
-acquisition behaviors.
-
-The user-facing interaction remains host-defined unless another host-owned
-document standardizes it.
-
-## 7. Context-Assisted Interpretation
-
-The drafter may use host context to interpret non-canonical user input before
-core execution.
-
-Allowed uses:
-
-- choosing between a candidate directive and no directive
-- deciding whether a simpler single canonical proposal preserves intent
-- deciding when clarification is needed
-
-Not allowed:
-
-- silently committing authoritative state changes
-- silently submitting a narrowed canonical directive without host workflow
-- using context to create compound mutations from one input
-- overriding core contradiction or lifecycle rules
-
-## 8. Migration Table
-
-| Previous behavior in core grammar spec | New owner | New document section |
-| --- | --- | --- |
-| Canonical syntax and state-transition semantics for directives | Core grammar contract | Context Compiler Directive Grammar Specification |
-| Premise near-miss `set premise to X` -> candidate `set premise X` | Drafter acquisition layer | Sections 3 and 4 |
-| Premise near-miss `change premise X` -> candidate `change premise to X` | Drafter acquisition layer | Sections 3 and 4 |
-| Replacement missing-source narrowing from `use X instead of Y` to candidate `use X` | Drafter acquisition layer | Sections 3 and 5.1 |
-| Replacement rewrite when old item is prohibited | Drafter acquisition layer | Section 5.2 |
-| Replacement rewrite when new item is prohibited | Drafter acquisition layer | Section 5.2 |
-| Clarification or no-directive result for ambiguous or non-recoverable input | Drafter acquisition layer | Section 6 |
-| Context-assisted narrowing from non-canonical input to one canonical directive candidate | Drafter acquisition layer | Sections 3 and 7 |
-
-## 9. Migration Notes
-
-The intended ownership boundary is:
-
-```text
-user input
-    |
-    v
-Drafter acquisition layer
-    |
-    v
-candidate canonical directive or no directive
-    |
-    v
-host workflow
-    |
-    v
-core validation and execution
-```
-
-Legacy acquisition behavior may still exist in implementations or fixtures, but
-those behaviors are not part of the core grammar contract.
-
-Core owns:
-
-- canonical syntax;
-- directive classification;
-- syntax validation;
-- state transitions.
-
-Drafter owns:
-
-- human-facing acquisition;
-- non-canonical phrasing;
-- candidate generation;
-- clarification decisions.
-
-The host owns:
-
-- confirmation workflow;
-- submission decisions;
-- user interaction.
-
-## 10. Design Questions
-
-These design questions remain open and are intentionally not resolved here:
-
-- which host confirmation workflows, if any, should be standardized across hosts
-- how much host context is sufficient to justify narrowing non-canonical input
-  into a simpler canonical directive candidate
-- whether any host confirmation workflow should be standardized separately
-  from core confirmation
+The Drafter must not become a second authority layer, silently upgrade
+ambiguous language into state changes, emit compound proposals, or bypass the
+host and Core workflow.
