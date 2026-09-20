@@ -61,6 +61,12 @@ compiler approved the result or applied it.
 
 ## Optional fallbacks
 
+Directive Drafter has two acquisition paths. The built-in heuristic path uses
+deterministic, bounded recognition and rewrite rules. An optional semantic
+fallback handles eligible inputs that the heuristic path leaves unresolved. A
+semantic fallback may use a model or another implementation, and is not needed
+for basic Directive Drafter use.
+
 Fallbacks are optional helpers for `UnknownDirective` results. They receive the
 original input and may suggest directive text for the host to review. For
 example, a fallback may interpret:
@@ -80,8 +86,9 @@ provider-specific setup.
 
 The host decides whether to accept a proposed `CanonicalDirective`. After the
 user confirms it, the host can pass it to Context Compiler with
-`engine.apply_directive(...)`. Do not pass raw fallback output directly to the
-compiler. The Drafter must not read or change compiler state.
+`engine.apply_directive(...)`. Drafter-produced `CanonicalDirective` candidates
+are the reviewed handoff for this workflow. The Drafter must not read or change
+compiler state.
 
 ## Further documentation
 
