@@ -52,7 +52,7 @@ elif isinstance(draft_result.result, UnknownDirective):
 `DraftResult.result` can be one of three things:
 
 - `CanonicalDirective`: a possible directive for the host to review;
-- `RejectedDirective`: the input should not be treated as a directive;
+- `RejectedDirective`: drafting ended with a terminal rejection and no candidate directive;
 - `UnknownDirective`: the input is unclear and may be sent to an optional
   fallback.
 
@@ -93,6 +93,7 @@ compiler state.
 ## Further documentation
 
 - [Acquisition specification](docs/DrafterAcquisitionSpec.md)
+- [English evaluation data](docs/EnglishEvaluationCorpus.md)
 - [Python fallback integrations](docs/PythonFallbacks.md)
 - [Contributor guidance](CONTRIBUTING.md)
 
