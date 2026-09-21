@@ -398,7 +398,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "context-compiler", specifier = ">=0.9.1,<1.0" },
+    { name = "context-compiler", specifier = ">=0.9.1,<0.10.0" },
     { name = "litellm", marker = "extra == 'litellm'", specifier = ">=1.0,<2.0" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0,<2.0" },
 ]
